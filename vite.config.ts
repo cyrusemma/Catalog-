@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-oxc'
+import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
@@ -33,4 +33,23 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) {
+            return undefined
+          }
+
+          if (id.includes('@supabase')) return 'supabase'
+          if (id.includes('@tanstack')) return 'react-query'
+          if (id.includes('react-router-dom')) return 'router'
+          if (id.includes('framer-motion')) return 'motion'
+          if (id.includes('lucide-react') || id.includes('@phosphor-icons')) return 'icons'
+
+          return 'vendor'
+        },
+      },
+    },
+  },
 })
