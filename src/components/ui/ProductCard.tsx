@@ -99,7 +99,7 @@ export default function ProductCard({ product, index = 0 }: Props) {
               )}
             </div>
 
-            {product.stock_status === 'in_stock' && (
+            {product.stock_status !== 'out_of_stock' && (
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={handleAddToCart}

@@ -17,14 +17,14 @@ const CATEGORIES = ['Electronics', 'Computing', 'Phones & Tablets', 'Fashion', '
 interface FormData {
   title: string; brand: string; category: string; description: string
   selling_price: string; original_price: string; discount_percent: string
-  stock: string; stock_status: 'in_stock' | 'out_of_stock'
+  stock: string; stock_status: 'in_stock' | 'few_units_left' | 'out_of_stock'
   images: string[]; key_features: string[]; is_featured: boolean; is_published: boolean
 }
 
 const emptyForm: FormData = {
   title: '', brand: '', category: '', description: '',
   selling_price: '', original_price: '', discount_percent: '',
-  stock: '1', stock_status: 'in_stock', images: [], key_features: [],
+  stock: '1', stock_status: 'few_units_left', images: [], key_features: [],
   is_featured: false, is_published: false,
 }
 
@@ -119,7 +119,7 @@ export default function AdminProductForm() {
         original_price: existingProduct.original_price?.toString() || '',
         discount_percent: existingProduct.discount_percent?.toString() || '',
         stock: existingProduct.stock?.toString() || '1',
-        stock_status: existingProduct.stock_status || 'in_stock',
+        stock_status: existingProduct.stock_status || 'few_units_left',
         images: existingProduct.images || [],
         key_features: existingProduct.key_features || [],
         is_featured: existingProduct.is_featured || false,
@@ -130,6 +130,19 @@ export default function AdminProductForm() {
 
   const set = (key: keyof FormData, val: FormData[keyof FormData]) =>
     setForm(f => ({ ...f, [key]: val }))
+
+  const setPrice = (key: 'selling_price' | 'original_price', val: string) =>
+    setForm(f => {
+      const next = { ...f, [key]: val }
+      const sell = parseFloat(next.selling_price)
+      const orig = parseFloat(next.original_price)
+      if (next.selling_price && next.original_price && orig > 0 && sell > 0 && sell < orig) {
+        next.discount_percent = Math.round(((orig - sell) / orig) * 100).toString()
+      } else if (!next.original_price || !next.selling_price) {
+        next.discount_percent = ''
+      }
+      return next
+    })
 
   const handleSave = async (publish = false) => {
     setSaveError('')
@@ -234,15 +247,15 @@ export default function AdminProductForm() {
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-gray-700 text-xs font-semibold mb-1.5">Selling Price (GHS) *</label>
-                  <input type="number" min="0" step="0.01" value={form.selling_price} onChange={e => set('selling_price', e.target.value)} placeholder="0.00" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
+                  <input type="number" min="0" step="0.01" value={form.selling_price} onChange={e => setPrice('selling_price', e.target.value)} placeholder="0.00" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
                 </div>
                 <div>
                   <label className="block text-gray-600 text-xs font-medium mb-1.5">Compare-at Price (GHS)</label>
-                  <input type="number" min="0" step="0.01" value={form.original_price} onChange={e => set('original_price', e.target.value)} placeholder="0.00" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
+                  <input type="number" min="0" step="0.01" value={form.original_price} onChange={e => setPrice('original_price', e.target.value)} placeholder="0.00" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
                 </div>
                 <div>
-                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Discount %</label>
-                  <input type="number" min="0" max="100" value={form.discount_percent} onChange={e => set('discount_percent', e.target.value)} placeholder="0" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
+                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Discount % (auto)</label>
+                  <input type="number" readOnly value={form.discount_percent} placeholder="—" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-100 cursor-not-allowed" />
                 </div>
               </div>
               <p className="text-gray-400 text-xs mt-3">
@@ -355,14 +368,23 @@ export default function AdminProductForm() {
 
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Stock Status</h2>
-              <div className="flex gap-2 mb-3">
-                {(['in_stock', 'out_of_stock'] as const).map(s => (
-                  <button key={s} onClick={() => set('stock_status', s)} className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${form.stock_status === s ? 'bg-brand-400 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                    {s === 'in_stock' ? 'In Stock' : 'Out of Stock'}
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {([
+                  { value: 'in_stock', label: 'In Stock' },
+                  { value: 'few_units_left', label: 'Few Units Left' },
+                  { value: 'out_of_stock', label: 'Out of Stock' },
+                ] as const).map(s => (
+                  <button key={s.value} onClick={() => set('stock_status', s.value)} className={`py-2 px-1 rounded-xl text-xs font-medium transition-colors ${form.stock_status === s.value ? 'bg-brand-400 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    {s.label}
                   </button>
                 ))}
               </div>
-              <input type="number" min="0" value={form.stock} onChange={e => set('stock', e.target.value)} placeholder="Quantity" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
+              {form.stock_status !== 'out_of_stock' && (
+                <div>
+                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Units left</label>
+                  <input type="number" min="0" value={form.stock} onChange={e => set('stock', e.target.value)} placeholder="e.g. 3" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">

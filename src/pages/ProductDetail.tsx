@@ -150,12 +150,21 @@ export default function ProductDetail() {
 
           {/* Stock */}
           <div className="flex items-center gap-2 mb-6">
-            {product.stock_status === 'in_stock' ? (
+            {product.stock_status === 'in_stock' && (
               <>
                 <CheckCircle size={18} weight="fill" className="text-green-500" />
                 <span className="text-green-500 text-sm font-semibold">In Stock</span>
               </>
-            ) : (
+            )}
+            {product.stock_status === 'few_units_left' && (
+              <>
+                <CheckCircle size={18} weight="fill" className="text-amber-500" />
+                <span className="text-amber-500 text-sm font-semibold">
+                  Few units left{product.stock > 0 ? ` — only ${product.stock} remaining` : ''}
+                </span>
+              </>
+            )}
+            {product.stock_status === 'out_of_stock' && (
               <>
                 <XCircle size={18} weight="fill" className="text-red-500" />
                 <span className="text-red-500 text-sm font-semibold">Out of Stock</span>
@@ -182,7 +191,7 @@ export default function ProductDetail() {
           )}
 
           {/* Actions */}
-          {product.stock_status === 'in_stock' && (
+          {product.stock_status !== 'out_of_stock' && (
             <div className="flex gap-3 mt-auto">
               <button
                 type="button"

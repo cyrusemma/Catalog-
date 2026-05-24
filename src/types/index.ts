@@ -10,7 +10,7 @@ export interface Product {
   original_price?: number
   discount_percent?: number
   stock: number
-  stock_status: 'in_stock' | 'out_of_stock'
+  stock_status: 'in_stock' | 'few_units_left' | 'out_of_stock'
   category: string
   brand?: string
   specs?: Record<string, string>
