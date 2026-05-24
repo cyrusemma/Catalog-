@@ -34,7 +34,7 @@ export default function AdminDashboard() {
   })
 
   const quickActions = [
-    { label: 'Import Product', desc: 'Paste a Jumia link to auto-fill', icon: Package, color: 'bg-brand-400', to: '/admin/products/new' },
+    { label: 'Add Product', desc: 'Create a new product manually', icon: Package, color: 'bg-brand-400', to: '/admin/products/new' },
     { label: 'View Orders', desc: 'Manage customer orders', icon: ShoppingBag, color: 'bg-blue-500', to: '/admin/orders' },
     { label: 'Store Settings', desc: 'Name, WhatsApp, colors', icon: Settings, color: 'bg-gray-400', to: '/admin/settings' },
   ]

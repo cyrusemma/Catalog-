@@ -35,7 +35,6 @@ export interface ProductFormValues {
   title: string
   selling_price: string
   original_price: string
-  source_price: string
   discount_percent: string
   stock: string
   images: string[]
@@ -59,11 +58,6 @@ export function validateProductForm(
   if (form.original_price.trim()) {
     const original = parseFloat(form.original_price)
     if (Number.isNaN(original) || original < 0) return 'Original price must be zero or greater'
-  }
-
-  if (form.source_price.trim()) {
-    const source = parseFloat(form.source_price)
-    if (Number.isNaN(source) || source < 0) return 'Source price must be zero or greater'
   }
 
   if (form.discount_percent.trim()) {

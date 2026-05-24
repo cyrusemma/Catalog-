@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Globe, Loader2, Plus, X, ImagePlus, Upload } from 'lucide-react'
+import { ArrowLeft, Loader2, Plus, X, ImagePlus, Upload } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
 import { slugify } from '../../lib/utils'
@@ -19,14 +19,13 @@ interface FormData {
   selling_price: string; original_price: string; discount_percent: string
   stock: string; stock_status: 'in_stock' | 'out_of_stock'
   images: string[]; key_features: string[]; is_featured: boolean; is_published: boolean
-  source_url: string; source_price: string
 }
 
 const emptyForm: FormData = {
   title: '', brand: '', category: '', description: '',
   selling_price: '', original_price: '', discount_percent: '',
   stock: '1', stock_status: 'in_stock', images: [], key_features: [],
-  is_featured: false, is_published: false, source_url: '', source_price: ''
+  is_featured: false, is_published: false,
 }
 
 async function resolveUniqueSlug(title: string, excludeId?: string): Promise<string> {
@@ -49,9 +48,6 @@ export default function AdminProductForm() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [form, setForm] = useState<FormData>(emptyForm)
-  const [importUrl, setImportUrl] = useState('')
-  const [importing, setImporting] = useState(false)
-  const [importError, setImportError] = useState('')
   const [newFeature, setNewFeature] = useState('')
   const [newImageUrl, setNewImageUrl] = useState('')
   const [saving, setSaving] = useState(false)
@@ -128,51 +124,12 @@ export default function AdminProductForm() {
         key_features: existingProduct.key_features || [],
         is_featured: existingProduct.is_featured || false,
         is_published: existingProduct.is_published || false,
-        source_url: existingProduct.source_url || '',
-        source_price: existingProduct.source_price?.toString() || '',
       })
     }
   }, [existingProduct])
 
   const set = (key: keyof FormData, val: FormData[keyof FormData]) =>
     setForm(f => ({ ...f, [key]: val }))
-
-  const handleImport = async () => {
-    if (!importUrl.trim()) return
-    setImporting(true)
-    setImportError('')
-    try {
-      const { data, error } = await supabase.functions.invoke('scrape-product', {
-        body: { url: importUrl.trim() },
-      })
-      if (error) {
-        const ctx = await error.context?.json?.().catch(() => null)
-        throw new Error(ctx?.error || error.message || 'Import failed')
-      }
-      if (data?.error) throw new Error(data.error)
-      if (data) {
-        const scrapedPrice = data.selling_price?.toString()
-        setForm(f => ({
-          ...f,
-          title: data.title || f.title,
-          brand: data.brand || f.brand,
-          category: data.category || f.category,
-          description: data.description || f.description,
-          images: data.images?.length ? data.images.filter(isValidImageUrl) : f.images,
-          key_features: data.key_features?.length ? data.key_features : f.key_features,
-          source_price: scrapedPrice || f.source_price,
-          original_price: data.original_price?.toString() || f.original_price,
-          discount_percent: data.discount_percent?.toString() || f.discount_percent,
-          stock_status: data.stock_status || f.stock_status,
-          source_url: importUrl.trim(),
-        }))
-      }
-    } catch {
-      setImportError('Could not import this URL. Check the link or fill in the form manually.')
-    } finally {
-      setImporting(false)
-    }
-  }
 
   const handleSave = async (publish = false) => {
     setSaveError('')
@@ -200,8 +157,8 @@ export default function AdminProductForm() {
         key_features: form.key_features,
         is_featured: form.is_featured,
         is_published: publish ? true : form.is_published,
-        source_url: form.source_url || null,
-        source_price: form.source_price ? parseFloat(form.source_price) : null,
+        source_url: null,
+        source_price: null,
       }
 
       const { error } = isEdit
@@ -237,43 +194,6 @@ export default function AdminProductForm() {
             <h1 className="text-2xl font-bold text-gray-900">{isEdit ? 'Edit Product' : 'Add Product'}</h1>
           </div>
         </div>
-
-        {!isEdit && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Globe size={16} className="text-brand-400" />
-                <span className="font-semibold text-gray-900 text-sm">Import from Store URL</span>
-              </div>
-              <span className="text-gray-400 text-xs">Jumia · Amazon · AliExpress · eBay</span>
-            </div>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="url"
-                  value={importUrl}
-                  onChange={e => setImportUrl(e.target.value)}
-                  placeholder="https://www.jumia.com.gh/product-name.html"
-                  className="w-full border border-gray-200 focus:border-brand-400 rounded-xl pl-8 pr-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white"
-                  onKeyDown={e => e.key === 'Enter' && handleImport()}
-                />
-              </div>
-              <button
-                onClick={handleImport}
-                disabled={importing || !importUrl.trim()}
-                className="bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm flex items-center gap-2"
-              >
-                {importing ? <Loader2 size={14} className="animate-spin" /> : null}
-                {importing ? 'Importing...' : 'Import'}
-              </button>
-            </div>
-            {importError && <p className="text-red-500 text-xs mt-2">{importError}</p>}
-            <p className="text-gray-400 text-xs mt-2">
-              Import fills source price and details — set your selling price before publishing.
-            </p>
-          </div>
-        )}
 
         <div className="grid grid-cols-5 gap-6">
           <div className="col-span-3 space-y-5">
@@ -311,32 +231,23 @@ export default function AdminProductForm() {
 
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Pricing</h2>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-gray-700 text-xs font-semibold mb-1.5">Your Selling Price (GHS) *</label>
+                  <label className="block text-gray-700 text-xs font-semibold mb-1.5">Selling Price (GHS) *</label>
                   <input type="number" min="0" step="0.01" value={form.selling_price} onChange={e => set('selling_price', e.target.value)} placeholder="0.00" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
                 </div>
                 <div>
-                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Original Price (GHS)</label>
+                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Compare-at Price (GHS)</label>
                   <input type="number" min="0" step="0.01" value={form.original_price} onChange={e => set('original_price', e.target.value)} placeholder="0.00" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Jumia Source Price (GHS)</label>
-                  <input type="number" min="0" step="0.01" value={form.source_price} onChange={e => set('source_price', e.target.value)} placeholder="0.00" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
                 </div>
                 <div>
                   <label className="block text-gray-600 text-xs font-medium mb-1.5">Discount %</label>
                   <input type="number" min="0" max="100" value={form.discount_percent} onChange={e => set('discount_percent', e.target.value)} placeholder="0" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
                 </div>
               </div>
-              {form.selling_price && form.source_price && (
-                <div className="mt-4 bg-green-50 border border-green-100 rounded-xl p-3">
-                  <p className="text-green-700 text-xs font-medium">
-                    💰 Profit: GHS {(parseFloat(form.selling_price) - parseFloat(form.source_price)).toFixed(2)} per unit
-                    {form.source_price && ` (${(((parseFloat(form.selling_price) - parseFloat(form.source_price)) / parseFloat(form.source_price)) * 100).toFixed(0)}% margin)`}
-                  </p>
-                </div>
-              )}
+              <p className="text-gray-400 text-xs mt-3">
+                Compare-at price shows as a strikethrough next to your selling price to highlight savings.
+              </p>
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
@@ -357,7 +268,7 @@ export default function AdminProductForm() {
                 ))}
               </div>
               <div className="flex gap-2">
-                <input value={newFeature} onChange={e => setNewFeature(e.target.value)} placeholder="Add a feature..." onKeyDown={e => { if (e.key === 'Enter' && newFeature.trim()) { set('key_features', [...form.key_features, newFeature.trim()]); setNewFeature('') } }} className="flex-1 border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:bg-white outline-none" />
+                <input value={newFeature} onChange={e => setNewFeature(e.target.value)} placeholder="Add a feature..." onKeyDown={e => { if (e.key === 'Enter' && newFeature.trim()) { set('key_features', [...form.key_features, newFeature.trim()]); setNewFeature('') } }} className="flex-1 border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-gray-50 focus:bg-white outline-none" />
                 <button
                   onClick={() => { if (newFeature.trim()) { set('key_features', [...form.key_features, newFeature.trim()]); setNewFeature('') } }}
                   aria-label="Add feature"
@@ -417,7 +328,20 @@ export default function AdminProductForm() {
               </button>
               {uploadError && <p className="text-red-500 text-xs mb-2">{uploadError}</p>}
               <div className="flex gap-2">
-                <input value={newImageUrl} onChange={e => setNewImageUrl(e.target.value)} placeholder="Or paste image URL..." onKeyDown={e => { if (e.key === 'Enter') addImageUrl(newImageUrl) }} className="flex-1 border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-xs bg-gray-50 focus:bg-white outline-none" />
+                <input
+                  value={newImageUrl}
+                  onChange={e => setNewImageUrl(e.target.value)}
+                  onPaste={e => {
+                    const pasted = e.clipboardData.getData('text').trim()
+                    if (pasted && isValidImageUrl(pasted)) {
+                      e.preventDefault()
+                      addImageUrl(pasted)
+                    }
+                  }}
+                  placeholder="Or paste image URL..."
+                  onKeyDown={e => { if (e.key === 'Enter') addImageUrl(newImageUrl) }}
+                  className="flex-1 border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-xs text-gray-900 placeholder-gray-400 bg-gray-50 focus:bg-white outline-none"
+                />
                 <button
                   onClick={() => addImageUrl(newImageUrl)}
                   aria-label="Add image from URL"
