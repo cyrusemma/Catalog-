@@ -20,7 +20,23 @@ npm install
 ## Step 4: Create your admin account
 1. In Supabase, go to Authentication → Users
 2. Click "Add user" → enter your email + password
-3. This is your admin login — keep it private!
+3. In SQL Editor, grant the admin role (replace the email):
+```sql
+update auth.users
+set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb
+where email = 'you@example.com';
+```
+4. In Authentication → Providers, **disable sign-ups** unless you want public registration
+5. Keep your admin password private
+
+## Step 4b: Security migration (existing projects only)
+If you already ran an older `supabase-schema.sql`, also run `supabase-migration-security.sql`.
+
+## Step 4c: Deploy scrape edge function
+```bash
+npx supabase functions deploy scrape-product
+```
+Requires the [Supabase CLI](https://supabase.com/docs/guides/cli) linked to your project.
 
 ## Step 5: Configure environment
 1. Copy `.env.example` to `.env`

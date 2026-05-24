@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { supabase } from './lib/supabase'
+import { isAdminSession } from './lib/admin'
 import type { Session } from '@supabase/supabase-js'
 
 import Navbar from './components/layout/Navbar'
@@ -22,6 +23,9 @@ const qc = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 *
 
 function ProtectedRoute({ session, children }: { session: Session | null; children: React.ReactNode }) {
   if (!session) return <Navigate to="/admin/login" replace />
+  if (!isAdminSession(session)) {
+    return <Navigate to="/admin/login" replace state={{ error: 'unauthorized' }} />
+  }
   return <>{children}</>
 }
 

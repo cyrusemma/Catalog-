@@ -18,6 +18,15 @@ const esc = (s) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
 
+const isSafeImageUrl = (url) => {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'https:' || u.protocol === 'http:'
+  } catch {
+    return false
+  }
+}
+
 export default async function handler(req, res) {
   const { id } = req.query
 
@@ -38,10 +47,12 @@ export default async function handler(req, res) {
   const description =
     product.description ||
     `Buy ${product.title} for GH₵ ${product.selling_price}. Order via WhatsApp.`
-  const image =
+  const firstImage =
     Array.isArray(product.images) && product.images.length > 0
       ? product.images[0]
-      : `${siteUrl}/favicon.svg`
+      : null
+  const image =
+    firstImage && isSafeImageUrl(firstImage) ? firstImage : `${siteUrl}/favicon.svg`
   const url = `${siteUrl}/product/${id}`
 
   const html = `<!DOCTYPE html>

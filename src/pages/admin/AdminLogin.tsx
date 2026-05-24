@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { isAdminSession } from '../../lib/admin'
 import { Store, Eye, EyeOff, Lock } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
 export default function AdminLogin() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const unauthorized = (location.state as { error?: string } | null)?.error === 'unauthorized'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -15,9 +18,12 @@ export default function AdminLogin() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       setError('Invalid credentials. Please try again.')
+    } else if (!isAdminSession(data.session)) {
+      await supabase.auth.signOut()
+      setError('This account does not have admin access.')
     } else {
       navigate('/admin')
     }
@@ -67,10 +73,16 @@ export default function AdminLogin() {
             </div>
           </div>
 
+          {unauthorized && !error && (
+            <p className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-amber-800 text-sm">
+              Admin access required. Sign in with an admin account.
+            </p>
+          )}
+
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm">
+            <p className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm">
               {error}
-            </div>
+            </p>
           )}
 
           <button
