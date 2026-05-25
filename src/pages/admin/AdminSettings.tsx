@@ -9,7 +9,6 @@ export default function AdminSettings() {
     store_name: 'Catalog by Cyrus',
     tagline: 'Discover Amazing Products Brought to you By Cyrus',
     whatsapp_number: '',
-    delivery_fee: '0',
     currency: 'GHS',
   })
   const [saved, setSaved] = useState(false)
@@ -29,7 +28,6 @@ export default function AdminSettings() {
         store_name: settings.store_name || '',
         tagline: settings.tagline || '',
         whatsapp_number: settings.whatsapp_number || '',
-        delivery_fee: settings.delivery_fee?.toString() || '0',
         currency: settings.currency || 'GHS',
       })
     }
@@ -37,11 +35,10 @@ export default function AdminSettings() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const payload = { ...form, delivery_fee: parseFloat(form.delivery_fee) || 0 }
       if (settings) {
-        await supabase.from('store_settings').update(payload).eq('id', settings.id)
+        await supabase.from('store_settings').update(form).eq('id', settings.id)
       } else {
-        await supabase.from('store_settings').insert(payload)
+        await supabase.from('store_settings').insert(form)
       }
     },
     onSuccess: () => {
@@ -57,7 +54,6 @@ export default function AdminSettings() {
     { key: 'store_name', label: 'Store Name', placeholder: 'Catalog by Cyrus', type: 'text' },
     { key: 'tagline', label: 'Tagline / Hero Text', placeholder: 'Discover Amazing Products...', type: 'text' },
     { key: 'whatsapp_number', label: 'WhatsApp Number', placeholder: '233244000000 (include country code, no +)', type: 'tel' },
-    { key: 'delivery_fee', label: 'Default Delivery Fee (GHS)', placeholder: '0', type: 'number' },
     { key: 'currency', label: 'Currency Symbol', placeholder: 'GHS', type: 'text' },
   ]
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ShoppingCart, WhatsappLogo, Star, CheckCircle, XCircle, SmileySad, ShareNetwork } from '@phosphor-icons/react'
+import { ArrowLeft, ShoppingCart, WhatsappLogo, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProduct } from '../hooks/useProducts'
 import { useCartStore } from '../store/cartStore'
@@ -169,6 +169,18 @@ export default function ProductDetail() {
                 <XCircle size={18} weight="fill" className="text-red-500" />
                 <span className="text-red-500 text-sm font-semibold">Out of Stock</span>
               </>
+            )}
+          </div>
+
+          {/* Delivery info */}
+          <div className="flex items-center gap-2 mb-6">
+            <Truck size={18} weight="duotone" className={Number(product.delivery_fee) > 0 ? 'text-brand-400' : 'text-green-500'} />
+            {Number(product.delivery_fee) > 0 ? (
+              <span className="text-dark-800/80 dark:text-white/70 text-sm">
+                Delivery: <span className="font-semibold text-dark-800 dark:text-white">{formatPrice(Number(product.delivery_fee))}</span>
+              </span>
+            ) : (
+              <span className="text-green-500 text-sm font-semibold">Free delivery</span>
             )}
           </div>
 

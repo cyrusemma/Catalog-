@@ -19,6 +19,7 @@ interface FormData {
   selling_price: string; original_price: string; discount_percent: string
   stock: string; stock_status: 'in_stock' | 'few_units_left' | 'out_of_stock'
   images: string[]; key_features: string[]; is_featured: boolean; is_published: boolean
+  free_delivery: boolean; delivery_fee: string
 }
 
 const emptyForm: FormData = {
@@ -26,6 +27,7 @@ const emptyForm: FormData = {
   selling_price: '', original_price: '', discount_percent: '',
   stock: '1', stock_status: 'few_units_left', images: [], key_features: [],
   is_featured: false, is_published: false,
+  free_delivery: true, delivery_fee: '',
 }
 
 async function resolveUniqueSlug(title: string, excludeId?: string): Promise<string> {
@@ -124,6 +126,10 @@ export default function AdminProductForm() {
         key_features: existingProduct.key_features || [],
         is_featured: existingProduct.is_featured || false,
         is_published: existingProduct.is_published || false,
+        free_delivery: !existingProduct.delivery_fee || Number(existingProduct.delivery_fee) === 0,
+        delivery_fee: existingProduct.delivery_fee && Number(existingProduct.delivery_fee) > 0
+          ? Number(existingProduct.delivery_fee).toString()
+          : '',
       })
     }
   }, [existingProduct])
@@ -172,6 +178,7 @@ export default function AdminProductForm() {
         is_published: publish ? true : form.is_published,
         source_url: null,
         source_price: null,
+        delivery_fee: form.free_delivery ? 0 : (parseFloat(form.delivery_fee) || 0),
       }
 
       const { error } = isEdit
@@ -192,24 +199,25 @@ export default function AdminProductForm() {
 
   return (
     <AdminLayout>
-      <div className="p-8 max-w-4xl">
-        <div className="flex items-center gap-3 mb-8">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-4xl pb-32 lg:pb-8">
+        <div className="flex items-center gap-3 mb-5 lg:mb-8">
           <button
+            type="button"
             onClick={() => navigate(-1)}
             aria-label="Go back"
             title="Go back"
-            className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors"
+            className="w-9 h-9 lg:w-8 lg:h-8 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
           >
             <ArrowLeft size={16} className="text-gray-600" />
           </button>
-          <div>
-            <p className="text-gray-400 text-sm">Products</p>
-            <h1 className="text-2xl font-bold text-gray-900">{isEdit ? 'Edit Product' : 'Add Product'}</h1>
+          <div className="min-w-0">
+            <p className="text-gray-400 text-xs lg:text-sm">Products</p>
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 truncate">{isEdit ? 'Edit Product' : 'Add Product'}</h1>
           </div>
         </div>
 
-        <div className="grid grid-cols-5 gap-6">
-          <div className="col-span-3 space-y-5">
+        <div className="grid lg:grid-cols-5 gap-5 lg:gap-6">
+          <div className="lg:col-span-3 space-y-5">
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Product Details</h2>
 
@@ -244,7 +252,7 @@ export default function AdminProductForm() {
 
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Pricing</h2>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-gray-700 text-xs font-semibold mb-1.5">Selling Price (GHS) *</label>
                   <input type="number" min="0" step="0.01" value={form.selling_price} onChange={e => setPrice('selling_price', e.target.value)} placeholder="0.00" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
@@ -294,7 +302,7 @@ export default function AdminProductForm() {
             </div>
           </div>
 
-          <div className="col-span-2 space-y-5">
+          <div className="lg:col-span-2 space-y-5">
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Images</h2>
               <div className="grid grid-cols-2 gap-2 mb-3">
@@ -384,6 +392,48 @@ export default function AdminProductForm() {
                   <label className="block text-gray-600 text-xs font-medium mb-1.5">Units left</label>
                   <input type="number" min="0" value={form.stock} onChange={e => set('stock', e.target.value)} placeholder="e.g. 3" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
                 </div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Delivery</h2>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => set('free_delivery', true)}
+                  className={`py-2 px-2 rounded-xl text-xs font-medium transition-colors ${form.free_delivery ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                  Free Delivery
+                </button>
+                <button
+                  type="button"
+                  onClick={() => set('free_delivery', false)}
+                  className={`py-2 px-2 rounded-xl text-xs font-medium transition-colors ${!form.free_delivery ? 'bg-brand-400 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                  Charged
+                </button>
+              </div>
+              {!form.free_delivery && (
+                <div>
+                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Delivery fee (GHS)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.delivery_fee}
+                    onChange={e => set('delivery_fee', e.target.value)}
+                    placeholder="e.g. 25.00"
+                    className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white"
+                  />
+                  <p className="text-gray-400 text-[11px] mt-2">
+                    Shown to the customer on the product page and added to the cart total.
+                  </p>
+                </div>
+              )}
+              {form.free_delivery && (
+                <p className="text-gray-400 text-[11px]">
+                  Customer sees a "Free delivery" badge on this product.
+                </p>
               )}
             </div>
 

@@ -9,10 +9,20 @@ export default function Cart() {
   const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCartStore()
   const settings = useStoreSettings()
 
+  const subtotal = totalPrice()
+  // Per-product delivery: take the highest fee across all cart items (one delivery trip)
+  const deliveryFee = items.reduce(
+    (max, item) => Math.max(max, Number(item.product.delivery_fee) || 0),
+    0
+  )
+  const grandTotal = subtotal + deliveryFee
+
   const handleWhatsAppOrder = () => {
     const message = buildCartWhatsAppMessage(
       items.map(i => ({ title: i.product.title, qty: i.quantity, price: i.product.selling_price })),
-      totalPrice()
+      subtotal,
+      deliveryFee,
+      settings.currency || 'GHS'
     )
     const url = buildWhatsAppUrl(settings.whatsapp_number || '233000000000', message)
     window.open(url, '_blank')
@@ -122,10 +132,20 @@ export default function Cart() {
                 </div>
               ))}
             </div>
-            <div className="border-t border-cream-200 dark:border-white/10 pt-4 mb-5">
-              <div className="flex justify-between items-center">
+            <div className="border-t border-cream-200 dark:border-white/10 pt-4 mb-5 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-dark-800/70 dark:text-white/60">Subtotal</span>
+                <span className="text-dark-800 dark:text-white font-medium">{formatPrice(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-dark-800/70 dark:text-white/60">Delivery</span>
+                <span className="text-dark-800 dark:text-white font-medium">
+                  {deliveryFee > 0 ? formatPrice(deliveryFee) : 'Free'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-cream-200/60 dark:border-white/10">
                 <span className="text-dark-800 dark:text-white font-bold">Total</span>
-                <span className="text-brand-400 font-bold text-2xl">{formatPrice(totalPrice())}</span>
+                <span className="text-brand-400 font-bold text-2xl">{formatPrice(grandTotal)}</span>
               </div>
             </div>
             <button onClick={handleWhatsAppOrder} className="btn-whatsapp w-full justify-center py-4 text-base">

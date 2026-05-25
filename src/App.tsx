@@ -98,6 +98,20 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('store-settings-live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'store_settings' },
+        () => qc.invalidateQueries({ queryKey: ['store-settings'] })
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
   if (loading) {
     return (
       <div className="min-h-dvh bg-cream-50 dark:bg-dark-900 flex items-center justify-center">

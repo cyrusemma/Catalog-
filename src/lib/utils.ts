@@ -22,7 +22,17 @@ export function buildProductWhatsAppMessage(productTitle: string, price: number,
   return `Hi! I'd like to order:\n\n*${productTitle}*\nPrice: GHS ${price.toFixed(2)}\n\nProduct link: ${productUrl}\n\nPlease confirm availability and delivery details. Thank you!`
 }
 
-export function buildCartWhatsAppMessage(items: { title: string; qty: number; price: number }[], total: number): string {
-  const lines = items.map(i => `• ${i.title} x${i.qty} — GHS ${(i.price * i.qty).toFixed(2)}`).join('\n')
-  return `Hi! I'd like to order the following:\n\n${lines}\n\n*Total: GHS ${total.toFixed(2)}*\n\nPlease confirm availability and delivery. Thank you!`
+export function buildCartWhatsAppMessage(
+  items: { title: string; qty: number; price: number }[],
+  subtotal: number,
+  deliveryFee = 0,
+  currency = 'GHS'
+): string {
+  const lines = items.map(i => `• ${i.title} x${i.qty} — ${currency} ${(i.price * i.qty).toFixed(2)}`).join('\n')
+  const total = subtotal + deliveryFee
+  const summary =
+    deliveryFee > 0
+      ? `Subtotal: ${currency} ${subtotal.toFixed(2)}\nDelivery: ${currency} ${deliveryFee.toFixed(2)}\n*Total: ${currency} ${total.toFixed(2)}*`
+      : `*Total: ${currency} ${total.toFixed(2)}*`
+  return `Hi! I'd like to order the following:\n\n${lines}\n\n${summary}\n\nPlease confirm availability and delivery. Thank you!`
 }

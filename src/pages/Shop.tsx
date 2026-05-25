@@ -80,8 +80,8 @@ export default function Shop() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="card animate-pulse">
-              <div className="aspect-square bg-cream-100 dark:bg-dark-700" />
-              <div className="p-3.5 space-y-2">
+              <div className="aspect-[4/5] sm:aspect-square bg-cream-100 dark:bg-dark-700" />
+              <div className="p-3 space-y-2">
                 <div className="h-3 bg-cream-100 dark:bg-dark-700 rounded w-1/2" />
                 <div className="h-4 bg-cream-100 dark:bg-dark-700 rounded w-3/4" />
                 <div className="h-4 bg-cream-100 dark:bg-dark-700 rounded w-1/3" />
@@ -96,7 +96,7 @@ export default function Shop() {
           variants={{ show: { transition: { staggerChildren: 0.04 } } }}
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
         >
-          {products.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+          {products.map((p, i) => <ProductCard key={p.id} product={p} index={i} compact />)}
         </motion.div>
       ) : (
         <div className="text-center py-24">

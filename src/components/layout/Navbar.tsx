@@ -28,7 +28,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-cream-50/70 dark:bg-dark-900/70 backdrop-blur-xl border-b border-brand-400/10 safe-top">
+    <nav className="sticky top-0 z-50 bg-transparent backdrop-blur-2xl backdrop-saturate-150 border-b border-white/20 dark:border-white/[0.08] safe-top shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5 group min-w-0 flex-1 sm:flex-none">
           <div className="w-9 h-9 flex-shrink-0 bg-gradient-to-br from-brand-400 to-brand-500 rounded-xl flex items-center justify-center shadow-amber-glow group-hover:shadow-amber-glow-lg transition-shadow">
