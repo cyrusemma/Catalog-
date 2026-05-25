@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Package, Eye, ShoppingBag, TrendingUp, Plus, ArrowRight, Settings } from 'lucide-react'
+import { Package, Eye, ShoppingBag, TrendingUp, Plus, ArrowRight, Settings, MessageSquareQuote } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils'
@@ -9,17 +9,20 @@ export default function AdminDashboard() {
   const { data: stats } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const [products, orders] = await Promise.all([
+      const [products, orders, reviews] = await Promise.all([
         supabase.from('products').select('id, is_published, selling_price'),
         supabase.from('orders').select('id, total, status'),
+        supabase.from('site_reviews').select('id, rating'),
       ])
       const allProducts = products.data || []
       const allOrders = orders.data || []
+      const allReviews = reviews.data || []
       const revenue = allOrders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0)
       return {
         total: allProducts.length,
         published: allProducts.filter(p => p.is_published).length,
         orders: allOrders.length,
+        reviews: allReviews.length,
         revenue,
       }
     },
@@ -36,6 +39,7 @@ export default function AdminDashboard() {
   const quickActions = [
     { label: 'Add Product', desc: 'Create a new product manually', icon: Package, color: 'bg-brand-400', to: '/admin/products/new' },
     { label: 'View Orders', desc: 'Manage customer orders', icon: ShoppingBag, color: 'bg-blue-500', to: '/admin/orders' },
+    { label: 'Read Reviews', desc: 'See ratings and site feedback', icon: MessageSquareQuote, color: 'bg-emerald-500', to: '/admin/reviews' },
     { label: 'Store Settings', desc: 'Name, WhatsApp, colors', icon: Settings, color: 'bg-gray-400', to: '/admin/settings' },
   ]
 
@@ -43,6 +47,7 @@ export default function AdminDashboard() {
     { label: 'Total Products', value: stats?.total ?? '—', icon: Package, color: 'bg-brand-400' },
     { label: 'Published', value: stats?.published ?? '—', icon: Eye, color: 'bg-green-500' },
     { label: 'Orders', value: stats?.orders ?? '—', icon: ShoppingBag, color: 'bg-blue-500' },
+    { label: 'Reviews', value: stats?.reviews ?? '—', icon: MessageSquareQuote, color: 'bg-emerald-500' },
     { label: 'Revenue', value: stats ? formatPrice(stats.revenue) : '—', icon: TrendingUp, color: 'bg-purple-500' },
   ]
 

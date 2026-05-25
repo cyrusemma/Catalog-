@@ -56,6 +56,7 @@ export default function ProductCard({ product, index = 0, compact = false }: Pro
             alt={product.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
+            decoding="async"
           />
           {/* Badges */}
           <div className={`absolute top-2 left-2 flex flex-col gap-1 ${compact ? 'scale-90 origin-top-left sm:scale-100' : ''}`}>

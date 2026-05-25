@@ -45,6 +45,29 @@ create policy "Admin manage settings" on store_settings
   using (public.is_admin())
   with check (public.is_admin());
 
+-- Reviews table
+create table if not exists site_reviews (
+  id uuid primary key default gen_random_uuid(),
+  name text,
+  rating int not null check (rating between 1 and 5),
+  message text not null,
+  page_url text,
+  created_at timestamptz default now()
+);
+
+alter table site_reviews enable row level security;
+
+drop policy if exists "Public submit reviews" on site_reviews;
+drop policy if exists "Admin manage reviews" on site_reviews;
+
+create policy "Public submit reviews" on site_reviews
+  for insert with check (true);
+
+create policy "Admin manage reviews" on site_reviews
+  for all
+  using (public.is_admin())
+  with check (public.is_admin());
+
 -- Storage bucket for product images
 insert into storage.buckets (id, name, public)
 values ('product-images', 'product-images', true)

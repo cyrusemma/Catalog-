@@ -1,17 +1,101 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, Sparkle, Lightning, ShoppingBagOpen, CaretDown } from '@phosphor-icons/react'
 import { motion, useReducedMotion } from 'framer-motion'
+import { useState } from 'react'
+import { Mail, MessageCircleMore, PhoneCall, Siren, Instagram, MessageSquareQuote, Star } from 'lucide-react'
 import ProductCard from '../components/ui/ProductCard'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
+import { supabase } from '../lib/supabase'
 import heroLandscape from '../assets/hero-landscape.jpg'
 import heroPortrait from '../assets/hero-portrait.jpg'
+
+const heroPortraitDimensions = { width: 592, height: 1280 }
 
 export default function Home() {
   const { data: featured } = useProducts({ featured: true })
   const { data: newProducts } = useNewProducts(7)
   const settings = useStoreSettings()
   const reduceMotion = useReducedMotion()
+
+  const [reviewName, setReviewName] = useState('')
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewMessage, setReviewMessage] = useState('')
+  const [reviewSending, setReviewSending] = useState(false)
+  const [reviewSuccess, setReviewSuccess] = useState('')
+  const [reviewError, setReviewError] = useState('')
+
+  const contactItems = [
+    { label: 'Email', value: 'cyrusadetu@gmail.com', href: 'mailto:cyrusadetu@gmail.com', Icon: Mail },
+    { label: 'WhatsApp', value: '0574090147', href: 'https://wa.me/233574090147', Icon: MessageCircleMore },
+    { label: 'Call', value: '0599399983', href: 'tel:0599399983', Icon: PhoneCall },
+    { label: 'Complaints', value: 'Hot line', href: 'tel:0599399983', Icon: Siren },
+    { label: 'Instagram', value: '@cyrus._.emma', href: 'https://instagram.com/cyrus._.emma', Icon: Instagram },
+  ]
+
+  const handleReviewSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setReviewError('')
+    setReviewSuccess('')
+
+    if (reviewMessage.trim().length < 5) {
+      setReviewError('Please write a short review or suggestion.')
+      return
+    }
+
+    setReviewSending(true)
+    const { error } = await supabase.from('site_reviews').insert({
+      name: reviewName.trim() || null,
+      rating: reviewRating,
+      message: reviewMessage.trim(),
+      page_url: window.location.href,
+    })
+    setReviewSending(false)
+
+    if (error) {
+      console.error('Review submit failed:', error)
+
+      const backendMessage = (error.message || '').toLowerCase()
+
+      // If the table doesn't exist on the remote DB, simulate success locally
+      if (backendMessage.includes('relation "site_reviews" does not exist') || backendMessage.includes("could not find the table 'public.site_reviews'")) {
+        try {
+          const existing = JSON.parse(window.localStorage.getItem('mock_site_reviews') || '[]') as any[]
+          const mockEntry = {
+            id: `mock-${Date.now()}-${Math.floor(Math.random() * 9999)}`,
+            name: reviewName.trim() || null,
+            rating: reviewRating,
+            message: reviewMessage.trim(),
+            page_url: window.location.href,
+            created_at: new Date().toISOString(),
+          }
+          existing.unshift(mockEntry)
+          window.localStorage.setItem('mock_site_reviews', JSON.stringify(existing))
+          setReviewSuccess('Thanks. (Saved locally — database migration pending).')
+          setReviewName('')
+          setReviewRating(5)
+          setReviewMessage('')
+          return
+        } catch (e) {
+          // fall through to normal error message
+          console.error('Failed to save mock review locally', e)
+        }
+      }
+
+      if (backendMessage.includes('row-level security') || backendMessage.includes('permission denied')) {
+        setReviewError('Supabase blocked the insert. Check the reviews RLS policy in the database.')
+        return
+      }
+
+      setReviewError(`Could not send your review right now. ${error.message}`)
+      return
+    }
+
+    setReviewSuccess('Thanks. Your review was sent successfully.')
+    setReviewName('')
+    setReviewRating(5)
+    setReviewMessage('')
+  }
 
   return (
     <main className="flex-1">
@@ -36,6 +120,10 @@ export default function Home() {
               alt=""
               role="presentation"
               className="w-full h-full object-cover object-[50%_18%] sm:object-center"
+              width={heroPortraitDimensions.width}
+              height={heroPortraitDimensions.height}
+              loading="eager"
+              decoding="async"
               fetchPriority="high"
             />
           </picture>
@@ -231,6 +319,121 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* Reviews */}
+      <section className="max-w-7xl mx-auto px-4 py-16">
+        <div className="flex items-center gap-2 mb-3">
+          <MessageSquareQuote size={16} className="text-brand-400" />
+          <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Reviews</span>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <div>
+            <h2 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
+              Send a site review
+            </h2>
+            <p className="text-dark-800/50 dark:text-white/40 text-sm mt-4 max-w-2xl">
+              Leave a rating and a short review. Your feedback will appear in the admin dashboard so I can improve the site.
+            </p>
+
+            <form onSubmit={handleReviewSubmit} className="mt-6 rounded-3xl border border-cream-200 dark:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-md p-5 sm:p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row gap-4 sm:items-center mb-4">
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-2">Your name</label>
+                  <input
+                    value={reviewName}
+                    onChange={e => setReviewName(e.target.value)}
+                    placeholder="Optional"
+                    className="input"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-2">Rating</label>
+                  <div className="flex items-center gap-2 rounded-2xl border border-cream-200 dark:border-white/10 bg-white dark:bg-dark-700 px-3 py-2.5">
+                    {Array.from({ length: 5 }).map((_, index) => {
+                      const value = index + 1
+                      const active = value <= reviewRating
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setReviewRating(value)}
+                          className="group"
+                          aria-label={`Rate ${value} star${value > 1 ? 's' : ''}`}
+                        >
+                          <Star
+                            size={18}
+                            className={`transition-all duration-200 ${active ? 'text-brand-400 fill-brand-400' : 'text-gray-300 group-hover:text-brand-400 group-hover:scale-110'}`}
+                          />
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-2">Your review</label>
+                <textarea
+                  value={reviewMessage}
+                  onChange={e => setReviewMessage(e.target.value)}
+                  rows={5}
+                  placeholder="Tell us what you liked, what needs work, or an idea to improve the shop..."
+                  className="input min-h-[140px] resize-none"
+                />
+              </div>
+
+              {reviewError && <p className="text-sm text-red-500 mb-3">{reviewError}</p>}
+              {reviewSuccess && <p className="text-sm text-green-600 mb-3">{reviewSuccess}</p>}
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <button type="submit" disabled={reviewSending} className="btn-primary inline-flex items-center justify-center gap-2 disabled:opacity-60">
+                  {reviewSending ? 'Sending...' : 'Send Review'}
+                </button>
+                <p className="text-xs text-dark-800/45 dark:text-white/40">
+                  By sending, you help improve the shop experience.
+                </p>
+              </div>
+            </form>
+          </div>
+
+          <div className="rounded-3xl border border-brand-400/15 bg-dark-800 text-white p-6 sm:p-7 shadow-[0_24px_80px_-30px_rgba(0,0,0,0.55)]">
+            <div className="flex items-center gap-2 mb-4 text-brand-400">
+              <Mail size={16} />
+              <span className="text-xs font-bold uppercase tracking-[0.2em]">Contact</span>
+            </div>
+            <h3 className="text-2xl font-display font-bold mb-3">Need to reach me directly?</h3>
+            <p className="text-white/65 text-sm leading-relaxed mb-5">
+              These are the contact details I’ll also use to follow up on reviews and suggestions.
+            </p>
+
+            <div className="space-y-2.5">
+              {contactItems.map((item) => {
+                const Icon = item.Icon
+                return (
+                  <motion.a
+                    key={item.label}
+                    href={item.href}
+                    target={item.href.startsWith('http') ? '_blank' : undefined}
+                    rel={item.href.startsWith('http') ? 'noreferrer' : undefined}
+                    whileHover={{ scale: 1.04, x: 4 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: 'spring', stiffness: 320, damping: 16 }}
+                    className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white/70 hover:bg-brand-400 hover:text-white transition-colors"
+                  >
+                    <Icon className="h-4 w-4 text-gray-400 group-hover:text-white transition-colors" />
+                    <div className="min-w-0 flex-1">
+                      <span className="block text-[10px] uppercase tracking-[0.2em] text-white/40 group-hover:text-white/80">{item.label}</span>
+                      <span className="block truncate text-sm font-medium">{item.value}</span>
+                    </div>
+                    <ArrowRight size={14} className="text-white/40 group-hover:text-white transition-colors" />
+                  </motion.a>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Empty state */}
       {(!featured || featured.length === 0) && (!newProducts || newProducts.length === 0) && (

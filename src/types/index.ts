@@ -56,3 +56,12 @@ export interface StoreSettings {
   delivery_fee: number
   currency: string
 }
+
+export interface SiteReview {
+  id: string
+  name?: string
+  rating: number
+  message: string
+  page_url?: string
+  created_at: string
+}
