@@ -30,11 +30,11 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-cream-50/70 dark:bg-dark-900/70 backdrop-blur-xl border-b border-brand-400/10 safe-top">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 bg-gradient-to-br from-brand-400 to-brand-500 rounded-xl flex items-center justify-center shadow-amber-glow group-hover:shadow-amber-glow-lg transition-shadow">
+        <Link to="/" className="flex items-center gap-2.5 group min-w-0 flex-1 sm:flex-none">
+          <div className="w-9 h-9 flex-shrink-0 bg-gradient-to-br from-brand-400 to-brand-500 rounded-xl flex items-center justify-center shadow-amber-glow group-hover:shadow-amber-glow-lg transition-shadow">
             <Storefront size={18} weight="duotone" className="text-white" />
           </div>
-          <span className="font-display font-bold text-lg text-dark-800 dark:text-white">{settings.store_name}</span>
+          <span className="font-display font-bold text-lg text-dark-800 dark:text-white truncate">{settings.store_name}</span>
         </Link>
 
         <div className="hidden sm:flex items-center gap-7">

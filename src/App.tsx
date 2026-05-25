@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from './lib/supabase'
 import { isAdminSession } from './lib/admin'
 import type { Session } from '@supabase/supabase-js'
@@ -13,6 +14,7 @@ const Home = lazy(() => import('./pages/Home'))
 const Shop = lazy(() => import('./pages/Shop'))
 const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const Cart = lazy(() => import('./pages/Cart'))
+const Wishlist = lazy(() => import('./pages/Wishlist'))
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
@@ -32,12 +34,54 @@ function ProtectedRoute({ session, children }: { session: Session | null; childr
 
 function StorefrontLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col min-h-dvh">
+    <div className="flex flex-col min-h-dvh overflow-x-hidden">
       <Navbar />
       {children}
       <Footer />
       <BottomNav />
     </div>
+  )
+}
+
+function PageTransition({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+      className="flex flex-col flex-1"
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+function AnimatedRoutes({ session }: { session: Session | null }) {
+  const location = useLocation()
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <Routes location={location} key={location.pathname}>
+        {/* Storefront */}
+        <Route path="/" element={<StorefrontLayout><PageTransition><Home /></PageTransition></StorefrontLayout>} />
+        <Route path="/shop" element={<StorefrontLayout><PageTransition><Shop /></PageTransition></StorefrontLayout>} />
+        <Route path="/product/:id" element={<StorefrontLayout><PageTransition><ProductDetail /></PageTransition></StorefrontLayout>} />
+        <Route path="/cart" element={<StorefrontLayout><PageTransition><Cart /></PageTransition></StorefrontLayout>} />
+        <Route path="/wishlist" element={<StorefrontLayout><PageTransition><Wishlist /></PageTransition></StorefrontLayout>} />
+
+        {/* Admin */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<ProtectedRoute session={session}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/products" element={<ProtectedRoute session={session}><AdminProducts /></ProtectedRoute>} />
+        <Route path="/admin/products/new" element={<ProtectedRoute session={session}><AdminProductForm /></ProtectedRoute>} />
+        <Route path="/admin/products/:id/edit" element={<ProtectedRoute session={session}><AdminProductForm /></ProtectedRoute>} />
+        <Route path="/admin/orders" element={<ProtectedRoute session={session}><AdminOrders /></ProtectedRoute>} />
+        <Route path="/admin/settings" element={<ProtectedRoute session={session}><AdminSettings /></ProtectedRoute>} />
+
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AnimatePresence>
   )
 }
 
@@ -72,25 +116,7 @@ export default function App() {
             </div>
           }
         >
-          <Routes>
-            {/* Storefront */}
-            <Route path="/" element={<StorefrontLayout><Home /></StorefrontLayout>} />
-            <Route path="/shop" element={<StorefrontLayout><Shop /></StorefrontLayout>} />
-            <Route path="/product/:id" element={<StorefrontLayout><ProductDetail /></StorefrontLayout>} />
-            <Route path="/cart" element={<StorefrontLayout><Cart /></StorefrontLayout>} />
-
-            {/* Admin */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin" element={<ProtectedRoute session={session}><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/products" element={<ProtectedRoute session={session}><AdminProducts /></ProtectedRoute>} />
-            <Route path="/admin/products/new" element={<ProtectedRoute session={session}><AdminProductForm /></ProtectedRoute>} />
-            <Route path="/admin/products/:id/edit" element={<ProtectedRoute session={session}><AdminProductForm /></ProtectedRoute>} />
-            <Route path="/admin/orders" element={<ProtectedRoute session={session}><AdminOrders /></ProtectedRoute>} />
-            <Route path="/admin/settings" element={<ProtectedRoute session={session}><AdminSettings /></ProtectedRoute>} />
-
-            {/* Catch all */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <AnimatedRoutes session={session} />
         </Suspense>
       </BrowserRouter>
     </QueryClientProvider>

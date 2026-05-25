@@ -23,19 +23,19 @@ export default function Shop() {
   }
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto px-4 py-10 pb-28 lg:pb-10">
+    <main className="flex-1 max-w-7xl mx-auto px-4 py-5 sm:py-10 pb-28 lg:pb-10">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl sm:text-5xl font-display font-bold text-dark-800 dark:text-white mb-2 underline-gradient inline-block">
+      <div className="mb-5 sm:mb-8">
+        <h1 className="text-2xl sm:text-5xl font-display font-bold text-dark-800 dark:text-white mb-1 sm:mb-2 underline-gradient inline-block">
           Shop
         </h1>
-        <p className="text-dark-800/50 dark:text-white/40 text-sm mt-4">
+        <p className="text-dark-800/50 dark:text-white/40 text-xs sm:text-sm mt-2 sm:mt-4">
           {products ? `Browse ${products.length} product${products.length !== 1 ? 's' : ''}` : 'Loading...'}
         </p>
       </div>
 
       {/* Search + Filter */}
-      <div className="flex gap-3 mb-6">
+      <div className="flex gap-2 sm:gap-3 mb-4 sm:mb-6">
         <form onSubmit={handleSearch} className="flex-1 relative">
           <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-cream-400 dark:text-white/30" />
           <input
@@ -43,7 +43,7 @@ export default function Shop() {
             placeholder="Search products..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="input pl-9"
+            className="input pl-9 py-2.5 sm:py-3 text-sm"
           />
         </form>
         <button
@@ -56,14 +56,14 @@ export default function Shop() {
       </div>
 
       {/* Category pills — glassmorphism */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-8 scrollbar-hide -mx-4 px-4">
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-5 sm:mb-8 scrollbar-hide -mx-4 px-4">
         {allCategories.map(cat => {
           const active = activeCategory === cat
           return (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`flex-shrink-0 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
                 active
                   ? 'bg-gradient-to-r from-brand-400 to-brand-500 text-white shadow-amber-glow'
                   : 'glass text-dark-800/70 dark:text-white/60 hover:text-brand-400'
