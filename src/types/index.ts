@@ -13,6 +13,8 @@ export interface Product {
   stock_status: 'in_stock' | 'few_units_left' | 'out_of_stock'
   delivery_fee: number
   category: string
+  category_id: string | null
+  sizes: string[]
   brand?: string
   specs?: Record<string, string>
   key_features?: string[]
@@ -46,6 +48,14 @@ export interface OrderItem {
 export interface CartItem {
   product: Product
   quantity: number
+}
+
+export interface Category {
+  id: string
+  name: string
+  slug: string
+  parent_id: string | null
+  sort_order: number
 }
 
 export interface StoreSettings {

@@ -5,6 +5,7 @@ import { ArrowLeft, Loader2, Plus, X, ImagePlus, Upload } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
 import { slugify } from '../../lib/utils'
+import { useCategoryTree, topLevelCategories, childCategories, findCategory } from '../../hooks/useProducts'
 import {
   extensionForMime,
   isValidImageUrl,
@@ -12,20 +13,22 @@ import {
   validateProductForm,
 } from '../../lib/productValidation'
 
-const CATEGORIES = ['Electronics', 'Computing', 'Phones & Tablets', 'Fashion', 'Bags', 'Footwear', 'Lifestyle', 'Home & Office', 'Beauty', 'Sporting Goods', 'Other']
-
 interface FormData {
-  title: string; brand: string; category: string; description: string
+  title: string; brand: string; description: string
+  parent_category_id: string; category_id: string
   selling_price: string; original_price: string; discount_percent: string
   stock: string; stock_status: 'in_stock' | 'few_units_left' | 'out_of_stock'
-  images: string[]; key_features: string[]; is_featured: boolean; is_published: boolean
+  images: string[]; key_features: string[]; sizes: string[]
+  is_featured: boolean; is_published: boolean
   free_delivery: boolean; delivery_fee: string
 }
 
 const emptyForm: FormData = {
-  title: '', brand: '', category: '', description: '',
+  title: '', brand: '', description: '',
+  parent_category_id: '', category_id: '',
   selling_price: '', original_price: '', discount_percent: '',
-  stock: '1', stock_status: 'few_units_left', images: [], key_features: [],
+  stock: '1', stock_status: 'few_units_left',
+  images: [], key_features: [], sizes: [],
   is_featured: false, is_published: false,
   free_delivery: true, delivery_fee: '',
 }
@@ -51,12 +54,19 @@ export default function AdminProductForm() {
   const qc = useQueryClient()
   const [form, setForm] = useState<FormData>(emptyForm)
   const [newFeature, setNewFeature] = useState('')
+  const [newSize, setNewSize] = useState('')
   const [newImageUrl, setNewImageUrl] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [creatingCategory, setCreatingCategory] = useState<'parent' | 'sub' | null>(null)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [categoryError, setCategoryError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { data: categoryTree } = useCategoryTree()
+  const parents = topLevelCategories(categoryTree)
+  const subs = form.parent_category_id ? childCategories(categoryTree, form.parent_category_id) : []
 
   const addImageUrl = (raw: string) => {
     const url = raw.trim()
@@ -111,12 +121,17 @@ export default function AdminProductForm() {
   })
 
   useEffect(() => {
-    if (existingProduct) {
+    if (existingProduct && categoryTree) {
+      const selectedCat = findCategory(categoryTree, existingProduct.category_id)
+      const parentCat = selectedCat?.parent_id
+        ? findCategory(categoryTree, selectedCat.parent_id)
+        : selectedCat
       setForm({
         title: existingProduct.title || '',
         brand: existingProduct.brand || '',
-        category: existingProduct.category || '',
         description: existingProduct.description || '',
+        parent_category_id: parentCat?.id || '',
+        category_id: existingProduct.category_id || '',
         selling_price: existingProduct.selling_price?.toString() || '',
         original_price: existingProduct.original_price?.toString() || '',
         discount_percent: existingProduct.discount_percent?.toString() || '',
@@ -124,6 +139,7 @@ export default function AdminProductForm() {
         stock_status: existingProduct.stock_status || 'few_units_left',
         images: existingProduct.images || [],
         key_features: existingProduct.key_features || [],
+        sizes: existingProduct.sizes || [],
         is_featured: existingProduct.is_featured || false,
         is_published: existingProduct.is_published || false,
         free_delivery: !existingProduct.delivery_fee || Number(existingProduct.delivery_fee) === 0,
@@ -132,10 +148,35 @@ export default function AdminProductForm() {
           : '',
       })
     }
-  }, [existingProduct])
+  }, [existingProduct, categoryTree])
 
   const set = (key: keyof FormData, val: FormData[keyof FormData]) =>
     setForm(f => ({ ...f, [key]: val }))
+
+  const createCategory = async () => {
+    const name = newCategoryName.trim()
+    if (!name) return
+    setCategoryError('')
+    const slug = slugify(name) || `cat-${Date.now()}`
+    const parentId = creatingCategory === 'sub' ? form.parent_category_id : null
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({ name, slug, parent_id: parentId, sort_order: 99 })
+      .select('id, name, slug, parent_id, sort_order')
+      .single()
+    if (error || !data) {
+      setCategoryError(error?.message || 'Could not create category')
+      return
+    }
+    await qc.invalidateQueries({ queryKey: ['categories', 'tree'] })
+    if (creatingCategory === 'parent') {
+      setForm(f => ({ ...f, parent_category_id: data.id, category_id: '' }))
+    } else {
+      setForm(f => ({ ...f, category_id: data.id }))
+    }
+    setCreatingCategory(null)
+    setNewCategoryName('')
+  }
 
   const setPrice = (key: 'selling_price' | 'original_price', val: string) =>
     setForm(f => {
@@ -165,7 +206,8 @@ export default function AdminProductForm() {
         title: form.title.trim(),
         slug,
         brand: form.brand.trim() || null,
-        category: form.category || null,
+        category_id: form.category_id || form.parent_category_id || null,
+        category: findCategory(categoryTree, form.category_id || form.parent_category_id)?.name || null,
         description: form.description.trim() || null,
         selling_price: parseFloat(form.selling_price) || 0,
         original_price: form.original_price ? parseFloat(form.original_price) : null,
@@ -174,6 +216,7 @@ export default function AdminProductForm() {
         stock_status: form.stock_status,
         images: form.images,
         key_features: form.key_features,
+        sizes: form.sizes,
         is_featured: form.is_featured,
         is_published: publish ? true : form.is_published,
         source_url: null,
@@ -229,19 +272,97 @@ export default function AdminProductForm() {
                   <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="Enter product title" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Brand</label>
+                  <input value={form.brand} onChange={e => set('brand', e.target.value)} placeholder="e.g. Samsung" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {/* Parent category */}
                   <div>
-                    <label className="block text-gray-600 text-xs font-medium mb-1.5">Brand</label>
-                    <input value={form.brand} onChange={e => set('brand', e.target.value)} placeholder="e.g. Samsung" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
-                  </div>
-                  <div>
-                    <label htmlFor="category" className="block text-gray-600 text-xs font-medium mb-1.5">Category</label>
-                    <select id="category" aria-label="Category" value={form.category} onChange={e => set('category', e.target.value)} className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 outline-none text-sm bg-gray-50 focus:bg-white">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label htmlFor="parent-category" className="block text-gray-600 text-xs font-medium">Category</label>
+                      <button
+                        type="button"
+                        onClick={() => { setCreatingCategory('parent'); setNewCategoryName(''); setCategoryError('') }}
+                        className="text-brand-400 text-[11px] font-semibold hover:text-brand-500"
+                      >
+                        + New
+                      </button>
+                    </div>
+                    <select
+                      id="parent-category"
+                      aria-label="Category"
+                      value={form.parent_category_id}
+                      onChange={e => setForm(f => ({ ...f, parent_category_id: e.target.value, category_id: '' }))}
+                      className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 outline-none text-sm bg-gray-50 focus:bg-white"
+                    >
                       <option value="">Select category</option>
-                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      {parents.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Sub-category */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label htmlFor="sub-category" className="block text-gray-600 text-xs font-medium">Sub-category</label>
+                      {form.parent_category_id && (
+                        <button
+                          type="button"
+                          onClick={() => { setCreatingCategory('sub'); setNewCategoryName(''); setCategoryError('') }}
+                          className="text-brand-400 text-[11px] font-semibold hover:text-brand-500"
+                        >
+                          + New
+                        </button>
+                      )}
+                    </div>
+                    <select
+                      id="sub-category"
+                      aria-label="Sub-category"
+                      value={form.category_id}
+                      onChange={e => set('category_id', e.target.value)}
+                      disabled={!form.parent_category_id}
+                      className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 outline-none text-sm bg-gray-50 focus:bg-white disabled:opacity-50"
+                    >
+                      <option value="">{form.parent_category_id ? 'Optional — leave blank for the parent only' : 'Pick a category first'}</option>
+                      {subs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </div>
                 </div>
+
+                {creatingCategory && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+                    <p className="text-xs font-semibold text-amber-900">
+                      {creatingCategory === 'parent' ? 'New top-level category' : `New sub-category under ${findCategory(categoryTree, form.parent_category_id)?.name}`}
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        autoFocus
+                        value={newCategoryName}
+                        onChange={e => setNewCategoryName(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); createCategory() } }}
+                        placeholder="e.g. Jewelries"
+                        className="flex-1 border border-amber-300 focus:border-brand-400 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-white outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={createCategory}
+                        className="bg-brand-400 hover:bg-brand-500 text-white text-sm font-semibold px-4 rounded-lg"
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setCreatingCategory(null); setCategoryError('') }}
+                        aria-label="Cancel"
+                        className="bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-lg px-3"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    {categoryError && <p className="text-xs text-red-600">{categoryError}</p>}
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-gray-600 text-xs font-medium mb-1.5">Description</label>
@@ -291,9 +412,61 @@ export default function AdminProductForm() {
               <div className="flex gap-2">
                 <input value={newFeature} onChange={e => setNewFeature(e.target.value)} placeholder="Add a feature..." onKeyDown={e => { if (e.key === 'Enter' && newFeature.trim()) { set('key_features', [...form.key_features, newFeature.trim()]); setNewFeature('') } }} className="flex-1 border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-gray-50 focus:bg-white outline-none" />
                 <button
+                  type="button"
                   onClick={() => { if (newFeature.trim()) { set('key_features', [...form.key_features, newFeature.trim()]); setNewFeature('') } }}
                   aria-label="Add feature"
                   title="Add feature"
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-xl transition-colors"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Available Sizes</h2>
+              <p className="text-gray-400 text-[11px] mb-3">
+                Add any sizes/variants the customer can pick from — e.g. S, M, L or shoe sizes like 38, 39, 40. Leave empty if not applicable.
+              </p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {form.sizes.map((s, i) => (
+                  <span key={i} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 text-sm rounded-full pl-3 pr-1 py-1">
+                    {s}
+                    <button
+                      type="button"
+                      onClick={() => set('sizes', form.sizes.filter((_, j) => j !== i))}
+                      aria-label={`Remove size ${s}`}
+                      className="w-5 h-5 rounded-full hover:bg-gray-200 text-gray-500 flex items-center justify-center"
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={newSize}
+                  onChange={e => setNewSize(e.target.value)}
+                  placeholder="e.g. M or 42"
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && newSize.trim()) {
+                      e.preventDefault()
+                      const val = newSize.trim()
+                      if (!form.sizes.includes(val)) set('sizes', [...form.sizes, val])
+                      setNewSize('')
+                    }
+                  }}
+                  className="flex-1 border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-gray-50 focus:bg-white outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const val = newSize.trim()
+                    if (val && !form.sizes.includes(val)) set('sizes', [...form.sizes, val])
+                    setNewSize('')
+                  }}
+                  aria-label="Add size"
+                  title="Add size"
                   className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-xl transition-colors"
                 >
                   <Plus size={14} />

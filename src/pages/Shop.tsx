@@ -3,40 +3,59 @@ import { useSearchParams } from 'react-router-dom'
 import { MagnifyingGlass, Faders, MagnifyingGlassMinus, CaretRight, ArrowRight } from '@phosphor-icons/react'
 import ProductCard from '../components/ui/ProductCard'
 import SkeletonCard from '../components/ui/SkeletonCard'
-import { useProducts, useCategories } from '../hooks/useProducts'
+import {
+  useProducts,
+  useCategoryTree,
+  topLevelCategories,
+  childCategories,
+  expandCategoryIds,
+} from '../hooks/useProducts'
 import type { Product } from '../types'
 
 export default function Shop() {
   const [search, setSearch] = useState('')
   const [searchParams, setSearchParams] = useSearchParams()
-  const [activeCategory, setActiveCategory] = useState(() => searchParams.get('category') || 'All')
   const [query, setQuery] = useState('')
+  const { data: categoryTree } = useCategoryTree()
+
+  // Slug-based routing in the URL: ?category=fashion or ?category=fashion&sub=jewelries
+  const parentSlug = searchParams.get('category')
+  const subSlug = searchParams.get('sub')
+
+  const parents = topLevelCategories(categoryTree)
+  const activeParent = parents.find(p => p.slug === parentSlug)
+  const subs = activeParent ? childCategories(categoryTree, activeParent.id) : []
+  const activeSub = subs.find(s => s.slug === subSlug)
+
+  const categoryIds = useMemo(() => {
+    if (activeSub) return [activeSub.id]
+    if (activeParent) return expandCategoryIds(categoryTree, activeParent.id)
+    return undefined
+  }, [activeParent, activeSub, categoryTree])
 
   const { data: products, isLoading } = useProducts({
-    category: activeCategory === 'All' ? undefined : activeCategory,
+    categoryIds,
     search: query || undefined,
   })
-  const { data: categories } = useCategories()
-
-  const allCategories = ['All', ...(categories || [])]
 
   // Group products by category for the "All" Netflix-style browse view
   const productsByCategory = useMemo(() => {
-    const map = new Map<string, Product[]>()
+    const map = new Map<string, { name: string; products: Product[] }>()
     if (!products) return map
     for (const p of products) {
-      const cat = p.category || 'Other'
-      if (!map.has(cat)) map.set(cat, [])
-      map.get(cat)!.push(p)
+      const cat = categoryTree?.find(c => c.id === p.category_id)
+      const key = cat?.parent_id ?? cat?.id ?? 'other'
+      const name = categoryTree?.find(c => c.id === key)?.name ?? p.category ?? 'Other'
+      if (!map.has(key)) map.set(key, { name, products: [] })
+      map.get(key)!.products.push(p)
     }
     return map
-  }, [products])
+  }, [products, categoryTree])
 
-  const showRowsView = activeCategory === 'All' && !query && productsByCategory.size > 1
+  const showRowsView = !activeParent && !query && productsByCategory.size > 1
 
   useEffect(() => {
-    const cat = searchParams.get('category')
-    setActiveCategory(cat || 'All')
+    // No additional sync needed — URL is the source of truth via searchParams
   }, [searchParams])
 
   const handleSearch = (e: React.FormEvent) => {
@@ -44,13 +63,18 @@ export default function Shop() {
     setQuery(search)
   }
 
-  const handleCategoryChange = (category: string) => {
-    setActiveCategory(category)
-    if (category === 'All') {
-      setSearchParams({})
-      return
-    }
-    setSearchParams({ category })
+  const handleParentChange = (slug: string | null) => {
+    const next = new URLSearchParams()
+    if (slug) next.set('category', slug)
+    setSearchParams(next)
+  }
+
+  const handleSubChange = (slug: string | null) => {
+    if (!activeParent) return
+    const next = new URLSearchParams()
+    next.set('category', activeParent.slug)
+    if (slug) next.set('sub', slug)
+    setSearchParams(next)
   }
 
   return (
@@ -88,25 +112,34 @@ export default function Shop() {
           </button>
         </div>
 
-        {/* Category pills — horizontal scroll with fade + hint on mobile */}
+        {/* Top-level category pills */}
         <div className="relative -mx-4 lg:mx-0">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide px-4 lg:px-0">
-            {allCategories.map(cat => {
-              const active = activeCategory === cat
-              return (
-                <button
-                  key={cat}
-                  onClick={() => handleCategoryChange(cat)}
-                  className={`flex-shrink-0 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
-                    active
-                      ? 'bg-gradient-to-r from-brand-400 to-brand-500 text-white shadow-amber-glow'
-                      : 'glass text-dark-800/70 dark:text-white/60 hover:text-brand-400'
-                  }`}
-                >
-                  {cat}
-                </button>
-              )
-            })}
+            <button
+              type="button"
+              onClick={() => handleParentChange(null)}
+              className={`flex-shrink-0 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                !activeParent
+                  ? 'bg-gradient-to-r from-brand-400 to-brand-500 text-white shadow-amber-glow'
+                  : 'glass text-dark-800/70 dark:text-white/60 hover:text-brand-400'
+              }`}
+            >
+              All
+            </button>
+            {parents.map(cat => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => handleParentChange(cat.slug)}
+                className={`flex-shrink-0 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                  activeParent?.id === cat.id
+                    ? 'bg-gradient-to-r from-brand-400 to-brand-500 text-white shadow-amber-glow'
+                    : 'glass text-dark-800/70 dark:text-white/60 hover:text-brand-400'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
           </div>
           {/* Fade + chevron scroll hint, mobile only */}
           <div
@@ -116,6 +149,39 @@ export default function Shop() {
             <CaretRight size={14} weight="bold" className="text-brand-400 animate-pulse" />
           </div>
         </div>
+
+        {/* Sub-category pills (only when a parent is selected and it has sub-categories) */}
+        {activeParent && subs.length > 0 && (
+          <div className="relative -mx-4 lg:mx-0 mt-2">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide px-4 lg:px-0">
+              <button
+                type="button"
+                onClick={() => handleSubChange(null)}
+                className={`flex-shrink-0 px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
+                  !activeSub
+                    ? 'bg-brand-400/15 text-brand-400 border border-brand-400/30'
+                    : 'bg-transparent text-dark-800/55 dark:text-white/50 border border-cream-200 dark:border-white/10 hover:border-brand-400/30'
+                }`}
+              >
+                All {activeParent.name}
+              </button>
+              {subs.map(s => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => handleSubChange(s.slug)}
+                  className={`flex-shrink-0 px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
+                    activeSub?.id === s.id
+                      ? 'bg-brand-400/15 text-brand-400 border border-brand-400/30'
+                      : 'bg-transparent text-dark-800/55 dark:text-white/50 border border-cream-200 dark:border-white/10 hover:border-brand-400/30'
+                  }`}
+                >
+                  {s.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Loading skeletons */}
@@ -130,36 +196,41 @@ export default function Shop() {
       {/* Netflix-style category rows (shown when "All" is selected, no search) */}
       {!isLoading && showRowsView && (
         <div className="space-y-8 sm:space-y-10">
-          {[...productsByCategory.entries()].map(([cat, prods]) => (
-            <section key={cat}>
-              <div className="flex items-end justify-between mb-3 sm:mb-4">
-                <h2 className="text-lg sm:text-2xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
-                  {cat}
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => handleCategoryChange(cat)}
-                  className="text-brand-400 text-xs sm:text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all flex-shrink-0"
-                >
-                  See all <ArrowRight size={12} weight="bold" />
-                </button>
-              </div>
-              <div className="relative -mx-4 lg:mx-0">
-                <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-4 lg:px-0 scrollbar-hide snap-x snap-mandatory">
-                  {prods.map((p, i) => (
-                    <div key={p.id} className="flex-shrink-0 w-40 sm:w-48 snap-start">
-                      <ProductCard product={p} index={i} compact />
-                    </div>
-                  ))}
+          {[...productsByCategory.entries()].map(([catId, { name, products: prods }]) => {
+            const parent = categoryTree?.find(c => c.id === catId)
+            return (
+              <section key={catId}>
+                <div className="flex items-end justify-between mb-3 sm:mb-4">
+                  <h2 className="text-lg sm:text-2xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
+                    {name}
+                  </h2>
+                  {parent?.slug && (
+                    <button
+                      type="button"
+                      onClick={() => handleParentChange(parent.slug)}
+                      className="text-brand-400 text-xs sm:text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all flex-shrink-0"
+                    >
+                      See all <ArrowRight size={12} weight="bold" />
+                    </button>
+                  )}
                 </div>
-                {/* Right-edge fade hint on mobile */}
-                <div
-                  aria-hidden="true"
-                  className="lg:hidden pointer-events-none absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-cream-50/95 dark:from-dark-900/95 to-transparent"
-                />
-              </div>
-            </section>
-          ))}
+                <div className="relative -mx-4 lg:mx-0">
+                  <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-4 lg:px-0 scrollbar-hide snap-x snap-mandatory">
+                    {prods.map((p, i) => (
+                      <div key={p.id} className="flex-shrink-0 w-40 sm:w-48 snap-start">
+                        <ProductCard product={p} index={i} compact />
+                      </div>
+                    ))}
+                  </div>
+                  {/* Right-edge fade hint on mobile */}
+                  <div
+                    aria-hidden="true"
+                    className="lg:hidden pointer-events-none absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-cream-50/95 dark:from-dark-900/95 to-transparent"
+                  />
+                </div>
+              </section>
+            )
+          })}
         </div>
       )}
 

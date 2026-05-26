@@ -1,19 +1,23 @@
 import { useQuery } from '@tanstack/react-query'
-import { supabase } from '../lib/supabase'
-import type { Product } from '../types'
+import type { Category, Product } from '../types'
 
-export function useProducts(filters?: { category?: string; search?: string; featured?: boolean }) {
+export function useProducts(filters?: {
+  categoryIds?: string[]
+  search?: string
+  featured?: boolean
+}) {
   return useQuery({
     queryKey: ['products', filters],
     queryFn: async () => {
+      const { supabase } = await import('../lib/supabase')
       let query = supabase
         .from('products')
         .select('*')
         .eq('is_published', true)
         .order('created_at', { ascending: false })
 
-      if (filters?.category && filters.category !== 'All') {
-        query = query.eq('category', filters.category)
+      if (filters?.categoryIds && filters.categoryIds.length > 0) {
+        query = query.in('category_id', filters.categoryIds)
       }
       if (filters?.search) {
         query = query.ilike('title', `%${filters.search}%`)
@@ -33,6 +37,7 @@ export function useProduct(id: string) {
   return useQuery({
     queryKey: ['product', id],
     queryFn: async () => {
+      const { supabase } = await import('../lib/supabase')
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -52,6 +57,7 @@ export function useNewProducts(days = 7) {
   return useQuery({
     queryKey: ['products', 'new', days],
     queryFn: async () => {
+      const { supabase } = await import('../lib/supabase')
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -65,17 +71,42 @@ export function useNewProducts(days = 7) {
   })
 }
 
-export function useCategories() {
+export function useCategoryTree() {
   return useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories', 'tree'],
     queryFn: async () => {
+      const { supabase } = await import('../lib/supabase')
       const { data, error } = await supabase
-        .from('products')
-        .select('category')
-        .eq('is_published', true)
+        .from('categories')
+        .select('id, name, slug, parent_id, sort_order')
+        .order('sort_order', { ascending: true })
       if (error) throw error
-      const cats = [...new Set((data as { category: string }[]).map(d => d.category).filter(Boolean))]
-      return cats
+      return data as Category[]
     },
+    staleTime: 1000 * 60,
   })
+}
+
+/** Given a category id, return its id plus the ids of all direct children. */
+export function expandCategoryIds(tree: Category[] | undefined, rootId: string): string[] {
+  if (!tree) return [rootId]
+  const ids = [rootId]
+  for (const c of tree) {
+    if (c.parent_id === rootId) ids.push(c.id)
+  }
+  return ids
+}
+
+/** Convenience accessors */
+export function topLevelCategories(tree: Category[] | undefined): Category[] {
+  return (tree ?? []).filter(c => c.parent_id === null).sort((a, b) => a.sort_order - b.sort_order)
+}
+
+export function childCategories(tree: Category[] | undefined, parentId: string): Category[] {
+  return (tree ?? []).filter(c => c.parent_id === parentId).sort((a, b) => a.sort_order - b.sort_order)
+}
+
+export function findCategory(tree: Category[] | undefined, id: string | null | undefined): Category | undefined {
+  if (!id || !tree) return undefined
+  return tree.find(c => c.id === id)
 }

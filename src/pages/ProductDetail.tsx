@@ -184,6 +184,28 @@ export default function ProductDetail() {
             )}
           </div>
 
+          {/* Available sizes */}
+          {product.sizes && product.sizes.length > 0 && (
+            <div className="mb-6">
+              <p className="text-dark-800/60 dark:text-white/50 text-xs uppercase tracking-[0.2em] font-semibold mb-2">
+                Available Sizes
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {product.sizes.map(s => (
+                  <span
+                    key={s}
+                    className="inline-flex items-center justify-center min-w-[2.5rem] px-3 py-1.5 rounded-lg border border-brand-400/30 bg-brand-400/5 text-dark-800 dark:text-white text-sm font-semibold"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+              <p className="text-dark-800/45 dark:text-white/35 text-[11px] mt-2">
+                Mention your size when you order via WhatsApp.
+              </p>
+            </div>
+          )}
+
           {product.description && (
             <p className="text-dark-800/70 dark:text-white/60 text-sm leading-relaxed mb-6">{product.description}</p>
           )}
