@@ -22,6 +22,8 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'price-desc', label: 'Price: high → low' },
 ]
 
+const PRODUCT_CHUNK_SIZE = 10
+
 const defaultFilters = {
   sort: 'newest' as SortOption,
   minPrice: '',
@@ -34,6 +36,7 @@ export default function Shop() {
   const [search, setSearch] = useState('')
   const [searchParams, setSearchParams] = useSearchParams()
   const [query, setQuery] = useState('')
+  const [visibleCount, setVisibleCount] = useState(PRODUCT_CHUNK_SIZE)
   const { data: categoryTree } = useCategoryTree()
 
   // Slug-based routing in the URL: ?category=fashion or ?category=fashion&sub=jewelries
@@ -107,8 +110,17 @@ export default function Shop() {
   const showRowsView = !activeParent && !query && activeFilterCount === 0 && productsByCategory.size > 1
 
   useEffect(() => {
-    // No additional sync needed — URL is the source of truth via searchParams
-  }, [searchParams])
+    setVisibleCount(PRODUCT_CHUNK_SIZE)
+  }, [
+    parentSlug,
+    subSlug,
+    query,
+    filters.sort,
+    filters.minPrice,
+    filters.maxPrice,
+    filters.inStockOnly,
+    filters.freeDeliveryOnly,
+  ])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -129,6 +141,15 @@ export default function Shop() {
     setSearchParams(next)
   }
 
+  const breadcrumbItems = [
+    { label: 'Shop', onClick: () => handleParentChange(null) },
+    ...(activeParent ? [{ label: activeParent.name, onClick: () => handleParentChange(activeParent.slug) }] : []),
+    ...(activeSub ? [{ label: activeSub.name, onClick: () => handleSubChange(activeSub.slug) }] : []),
+  ]
+
+  const visibleGridProducts = visibleProducts?.slice(0, visibleCount) ?? []
+  const hasMoreGridProducts = Boolean(visibleProducts && visibleProducts.length > visibleCount)
+
   return (
     <main className="flex-1 max-w-7xl mx-auto px-4 py-5 sm:py-10 pb-28 lg:pb-10">
       {/* Header */}
@@ -143,6 +164,31 @@ export default function Shop() {
           )}
         </p>
       </div>
+
+      {breadcrumbItems.length > 1 && (
+        <nav aria-label="Category path" className="mb-4 -mt-2 flex flex-wrap items-center gap-1.5 text-xs sm:text-sm">
+          {breadcrumbItems.map((item, index) => {
+            const isLast = index === breadcrumbItems.length - 1
+            return (
+              <div key={`${item.label}-${index}`} className="flex items-center gap-1.5">
+                {index > 0 && <CaretRight size={12} weight="bold" className="text-dark-800/30 dark:text-white/25" />}
+                <button
+                  type="button"
+                  onClick={item.onClick}
+                  disabled={isLast}
+                  className={`font-medium transition-colors ${
+                    isLast
+                      ? 'text-brand-400 cursor-default'
+                      : 'text-dark-800/50 dark:text-white/45 hover:text-brand-400'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              </div>
+            )
+          })}
+        </nav>
+      )}
 
       {/* Sticky filter bar on mobile (search + categories stay pinned under navbar) */}
       <div className="sticky top-16 z-30 -mx-4 px-4 pt-3 pb-3 mb-4 sm:mb-6 bg-cream-50/90 dark:bg-dark-900/85 backdrop-blur-xl lg:static lg:bg-transparent lg:dark:bg-transparent lg:backdrop-blur-none lg:p-0 lg:mx-0">
@@ -175,11 +221,11 @@ export default function Shop() {
 
         {/* Top-level category pills */}
         <div className="relative -mx-4 lg:mx-0">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide px-4 lg:px-0">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide px-4 lg:px-0 scroll-smooth snap-x snap-proximity overscroll-x-contain [-webkit-overflow-scrolling:touch]">
             <button
               type="button"
               onClick={() => handleParentChange(null)}
-              className={`flex-shrink-0 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+              className={`flex-shrink-0 snap-start px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
                 !activeParent
                   ? 'bg-gradient-to-r from-brand-400 to-brand-500 text-white shadow-amber-glow'
                   : 'glass text-dark-800/70 dark:text-white/60 hover:text-brand-400'
@@ -192,7 +238,7 @@ export default function Shop() {
                 key={cat.id}
                 type="button"
                 onClick={() => handleParentChange(cat.slug)}
-                className={`flex-shrink-0 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                className={`flex-shrink-0 snap-start px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
                   activeParent?.id === cat.id
                     ? 'bg-gradient-to-r from-brand-400 to-brand-500 text-white shadow-amber-glow'
                     : 'glass text-dark-800/70 dark:text-white/60 hover:text-brand-400'
@@ -214,11 +260,11 @@ export default function Shop() {
         {/* Sub-category pills (only when a parent is selected and it has sub-categories) */}
         {activeParent && subs.length > 0 && (
           <div className="relative -mx-4 lg:mx-0 mt-2">
-            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide px-4 lg:px-0">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide px-4 lg:px-0 scroll-smooth snap-x snap-proximity overscroll-x-contain [-webkit-overflow-scrolling:touch]">
               <button
                 type="button"
                 onClick={() => handleSubChange(null)}
-                className={`flex-shrink-0 px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
+                className={`flex-shrink-0 snap-start px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
                   !activeSub
                     ? 'bg-brand-400/15 text-brand-400 border border-brand-400/30'
                     : 'bg-transparent text-dark-800/55 dark:text-white/50 border border-cream-200 dark:border-white/10 hover:border-brand-400/30'
@@ -231,7 +277,7 @@ export default function Shop() {
                   key={s.id}
                   type="button"
                   onClick={() => handleSubChange(s.slug)}
-                  className={`flex-shrink-0 px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
+                  className={`flex-shrink-0 snap-start px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium transition-all ${
                     activeSub?.id === s.id
                       ? 'bg-brand-400/15 text-brand-400 border border-brand-400/30'
                       : 'bg-transparent text-dark-800/55 dark:text-white/50 border border-cream-200 dark:border-white/10 hover:border-brand-400/30'
@@ -241,6 +287,11 @@ export default function Shop() {
                 </button>
               ))}
             </div>
+            {/* Fade + chevron hint to match parent row */}
+            <div
+              aria-hidden="true"
+              className="lg:hidden pointer-events-none absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-cream-50/95 dark:from-dark-900/95 to-transparent"
+            />
           </div>
         )}
       </div>
@@ -265,19 +316,19 @@ export default function Shop() {
                   <h2 className="text-lg sm:text-2xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
                     {name}
                   </h2>
-                  {parent?.slug && (
+                  {parent?.slug && prods.length > PRODUCT_CHUNK_SIZE && (
                     <button
                       type="button"
                       onClick={() => handleParentChange(parent.slug)}
                       className="text-brand-400 text-xs sm:text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all flex-shrink-0"
                     >
-                      See all <ArrowRight size={12} weight="bold" />
+                      See all {prods.length} <ArrowRight size={12} weight="bold" />
                     </button>
                   )}
                 </div>
                 <div className="relative -mx-4 lg:mx-0">
-                  <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-4 lg:px-0 scrollbar-hide snap-x snap-mandatory">
-                    {prods.map((p, i) => (
+                  <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-4 lg:px-0 scrollbar-hide scroll-smooth snap-x snap-mandatory overscroll-x-contain [-webkit-overflow-scrolling:touch]">
+                    {prods.slice(0, PRODUCT_CHUNK_SIZE).map((p, i) => (
                       <div key={p.id} className="flex-shrink-0 w-40 sm:w-48 snap-start">
                         <ProductCard product={p} index={i} compact />
                       </div>
@@ -297,11 +348,28 @@ export default function Shop() {
 
       {/* Filtered grid (specific category, search, or filters active) */}
       {!isLoading && !showRowsView && visibleProducts && visibleProducts.length > 0 && (
-        <div className="product-grid">
-          {visibleProducts.map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} />
-          ))}
-        </div>
+        <>
+          <div className="product-grid">
+            {visibleGridProducts.map((p, i) => (
+              <ProductCard key={p.id} product={p} index={i} />
+            ))}
+          </div>
+
+          <div className="mt-7 flex flex-col items-center gap-3">
+            <p className="text-xs text-dark-800/45 dark:text-white/40">
+              Showing {visibleGridProducts.length} of {visibleProducts.length}
+            </p>
+            {hasMoreGridProducts && (
+              <button
+                type="button"
+                onClick={() => setVisibleCount(count => count + PRODUCT_CHUNK_SIZE)}
+                className="inline-flex items-center gap-2 rounded-full bg-brand-400 px-5 py-2.5 text-sm font-semibold text-white shadow-amber-glow hover:bg-brand-500 transition-colors"
+              >
+                Load more <ArrowRight size={14} weight="bold" />
+              </button>
+            )}
+          </div>
+        </>
       )}
 
       {/* Empty state */}
