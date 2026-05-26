@@ -6,7 +6,6 @@ import { Mail, MessageCircleMore, PhoneCall, Siren, Instagram, MessageSquareQuot
 import ProductCard from '../components/ui/ProductCard'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
-import { supabase } from '../lib/supabase'
 import heroLandscape from '../assets/hero-landscape.jpg'
 import heroPortrait from '../assets/hero-portrait.jpg'
 
@@ -44,6 +43,7 @@ export default function Home() {
     }
 
     setReviewSending(true)
+    const { supabase } = await import('../lib/supabase')
     const { error } = await supabase.from('site_reviews').insert({
       name: reviewName.trim() || null,
       rating: reviewRating,
@@ -71,7 +71,7 @@ export default function Home() {
           }
           existing.unshift(mockEntry)
           window.localStorage.setItem('mock_site_reviews', JSON.stringify(existing))
-          setReviewSuccess('Thanks. (Saved locally — database migration pending).')
+          setReviewSuccess('Thanks. (Saved locally â€” database migration pending).')
           setReviewName('')
           setReviewRating(5)
           setReviewMessage('')
@@ -137,7 +137,7 @@ export default function Home() {
         <div className="absolute -top-32 -right-32 w-[560px] h-[560px] bg-brand-400/25 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-1/4 -left-24 w-[320px] h-[320px] bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Text — lower-left editorial composition */}
+        {/* Text â€” lower-left editorial composition */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pb-28 sm:pb-24 lg:pb-32">
           <div className="max-w-2xl">
             {/* Hairline rule + label */}
@@ -149,38 +149,56 @@ export default function Home() {
             >
               <span className="block h-px w-10 bg-brand-400" />
               <span className="text-brand-400 text-[10px] sm:text-xs uppercase tracking-[0.32em] font-semibold">
-                New Season — Now Live
+                New Season â€” Now Live
               </span>
             </motion.div>
 
-            {/* Headline — letter-by-letter wave, shimmer scoped to "Cyrus" */}
-            <h1 className="font-display font-bold leading-[1.02] tracking-tight mb-5 sm:mb-7 text-white text-[2.25rem] sm:text-5xl lg:text-6xl xl:text-7xl max-w-md sm:max-w-lg">
+            {/* Headline â€” letter-by-letter wave, shimmer scoped to "Cyrus" */}
+            <h1
+              className="font-display font-bold leading-[1.05] tracking-tight mb-5 sm:mb-7 text-white text-[2rem] sm:text-5xl lg:text-6xl xl:text-7xl max-w-md sm:max-w-xl"
+              style={{ textWrap: 'balance' } as React.CSSProperties}
+            >
               {(() => {
                 const tagline = settings.tagline || 'Discover Amazing Products Brought to you By Cyrus'
                 const accent = 'Cyrus'
                 const idx = tagline.lastIndexOf(accent)
                 const hasAccent = idx >= 0
-                const before = hasAccent ? tagline.slice(0, idx) : tagline
+                const beforeRaw = hasAccent ? tagline.slice(0, idx) : tagline
                 const accentWord = hasAccent ? tagline.slice(idx) : ''
                 const baseDelay = 0.55
                 const charDelay = reduceMotion ? 0 : 0.028
+                const beforeWords = beforeRaw.split(/\s+/).filter(Boolean)
+                let charIdx = 0
                 return (
                   <>
-                    {before.split('').map((char, i) => (
-                      <motion.span
-                        key={`b-${i}`}
-                        initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 36, filter: 'blur(8px)' }}
-                        animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
-                        transition={{
-                          duration: reduceMotion ? 0.3 : 0.55,
-                          ease: [0.22, 1, 0.36, 1],
-                          delay: baseDelay + i * charDelay,
-                        }}
-                        className="inline-block will-change-transform"
-                      >
-                        {char === ' ' ? ' ' : char}
-                      </motion.span>
-                    ))}
+                    {beforeWords.map((word, wi) => {
+                      const isLast = wi === beforeWords.length - 1 && !hasAccent
+                      return (
+                        <span key={`g-${wi}`}>
+                          <span className="inline-block whitespace-nowrap">
+                            {[...word].map(char => {
+                              const i = charIdx++
+                              return (
+                                <motion.span
+                                  key={i}
+                                  initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 36, filter: 'blur(8px)' }}
+                                  animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
+                                  transition={{
+                                    duration: reduceMotion ? 0.3 : 0.55,
+                                    ease: [0.22, 1, 0.36, 1],
+                                    delay: baseDelay + i * charDelay,
+                                  }}
+                                  className="inline-block will-change-transform"
+                                >
+                                  {char}
+                                </motion.span>
+                              )
+                            })}
+                          </span>
+                          {!isLast && ' '}
+                        </span>
+                      )
+                    })}
                     {hasAccent && (
                       <motion.span
                         initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 36, filter: 'blur(10px)' }}
@@ -188,9 +206,9 @@ export default function Home() {
                         transition={{
                           duration: reduceMotion ? 0.3 : 0.85,
                           ease: [0.22, 1, 0.36, 1],
-                          delay: baseDelay + before.length * charDelay + 0.18,
+                          delay: baseDelay + charIdx * charDelay + 0.18,
                         }}
-                        className="inline-block text-shimmer"
+                        className="inline-block whitespace-nowrap text-shimmer"
                       >
                         {accentWord}
                       </motion.span>
@@ -210,7 +228,7 @@ export default function Home() {
               Shop the finest selection, curated just for you. Fast delivery, great prices, premium quality.
             </motion.p>
 
-            {/* CTAs — bouncy liquid buttons */}
+            {/* CTAs â€” bouncy liquid buttons */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -254,7 +272,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Scroll cue — desktop only (mobile bottom-nav covers this area) */}
+        {/* Scroll cue â€” desktop only (mobile bottom-nav covers this area) */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -404,7 +422,7 @@ export default function Home() {
             </div>
             <h3 className="text-2xl font-display font-bold mb-3">Need to reach me directly?</h3>
             <p className="text-white/65 text-sm leading-relaxed mb-5">
-              These are the contact details I’ll also use to follow up on reviews and suggestions.
+              These are the contact details Iâ€™ll also use to follow up on reviews and suggestions.
             </p>
 
             <div className="space-y-2.5">
