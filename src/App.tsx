@@ -8,6 +8,7 @@ import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import BottomNav from './components/layout/BottomNav'
 import AnnouncementBanner from './components/layout/AnnouncementBanner'
+import ShopLoader from './components/ui/ShopLoader'
 
 const Home = lazy(() => import('./pages/Home'))
 const Shop = lazy(() => import('./pages/Shop'))
@@ -52,11 +53,7 @@ function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
   }, [])
 
   if (loading) {
-    return (
-      <div className="min-h-dvh bg-cream-50 dark:bg-dark-900 flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <ShopLoader />
   }
 
   if (!session) return <Navigate to="/admin/login" replace />
@@ -139,11 +136,7 @@ export default function App() {
     <QueryClientProvider client={qc}>
       <BrowserRouter>
         <Suspense
-          fallback={
-            <div className="min-h-dvh bg-cream-50 dark:bg-dark-900 flex items-center justify-center">
-              <div className="w-10 h-10 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" />
-            </div>
-          }
+          fallback={<ShopLoader />}
         >
           <AnimatedRoutes />
         </Suspense>
