@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate, useNavigationType, useParams } from 'react-router-dom'
 import { MagnifyingGlass, Faders, MagnifyingGlassMinus, CaretRight, ArrowRight, X } from '@phosphor-icons/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import ProductCard from '../components/ui/ProductCard'
@@ -34,14 +34,18 @@ const defaultFilters = {
 
 export default function Shop() {
   const [search, setSearch] = useState('')
-  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const navType = useNavigationType()
+  const params = useParams<{ parentSlug?: string; subSlug?: string }>()
   const [query, setQuery] = useState('')
   const [visibleCount, setVisibleCount] = useState(PRODUCT_CHUNK_SIZE)
+  const pendingScrollRef = useRef<number | null>(null)
   const { data: categoryTree } = useCategoryTree()
 
-  // Slug-based routing in the URL: ?category=fashion or ?category=fashion&sub=jewelries
-  const parentSlug = searchParams.get('category')
-  const subSlug = searchParams.get('sub')
+  // Pretty-URL routing: /shop, /shop/electronics, /shop/electronics/phones-tablets
+  const parentSlug = params.parentSlug ?? null
+  const subSlug = params.subSlug ?? null
 
   const parents = topLevelCategories(categoryTree)
   const activeParent = parents.find(p => p.slug === parentSlug)
@@ -109,7 +113,24 @@ export default function Shop() {
 
   const showRowsView = !activeParent && !query && activeFilterCount === 0 && productsByCategory.size > 1
 
+  // Reset Load More state on filter changes — but on Back/Forward,
+  // restore the saved chunk count and scroll position so the shopper
+  // lands exactly where they left off.
   useEffect(() => {
+    if (navType === 'POP') {
+      const saved = sessionStorage.getItem(`shop-scroll:${location.pathname}`)
+      if (saved) {
+        try {
+          const { visibleCount: vc, scrollY } = JSON.parse(saved) as { visibleCount?: number; scrollY?: number }
+          if (typeof vc === 'number' && vc > 0) setVisibleCount(vc)
+          else setVisibleCount(PRODUCT_CHUNK_SIZE)
+          if (typeof scrollY === 'number') pendingScrollRef.current = scrollY
+          return
+        } catch {
+          // fall through to reset
+        }
+      }
+    }
     setVisibleCount(PRODUCT_CHUNK_SIZE)
   }, [
     parentSlug,
@@ -120,7 +141,39 @@ export default function Shop() {
     filters.maxPrice,
     filters.inStockOnly,
     filters.freeDeliveryOnly,
+    navType,
+    location.pathname,
   ])
+
+  // After products render, restore scroll position if we have one pending.
+  useEffect(() => {
+    if (pendingScrollRef.current === null) return
+    if (!visibleProducts) return
+    const y = pendingScrollRef.current
+    pendingScrollRef.current = null
+    // Two RAFs to ensure layout has fully settled (images may still be loading)
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, y)))
+  }, [visibleProducts])
+
+  // Persist scroll position so Back/Forward can restore it.
+  useEffect(() => {
+    let timer: number | null = null
+    const save = () => {
+      if (timer !== null) return
+      timer = window.setTimeout(() => {
+        sessionStorage.setItem(
+          `shop-scroll:${location.pathname}`,
+          JSON.stringify({ scrollY: window.scrollY, visibleCount }),
+        )
+        timer = null
+      }, 200)
+    }
+    window.addEventListener('scroll', save, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', save)
+      if (timer !== null) window.clearTimeout(timer)
+    }
+  }, [visibleCount, location.pathname])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -128,17 +181,12 @@ export default function Shop() {
   }
 
   const handleParentChange = (slug: string | null) => {
-    const next = new URLSearchParams()
-    if (slug) next.set('category', slug)
-    setSearchParams(next)
+    navigate(slug ? `/shop/${slug}` : '/shop')
   }
 
   const handleSubChange = (slug: string | null) => {
     if (!activeParent) return
-    const next = new URLSearchParams()
-    next.set('category', activeParent.slug)
-    if (slug) next.set('sub', slug)
-    setSearchParams(next)
+    navigate(slug ? `/shop/${activeParent.slug}/${slug}` : `/shop/${activeParent.slug}`)
   }
 
   const breadcrumbItems = [
@@ -298,10 +346,14 @@ export default function Shop() {
 
       {/* Loading skeletons */}
       {isLoading && (
-        <div className="product-grid">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
+        <div className="relative -mx-4 lg:mx-0">
+          <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-4 lg:px-0 scrollbar-hide scroll-smooth snap-x snap-mandatory overscroll-x-contain [-webkit-overflow-scrolling:touch]">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex-shrink-0 w-40 sm:w-48 snap-start">
+                <SkeletonCard compact />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -346,13 +398,27 @@ export default function Shop() {
         </div>
       )}
 
-      {/* Filtered grid (specific category, search, or filters active) */}
+      {/* Filtered shelf (specific category, search, or filters active) */}
       {!isLoading && !showRowsView && visibleProducts && visibleProducts.length > 0 && (
-        <>
-          <div className="product-grid">
-            {visibleGridProducts.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} />
-            ))}
+        <section>
+          <div className="flex items-end justify-between mb-3 sm:mb-4">
+            <h2 className="text-lg sm:text-2xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
+              {activeSub?.name || activeParent?.name || (query ? 'Search results' : 'Products')}
+            </h2>
+          </div>
+
+          <div className="relative -mx-4 lg:mx-0">
+            <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-4 lg:px-0 scrollbar-hide scroll-smooth snap-x snap-mandatory overscroll-x-contain [-webkit-overflow-scrolling:touch]">
+              {visibleGridProducts.map((p, i) => (
+                <div key={p.id} className="flex-shrink-0 w-40 sm:w-48 snap-start">
+                  <ProductCard product={p} index={i} compact />
+                </div>
+              ))}
+            </div>
+            <div
+              aria-hidden="true"
+              className="lg:hidden pointer-events-none absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-cream-50/95 dark:from-dark-900/95 to-transparent"
+            />
           </div>
 
           <div className="mt-7 flex flex-col items-center gap-3">
@@ -369,7 +435,7 @@ export default function Shop() {
               </button>
             )}
           </div>
-        </>
+        </section>
       )}
 
       {/* Empty state */}
