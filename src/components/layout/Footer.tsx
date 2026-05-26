@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import {
   Store,
   Mail,
@@ -7,22 +6,50 @@ import {
   PhoneCall,
   Siren,
   Instagram,
+  Facebook,
   ArrowUpRight,
   Sparkles,
   MessageSquareQuote,
 } from 'lucide-react'
+import { TiktokLogo } from '@phosphor-icons/react'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
+
+type ContactItem = {
+  label: string
+  value: string
+  href: string
+  // Icons come from different libraries (lucide + phosphor) with different prop types;
+  // a permissive type avoids fighting both signatures.
+  Icon: React.ComponentType<Record<string, unknown>>
+}
+
+const stripProtocol = (url: string) => url.replace(/^https?:\/\//i, '').replace(/\/$/, '')
 
 export default function Footer() {
   const settings = useStoreSettings()
 
-  const contactItems = [
+  const baseContacts: ContactItem[] = [
     { label: 'Email', value: 'cyrusadetu@gmail.com', href: 'mailto:cyrusadetu@gmail.com', Icon: Mail },
-    { label: 'WhatsApp', value: '0574090147', href: 'https://wa.me/233574090147', Icon: MessageCircleMore },
+    settings.whatsapp_number
+      ? { label: 'WhatsApp', value: settings.whatsapp_number, href: `https://wa.me/${settings.whatsapp_number.replace(/\D/g, '')}`, Icon: MessageCircleMore }
+      : { label: 'WhatsApp', value: '0574090147', href: 'https://wa.me/233574090147', Icon: MessageCircleMore },
     { label: 'Call us', value: '0599399983', href: 'tel:0599399983', Icon: PhoneCall },
     { label: 'Complaints', value: 'Hot line for complaints', href: 'tel:0599399983', Icon: Siren },
-    { label: 'Instagram', value: '@cyrus._.emma', href: 'https://instagram.com/cyrus._.emma', Icon: Instagram },
   ]
+
+  const socialContacts: ContactItem[] = [
+    settings.social_instagram
+      ? { label: 'Instagram', value: stripProtocol(settings.social_instagram), href: settings.social_instagram, Icon: Instagram }
+      : null,
+    settings.social_tiktok
+      ? { label: 'TikTok', value: stripProtocol(settings.social_tiktok), href: settings.social_tiktok, Icon: TiktokLogo as unknown as React.ComponentType<Record<string, unknown>> }
+      : null,
+    settings.social_facebook
+      ? { label: 'Facebook', value: stripProtocol(settings.social_facebook), href: settings.social_facebook, Icon: Facebook }
+      : null,
+  ].filter((x): x is ContactItem => x !== null)
+
+  const contactItems = [...baseContacts, ...socialContacts]
 
   const quickLinks = [
     { label: 'Home', href: '/' },
@@ -37,14 +64,9 @@ export default function Footer() {
         <div className="grid gap-10 lg:grid-cols-[1.25fr_1fr_1fr]">
           <div>
             <Link to="/" className="inline-flex items-center gap-3 group">
-              <motion.div
-                whileHover={{ scale: 1.08, rotate: -4 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 16 }}
-                className="w-11 h-11 rounded-2xl bg-brand-400/15 border border-brand-400/20 flex items-center justify-center text-brand-400 group-hover:bg-brand-400 group-hover:text-white transition-colors"
-              >
+              <div className="w-11 h-11 rounded-2xl bg-brand-400/15 border border-brand-400/20 flex items-center justify-center text-brand-400 group-hover:bg-brand-400 group-hover:text-white group-hover:-rotate-3 group-hover:scale-105 transition-all">
                 <Store size={20} />
-              </motion.div>
+              </div>
               <div>
                 <p className="font-display font-bold text-lg text-dark-800 dark:text-white">{settings.store_name}</p>
                 <p className="text-xs text-dark-800/50 dark:text-white/45">Curated products, fast support, real contact.</p>
@@ -63,15 +85,12 @@ export default function Footer() {
             </div>
             <div className="space-y-2">
               {contactItems.map(({ label, value, href, Icon }) => (
-                <motion.a
+                <a
                   key={label}
                   href={href}
                   target={href.startsWith('http') ? '_blank' : undefined}
                   rel={href.startsWith('http') ? 'noreferrer' : undefined}
-                  whileHover={{ scale: 1.03, x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 320, damping: 18 }}
-                  className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-sm text-dark-800/60 dark:text-white/55 hover:border-brand-400/20 hover:bg-brand-400/8 hover:text-brand-400 transition-colors"
+                  className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-sm text-dark-800/60 dark:text-white/55 hover:border-brand-400/20 hover:bg-brand-400/8 hover:text-brand-400 hover:translate-x-1 transition-all"
                 >
                   <Icon size={16} className="text-gray-400 group-hover:text-brand-400 transition-colors" />
                   <span className="flex-1 min-w-0">
@@ -79,7 +98,7 @@ export default function Footer() {
                     <span className="block truncate font-medium text-dark-800 dark:text-white group-hover:text-brand-400">{value}</span>
                   </span>
                   <ArrowUpRight size={14} className="text-gray-400 group-hover:text-brand-400 transition-colors" />
-                </motion.a>
+                </a>
               ))}
             </div>
           </div>
@@ -91,11 +110,9 @@ export default function Footer() {
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               {quickLinks.map((link) => (
-                <motion.div
+                <div
                   key={link.label}
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 320, damping: 16 }}
+                  className="transition-transform hover:-translate-y-0.5 hover:scale-[1.02]"
                 >
                   <Link
                     to={link.href}
@@ -104,7 +121,7 @@ export default function Footer() {
                     <span>{link.label}</span>
                     <ArrowUpRight size={14} className="opacity-60 group-hover:opacity-100 transition-opacity" />
                   </Link>
-                </motion.div>
+                </div>
               ))}
             </div>
 

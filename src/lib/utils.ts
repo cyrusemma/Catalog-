@@ -26,7 +26,8 @@ export function buildCartWhatsAppMessage(
   items: { title: string; qty: number; price: number }[],
   subtotal: number,
   deliveryFee = 0,
-  currency = 'GHS'
+  currency = 'GHS',
+  template?: string | null
 ): string {
   const lines = items.map(i => `• ${i.title} x${i.qty} — ${currency} ${(i.price * i.qty).toFixed(2)}`).join('\n')
   const total = subtotal + deliveryFee
@@ -34,5 +35,17 @@ export function buildCartWhatsAppMessage(
     deliveryFee > 0
       ? `Subtotal: ${currency} ${subtotal.toFixed(2)}\nDelivery: ${currency} ${deliveryFee.toFixed(2)}\n*Total: ${currency} ${total.toFixed(2)}*`
       : `*Total: ${currency} ${total.toFixed(2)}*`
+
+  // Custom template support: admin can override the message body using
+  // {items}, {subtotal}, {delivery}, {total}, {currency} placeholders.
+  if (template && template.trim()) {
+    return template
+      .replace(/\{items\}/g, lines)
+      .replace(/\{subtotal\}/g, `${currency} ${subtotal.toFixed(2)}`)
+      .replace(/\{delivery\}/g, deliveryFee > 0 ? `${currency} ${deliveryFee.toFixed(2)}` : 'Free')
+      .replace(/\{total\}/g, `${currency} ${total.toFixed(2)}`)
+      .replace(/\{currency\}/g, currency)
+  }
+
   return `Hi! I'd like to order the following:\n\n${lines}\n\n${summary}\n\nPlease confirm availability and delivery. Thank you!`
 }

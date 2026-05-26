@@ -1,14 +1,13 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AnimatePresence, motion } from 'framer-motion'
-import { supabase } from './lib/supabase'
 import { isAdminSession } from './lib/admin'
 import type { Session } from '@supabase/supabase-js'
 
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import BottomNav from './components/layout/BottomNav'
+import AnnouncementBanner from './components/layout/AnnouncementBanner'
 
 const Home = lazy(() => import('./pages/Home'))
 const Shop = lazy(() => import('./pages/Shop'))
@@ -25,92 +24,30 @@ const AdminReviews = lazy(() => import('./pages/admin/AdminReviews'))
 
 const qc = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 * 5 } } })
 
-function ProtectedRoute({ session, children }: { session: Session | null; children: React.ReactNode }) {
-  if (!session) return <Navigate to="/admin/login" replace />
-  if (!isAdminSession(session)) {
-    return <Navigate to="/admin/login" replace state={{ error: 'unauthorized' }} />
-  }
-  return <>{children}</>
-}
-
-function StorefrontLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col min-h-dvh overflow-x-hidden">
-      <Navbar />
-      {children}
-      <Footer />
-      <BottomNav />
-    </div>
-  )
-}
-
-function PageTransition({ children }: { children: React.ReactNode }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-      className="flex flex-col flex-1"
-    >
-      {children}
-    </motion.div>
-  )
-}
-
-function AnimatedRoutes({ session }: { session: Session | null }) {
-  const location = useLocation()
-  return (
-    <AnimatePresence mode="wait" initial={false}>
-      <Routes location={location} key={location.pathname}>
-        {/* Storefront */}
-        <Route path="/" element={<StorefrontLayout><PageTransition><Home /></PageTransition></StorefrontLayout>} />
-        <Route path="/shop" element={<StorefrontLayout><PageTransition><Shop /></PageTransition></StorefrontLayout>} />
-        <Route path="/product/:id" element={<StorefrontLayout><PageTransition><ProductDetail /></PageTransition></StorefrontLayout>} />
-        <Route path="/cart" element={<StorefrontLayout><PageTransition><Cart /></PageTransition></StorefrontLayout>} />
-        <Route path="/wishlist" element={<StorefrontLayout><PageTransition><Wishlist /></PageTransition></StorefrontLayout>} />
-
-        {/* Admin */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<ProtectedRoute session={session}><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/admin/products" element={<ProtectedRoute session={session}><AdminProducts /></ProtectedRoute>} />
-        <Route path="/admin/products/new" element={<ProtectedRoute session={session}><AdminProductForm /></ProtectedRoute>} />
-        <Route path="/admin/products/:id/edit" element={<ProtectedRoute session={session}><AdminProductForm /></ProtectedRoute>} />
-        <Route path="/admin/orders" element={<ProtectedRoute session={session}><AdminOrders /></ProtectedRoute>} />
-        <Route path="/admin/reviews" element={<ProtectedRoute session={session}><AdminReviews /></ProtectedRoute>} />
-        <Route path="/admin/settings" element={<ProtectedRoute session={session}><AdminSettings /></ProtectedRoute>} />
-
-        {/* Catch all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AnimatePresence>
-  )
-}
-
-export default function App() {
+function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setLoading(false)
-    })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
-    return () => subscription.unsubscribe()
-  }, [])
+    let mounted = true
+    let unsubscribe: (() => void) | undefined
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('store-settings-live')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'store_settings' },
-        () => qc.invalidateQueries({ queryKey: ['store-settings'] })
-      )
-      .subscribe()
+    import('./lib/supabase').then(({ supabase }) => {
+      if (!mounted) return
+
+      supabase.auth.getSession().then(({ data }) => {
+        if (!mounted) return
+        setSession(data.session)
+        setLoading(false)
+      })
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+      unsubscribe = () => subscription.unsubscribe()
+    })
+
     return () => {
-      supabase.removeChannel(channel)
+      mounted = false
+      unsubscribe?.()
     }
   }, [])
 
@@ -122,6 +59,82 @@ export default function App() {
     )
   }
 
+  if (!session) return <Navigate to="/admin/login" replace />
+
+  if (!isAdminSession(session)) {
+    return <Navigate to="/admin/login" replace state={{ error: 'unauthorized' }} />
+  }
+
+  return <>{children}</>
+}
+
+function StorefrontLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col min-h-dvh overflow-x-hidden">
+      <AnnouncementBanner />
+      <Navbar />
+      {children}
+      <Footer />
+      <BottomNav />
+    </div>
+  )
+}
+
+function AnimatedRoutes() {
+  const location = useLocation()
+  return (
+      <Routes location={location}>
+        {/* Storefront */}
+        <Route path="/" element={<StorefrontLayout><Home /></StorefrontLayout>} />
+        <Route path="/shop" element={<StorefrontLayout><Shop /></StorefrontLayout>} />
+        <Route path="/product/:id" element={<StorefrontLayout><ProductDetail /></StorefrontLayout>} />
+        <Route path="/cart" element={<StorefrontLayout><Cart /></StorefrontLayout>} />
+        <Route path="/wishlist" element={<StorefrontLayout><Wishlist /></StorefrontLayout>} />
+
+        {/* Admin */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/products" element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
+        <Route path="/admin/products/new" element={<AdminProtectedRoute><AdminProductForm /></AdminProtectedRoute>} />
+        <Route path="/admin/products/:id/edit" element={<AdminProtectedRoute><AdminProductForm /></AdminProtectedRoute>} />
+        <Route path="/admin/orders" element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
+        <Route path="/admin/reviews" element={<AdminProtectedRoute><AdminReviews /></AdminProtectedRoute>} />
+        <Route path="/admin/settings" element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
+
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+  )
+}
+
+export default function App() {
+  useEffect(() => {
+    let mounted = true
+    let removeChannel: (() => void) | undefined
+
+    window.setTimeout(() => {
+      import('./lib/supabase').then(({ supabase }) => {
+        if (!mounted) return
+        const channel = supabase
+          .channel('store-settings-live')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'store_settings' },
+            () => qc.invalidateQueries({ queryKey: ['store-settings'] })
+          )
+          .subscribe()
+        removeChannel = () => {
+          supabase.removeChannel(channel)
+        }
+      })
+    }, 3000)
+
+    return () => {
+      mounted = false
+      removeChannel?.()
+    }
+  }, [])
+
   return (
     <QueryClientProvider client={qc}>
       <BrowserRouter>
@@ -132,7 +145,7 @@ export default function App() {
             </div>
           }
         >
-          <AnimatedRoutes session={session} />
+          <AnimatedRoutes />
         </Suspense>
       </BrowserRouter>
     </QueryClientProvider>

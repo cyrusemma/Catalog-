@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, Sparkle, Lightning, ShoppingBagOpen, CaretDown } from '@phosphor-icons/react'
-import { motion, useReducedMotion } from 'framer-motion'
-import { useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { useEffect, useMemo, useState } from 'react'
 import { Mail, MessageCircleMore, PhoneCall, Siren, Instagram, MessageSquareQuote, Star } from 'lucide-react'
 import ProductCard from '../components/ui/ProductCard'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
@@ -16,6 +16,25 @@ export default function Home() {
   const { data: newProducts } = useNewProducts(7)
   const settings = useStoreSettings()
   const reduceMotion = useReducedMotion()
+
+  // Hero carousel: cycle through settings.hero_images if any, otherwise use the bundled defaults
+  const heroSources = useMemo(() => {
+    if (settings.hero_images && settings.hero_images.length > 0) {
+      return settings.hero_images
+    }
+    return [heroLandscape]
+  }, [settings.hero_images])
+  const [heroIdx, setHeroIdx] = useState(0)
+  useEffect(() => {
+    if (heroSources.length <= 1 || reduceMotion) return
+    const intervalMs = Math.max(2000, (settings.hero_rotation_seconds || 6) * 1000)
+    const id = window.setInterval(() => {
+      setHeroIdx(i => (i + 1) % heroSources.length)
+    }, intervalMs)
+    return () => window.clearInterval(id)
+  }, [heroSources, settings.hero_rotation_seconds, reduceMotion])
+  const usingCustomHero = settings.hero_images && settings.hero_images.length > 0
+  const currentHero = heroSources[heroIdx] ?? heroSources[0]
 
   const [reviewName, setReviewName] = useState('')
   const [reviewRating, setReviewRating] = useState(5)
@@ -101,7 +120,7 @@ export default function Home() {
     <main className="flex-1">
       {/* Cinematic Hero */}
       <section className="relative min-h-[100dvh] flex items-end overflow-hidden bg-dark-900 -mt-16">
-        {/* Background image with Ken Burns drift */}
+        {/* Background image with Ken Burns drift + carousel crossfade */}
         <motion.div
           aria-hidden="true"
           className="absolute inset-0"
@@ -113,21 +132,61 @@ export default function Home() {
               : { duration: 22, ease: 'easeInOut', repeat: Infinity }
           }
         >
-          <picture>
-            <source media="(min-width: 641px)" srcSet={heroLandscape} />
-            <img
-              src={heroPortrait}
-              alt=""
-              role="presentation"
-              className="w-full h-full object-cover object-[50%_18%] sm:object-center"
-              width={heroPortraitDimensions.width}
-              height={heroPortraitDimensions.height}
-              loading="eager"
-              decoding="async"
-              fetchPriority="high"
-            />
-          </picture>
+          <AnimatePresence mode="sync" initial={false}>
+            <motion.div
+              key={`hero-${heroIdx}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.2, ease: 'easeInOut' }}
+              className="absolute inset-0"
+            >
+              {usingCustomHero ? (
+                <img
+                  src={currentHero}
+                  alt=""
+                  role="presentation"
+                  className="w-full h-full object-cover object-[50%_25%] sm:object-center"
+                  loading={heroIdx === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  {...(heroIdx === 0 ? { fetchPriority: 'high' as 'high' } : {})}
+                />
+              ) : (
+                <picture>
+                  <source media="(min-width: 641px)" srcSet={heroLandscape} />
+                  <img
+                    src={heroPortrait}
+                    alt=""
+                    role="presentation"
+                    className="w-full h-full object-cover object-[50%_18%] sm:object-center"
+                    width={heroPortraitDimensions.width}
+                    height={heroPortraitDimensions.height}
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                  />
+                </picture>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </motion.div>
+
+        {/* Carousel dot indicators */}
+        {heroSources.length > 1 && (
+          <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+            {heroSources.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setHeroIdx(i)}
+                aria-label={`Show hero image ${i + 1}`}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === heroIdx ? 'w-8 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/60'
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Cinematographer's vignette: bottom wash + left wash */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15 pointer-events-none" />

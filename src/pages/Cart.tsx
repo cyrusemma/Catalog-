@@ -22,7 +22,8 @@ export default function Cart() {
       items.map(i => ({ title: i.product.title, qty: i.quantity, price: i.product.selling_price })),
       subtotal,
       deliveryFee,
-      settings.currency || 'GHS'
+      settings.currency || 'GHS',
+      settings.whatsapp_template
     )
     const url = buildWhatsAppUrl(settings.whatsapp_number || '233000000000', message)
     window.open(url, '_blank')

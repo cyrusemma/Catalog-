@@ -30,9 +30,17 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-cream-50/75 dark:bg-white/[0.06] backdrop-blur-2xl backdrop-saturate-150 border-b border-cream-200/50 dark:border-white/[0.08] safe-top shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_4px_30px_rgba(0,0,0,0.04)]">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5 group min-w-0 flex-1 sm:flex-none">
-          <div className="w-9 h-9 flex-shrink-0 bg-gradient-to-br from-brand-400 to-brand-500 rounded-xl flex items-center justify-center shadow-amber-glow group-hover:shadow-amber-glow-lg transition-shadow">
-            <Storefront size={18} weight="duotone" className="text-white" />
-          </div>
+          {settings.logo_url ? (
+            <img
+              src={settings.logo_url}
+              alt={settings.store_name}
+              className="w-9 h-9 flex-shrink-0 object-contain rounded-xl bg-white/5"
+            />
+          ) : (
+            <div className="w-9 h-9 flex-shrink-0 bg-gradient-to-br from-brand-400 to-brand-500 rounded-xl flex items-center justify-center shadow-amber-glow group-hover:shadow-amber-glow-lg transition-shadow">
+              <Storefront size={18} weight="duotone" className="text-white" />
+            </div>
+          )}
           <span className="font-display font-bold text-lg text-dark-800 dark:text-white truncate">{settings.store_name}</span>
         </Link>
 
