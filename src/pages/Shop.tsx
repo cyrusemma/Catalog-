@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { MagnifyingGlass, Faders, MagnifyingGlassMinus, CaretRight } from '@phosphor-icons/react'
+import { MagnifyingGlass, Faders, MagnifyingGlassMinus, CaretRight, ArrowRight } from '@phosphor-icons/react'
 import ProductCard from '../components/ui/ProductCard'
 import SkeletonCard from '../components/ui/SkeletonCard'
 import { useProducts, useCategories } from '../hooks/useProducts'
+import type { Product } from '../types'
 
 export default function Shop() {
   const [search, setSearch] = useState('')
@@ -18,6 +19,20 @@ export default function Shop() {
   const { data: categories } = useCategories()
 
   const allCategories = ['All', ...(categories || [])]
+
+  // Group products by category for the "All" Netflix-style browse view
+  const productsByCategory = useMemo(() => {
+    const map = new Map<string, Product[]>()
+    if (!products) return map
+    for (const p of products) {
+      const cat = p.category || 'Other'
+      if (!map.has(cat)) map.set(cat, [])
+      map.get(cat)!.push(p)
+    }
+    return map
+  }, [products])
+
+  const showRowsView = activeCategory === 'All' && !query && productsByCategory.size > 1
 
   useEffect(() => {
     const cat = searchParams.get('category')
@@ -103,20 +118,62 @@ export default function Shop() {
         </div>
       </div>
 
-      {/* Products grid */}
-      {isLoading ? (
+      {/* Loading skeletons */}
+      {isLoading && (
         <div className="product-grid">
-          {Array.from({ length: 8 }).map((_, i) => (
+          {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
-      ) : products && products.length > 0 ? (
+      )}
+
+      {/* Netflix-style category rows (shown when "All" is selected, no search) */}
+      {!isLoading && showRowsView && (
+        <div className="space-y-8 sm:space-y-10">
+          {[...productsByCategory.entries()].map(([cat, prods]) => (
+            <section key={cat}>
+              <div className="flex items-end justify-between mb-3 sm:mb-4">
+                <h2 className="text-lg sm:text-2xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
+                  {cat}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => handleCategoryChange(cat)}
+                  className="text-brand-400 text-xs sm:text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all flex-shrink-0"
+                >
+                  See all <ArrowRight size={12} weight="bold" />
+                </button>
+              </div>
+              <div className="relative -mx-4 lg:mx-0">
+                <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-4 lg:px-0 scrollbar-hide snap-x snap-mandatory">
+                  {prods.map((p, i) => (
+                    <div key={p.id} className="flex-shrink-0 w-40 sm:w-48 snap-start">
+                      <ProductCard product={p} index={i} compact />
+                    </div>
+                  ))}
+                </div>
+                {/* Right-edge fade hint on mobile */}
+                <div
+                  aria-hidden="true"
+                  className="lg:hidden pointer-events-none absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-cream-50/95 dark:from-dark-900/95 to-transparent"
+                />
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+
+      {/* Filtered grid (specific category or search) */}
+      {!isLoading && !showRowsView && products && products.length > 0 && (
         <div className="product-grid">
           {products.map((p, i) => (
             <ProductCard key={p.id} product={p} index={i} />
           ))}
         </div>
-      ) : (
+      )}
+
+      {/* Empty state */}
+      {!isLoading && (!products || products.length === 0) && (
         <div className="text-center py-24">
           <MagnifyingGlassMinus size={56} weight="duotone" className="text-brand-400 mx-auto mb-4" />
           <h3 className="text-dark-800 dark:text-white font-semibold mb-2">No products found</h3>
