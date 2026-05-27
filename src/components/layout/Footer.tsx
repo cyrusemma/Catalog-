@@ -1,17 +1,17 @@
 import { Link } from 'react-router-dom'
 import {
-  Store,
-  Mail,
-  MessageCircleMore,
-  PhoneCall,
-  Siren,
-  Instagram,
-  Facebook,
+  Storefront,
+  Envelope,
+  WhatsappLogo,
+  Phone,
+  WarningOctagon,
+  InstagramLogo,
+  FacebookLogo,
   ArrowUpRight,
-  Sparkles,
-  MessageSquareQuote,
-} from 'lucide-react'
-import { TiktokLogo } from '@phosphor-icons/react'
+  Sparkle,
+  ChatCircleText,
+  TiktokLogo,
+} from '@phosphor-icons/react'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
 
 type ContactItem = {
@@ -29,23 +29,24 @@ export default function Footer() {
   const settings = useStoreSettings()
 
   const baseContacts: ContactItem[] = [
-    { label: 'Email', value: 'cyrusadetu@gmail.com', href: 'mailto:cyrusadetu@gmail.com', Icon: Mail },
+    { label: 'Email', value: 'cyrusadetu@gmail.com', href: 'mailto:cyrusadetu@gmail.com', Icon: Envelope as unknown as React.ComponentType<Record<string, unknown>> },
     settings.whatsapp_number
-      ? { label: 'WhatsApp', value: settings.whatsapp_number, href: `https://wa.me/${settings.whatsapp_number.replace(/\D/g, '')}`, Icon: MessageCircleMore }
-      : { label: 'WhatsApp', value: '0574090147', href: 'https://wa.me/233574090147', Icon: MessageCircleMore },
-    { label: 'Call us', value: '0599399983', href: 'tel:0599399983', Icon: PhoneCall },
-    { label: 'Complaints', value: 'Hot line for complaints', href: 'tel:0599399983', Icon: Siren },
+      ? { label: 'WhatsApp', value: settings.whatsapp_number, href: `https://wa.me/${settings.whatsapp_number.replace(/\D/g, '')}`, Icon: WhatsappLogo as unknown as React.ComponentType<Record<string, unknown>> }
+      : { label: 'WhatsApp', value: '0574090147', href: 'https://wa.me/233574090147', Icon: WhatsappLogo as unknown as React.ComponentType<Record<string, unknown>> },
+    { label: 'Call us', value: '0599399983', href: 'tel:0599399983', Icon: Phone as unknown as React.ComponentType<Record<string, unknown>> },
+    { label: 'Complaints', value: 'Hot line for complaints', href: 'tel:0599399983', Icon: WarningOctagon as unknown as React.ComponentType<Record<string, unknown>> },
   ]
 
   const socialContacts: ContactItem[] = [
     settings.social_instagram
-      ? { label: 'Instagram', value: stripProtocol(settings.social_instagram), href: settings.social_instagram, Icon: Instagram }
+      ? { label: 'Instagram', value: stripProtocol(settings.social_instagram), href: settings.social_instagram, Icon: InstagramLogo as unknown as React.ComponentType<Record<string, unknown>> }
       : null,
     settings.social_tiktok
       ? { label: 'TikTok', value: stripProtocol(settings.social_tiktok), href: settings.social_tiktok, Icon: TiktokLogo as unknown as React.ComponentType<Record<string, unknown>> }
+      // ^ TikTok was already phosphor pre-swap
       : null,
     settings.social_facebook
-      ? { label: 'Facebook', value: stripProtocol(settings.social_facebook), href: settings.social_facebook, Icon: Facebook }
+      ? { label: 'Facebook', value: stripProtocol(settings.social_facebook), href: settings.social_facebook, Icon: FacebookLogo as unknown as React.ComponentType<Record<string, unknown>> }
       : null,
   ].filter((x): x is ContactItem => x !== null)
 
@@ -65,7 +66,7 @@ export default function Footer() {
           <div>
             <Link to="/" className="inline-flex items-center gap-3 group">
               <div className="w-11 h-11 rounded-2xl bg-brand-400/15 border border-brand-400/20 flex items-center justify-center text-brand-400 group-hover:bg-brand-400 group-hover:text-white group-hover:-rotate-3 group-hover:scale-105 transition-all">
-                <Store size={20} />
+                <Storefront size={20} weight="duotone" />
               </div>
               <div>
                 <p className="font-display font-bold text-lg text-dark-800 dark:text-white">{settings.store_name}</p>
@@ -80,7 +81,7 @@ export default function Footer() {
 
           <div>
             <div className="flex items-center gap-2 mb-5 text-dark-800 dark:text-white">
-              <Sparkles size={16} className="text-brand-400" />
+              <Sparkle size={16} weight="fill" className="text-brand-400" />
               <h3 className="font-semibold text-base">Contact</h3>
             </div>
             <div className="space-y-2">
@@ -105,7 +106,7 @@ export default function Footer() {
 
           <div>
             <div className="flex items-center gap-2 mb-5 text-dark-800 dark:text-white">
-              <MessageSquareQuote size={16} className="text-brand-400" />
+              <ChatCircleText size={16} weight="duotone" className="text-brand-400" />
               <h3 className="font-semibold text-base">Quick Links</h3>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">

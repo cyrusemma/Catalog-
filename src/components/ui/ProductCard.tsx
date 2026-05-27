@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Link } from 'react-router-dom'
 import { ShoppingCart, WhatsappLogo, Star, Sparkle, Lightning, Heart } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
@@ -13,7 +14,7 @@ interface Props {
   compact?: boolean
 }
 
-export default function ProductCard({ product, index = 0, compact = false }: Props) {
+function ProductCard({ product, index = 0, compact = false }: Props) {
   const addItem = useCartStore(s => s.addItem)
   const toggleWishlist = useWishlistStore(s => s.toggle)
   const isWishlisted = useWishlistStore(s => s.has(product.id))
@@ -169,3 +170,10 @@ export default function ProductCard({ product, index = 0, compact = false }: Pro
     </motion.div>
   )
 }
+
+// Cart count, wishlist toggles and store settings all bubble re-renders up here
+// through the storefront. Memoizing prevents every product card on screen from
+// repainting when, say, a single item is added to the cart. The default shallow
+// prop check is enough — `product` is stable per id and `compact`/`index` are primitives.
+export default memo(ProductCard)
+

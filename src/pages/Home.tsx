@@ -1,8 +1,20 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Sparkle, Lightning, ShoppingBagOpen, CaretDown } from '@phosphor-icons/react'
+import {
+  ArrowRight,
+  Sparkle,
+  Lightning,
+  ShoppingBagOpen,
+  CaretDown,
+  Envelope,
+  WhatsappLogo,
+  Phone,
+  WarningOctagon,
+  InstagramLogo,
+  ChatCircleText,
+  Star,
+} from '@phosphor-icons/react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
-import { Mail, MessageCircleMore, PhoneCall, Siren, Instagram, MessageSquareQuote, Star } from 'lucide-react'
 import ProductCard from '../components/ui/ProductCard'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
@@ -44,11 +56,11 @@ export default function Home() {
   const [reviewError, setReviewError] = useState('')
 
   const contactItems = [
-    { label: 'Email', value: 'cyrusadetu@gmail.com', href: 'mailto:cyrusadetu@gmail.com', Icon: Mail },
-    { label: 'WhatsApp', value: '0574090147', href: 'https://wa.me/233574090147', Icon: MessageCircleMore },
-    { label: 'Call', value: '0599399983', href: 'tel:0599399983', Icon: PhoneCall },
-    { label: 'Complaints', value: 'Hot line', href: 'tel:0599399983', Icon: Siren },
-    { label: 'Instagram', value: '@cyrus._.emma', href: 'https://instagram.com/cyrus._.emma', Icon: Instagram },
+    { label: 'Email', value: 'cyrusadetu@gmail.com', href: 'mailto:cyrusadetu@gmail.com', Icon: Envelope },
+    { label: 'WhatsApp', value: '0574090147', href: 'https://wa.me/233574090147', Icon: WhatsappLogo },
+    { label: 'Call', value: '0599399983', href: 'tel:0599399983', Icon: Phone },
+    { label: 'Complaints', value: 'Hot line', href: 'tel:0599399983', Icon: WarningOctagon },
+    { label: 'Instagram', value: '@cyrus._.emma', href: 'https://instagram.com/cyrus._.emma', Icon: InstagramLogo },
   ]
 
   const handleReviewSubmit = async (event: React.FormEvent) => {
@@ -90,7 +102,7 @@ export default function Home() {
           }
           existing.unshift(mockEntry)
           window.localStorage.setItem('mock_site_reviews', JSON.stringify(existing))
-          setReviewSuccess('Thanks. (Saved locally â€” database migration pending).')
+          setReviewSuccess('Thanks. (Saved locally - database migration pending).')
           setReviewName('')
           setReviewRating(5)
           setReviewMessage('')
@@ -196,7 +208,7 @@ export default function Home() {
         <div className="absolute -top-32 -right-32 w-[560px] h-[560px] bg-brand-400/25 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-1/4 -left-24 w-[320px] h-[320px] bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Text â€” lower-left editorial composition */}
+        {/* Text - lower-left editorial composition */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pb-28 sm:pb-24 lg:pb-32">
           <div className="max-w-2xl">
             {/* Hairline rule + label */}
@@ -208,15 +220,12 @@ export default function Home() {
             >
               <span className="block h-px w-10 bg-brand-400" />
               <span className="text-brand-400 text-[10px] sm:text-xs uppercase tracking-[0.32em] font-semibold">
-                New Season â€” Now Live
+                New Season - Now Live
               </span>
             </motion.div>
 
-            {/* Headline â€” letter-by-letter wave, shimmer scoped to "Cyrus" */}
-            <h1
-              className="font-display font-bold leading-[1.05] tracking-tight mb-5 sm:mb-7 text-white text-[2rem] sm:text-5xl lg:text-6xl xl:text-7xl max-w-md sm:max-w-xl"
-              style={{ textWrap: 'balance' } as React.CSSProperties}
-            >
+            {/* Headline - letter-by-letter wave, shimmer scoped to "Cyrus" */}
+            <h1 className="font-display font-bold leading-[1.05] tracking-tight mb-5 sm:mb-7 text-white text-[2rem] sm:text-5xl lg:text-6xl xl:text-7xl max-w-md sm:max-w-xl text-wrap-balance">
               {(() => {
                 const tagline = settings.tagline || 'Discover Amazing Products Brought to you By Cyrus'
                 const accent = 'Cyrus'
@@ -287,7 +296,7 @@ export default function Home() {
               Shop the finest selection, curated just for you. Fast delivery, great prices, premium quality.
             </motion.p>
 
-            {/* CTAs â€” bouncy liquid buttons */}
+            {/* CTAs - bouncy liquid buttons */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -331,7 +340,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Scroll cue â€” desktop only (mobile bottom-nav covers this area) */}
+        {/* Scroll cue - desktop only (mobile bottom-nav covers this area) */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -351,7 +360,13 @@ export default function Home() {
 
       {/* New Arrivals */}
       {newProducts && newProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 py-16">
+        <motion.section
+          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-7xl mx-auto px-4 py-16"
+        >
           <div className="flex items-center justify-between mb-10">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -370,12 +385,18 @@ export default function Home() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             {newProducts.slice(0, 4).map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
           </div>
-        </section>
+        </motion.section>
       )}
 
       {/* Featured */}
       {featured && featured.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 py-16">
+        <motion.section
+          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-7xl mx-auto px-4 py-16"
+        >
           <div className="flex items-center justify-between mb-10">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -394,13 +415,19 @@ export default function Home() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             {featured.slice(0, 8).map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
           </div>
-        </section>
+        </motion.section>
       )}
 
       {/* Reviews */}
-      <section className="max-w-7xl mx-auto px-4 py-16">
+      <motion.section
+        initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+        whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-7xl mx-auto px-4 py-16"
+      >
         <div className="flex items-center gap-2 mb-3">
-          <MessageSquareQuote size={16} className="text-brand-400" />
+          <ChatCircleText size={16} weight="duotone" className="text-brand-400" />
           <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Reviews</span>
         </div>
 
@@ -476,12 +503,12 @@ export default function Home() {
 
           <div className="rounded-3xl border border-brand-400/15 bg-dark-800 text-white p-6 sm:p-7 shadow-[0_24px_80px_-30px_rgba(0,0,0,0.55)]">
             <div className="flex items-center gap-2 mb-4 text-brand-400">
-              <Mail size={16} />
+              <Envelope size={16} weight="duotone" />
               <span className="text-xs font-bold uppercase tracking-[0.2em]">Contact</span>
             </div>
             <h3 className="text-2xl font-display font-bold mb-3">Need to reach me directly?</h3>
             <p className="text-white/65 text-sm leading-relaxed mb-5">
-              These are the contact details Iâ€™ll also use to follow up on reviews and suggestions.
+              These are the contact details I'll also use to follow up on reviews and suggestions.
             </p>
 
             <div className="space-y-2.5">
@@ -510,7 +537,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Empty state */}
       {(!featured || featured.length === 0) && (!newProducts || newProducts.length === 0) && (
