@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartItem, Product } from '../types'
+import { effectivePrice } from '../lib/utils'
 
 interface CartStore {
   items: CartItem[]
@@ -34,7 +35,7 @@ export const useCartStore = create<CartStore>()(
       },
       clearCart: () => set({ items: [] }),
       totalItems: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
-      totalPrice: () => get().items.reduce((sum, i) => sum + i.product.selling_price * i.quantity, 0),
+      totalPrice: () => get().items.reduce((sum, i) => sum + effectivePrice(i.product) * i.quantity, 0),
     }),
     { name: 'catalog-cart' }
   )

@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ShoppingCart, WhatsappLogo, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck } from '@phosphor-icons/react'
+import { ArrowLeft, ShoppingCart, WhatsappLogo, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck, Lightning, Clock } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProduct } from '../hooks/useProducts'
 import { useCartStore } from '../store/cartStore'
 import { useStoreSettings } from '../hooks/useStoreSettings'
-import { formatPrice, buildWhatsAppUrl, buildProductWhatsAppMessage } from '../lib/utils'
+import { formatPrice, buildWhatsAppUrl, buildProductWhatsAppMessage, activeFlashSalePrice, effectivePrice } from '../lib/utils'
+import CountdownTimer from '../components/ui/CountdownTimer'
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>()
@@ -26,14 +27,14 @@ export default function ProductDetail() {
     if (!product) return
     const url = buildWhatsAppUrl(
       settings.whatsapp_number || '233000000000',
-      buildProductWhatsAppMessage(product.title, product.selling_price, window.location.href)
+      buildProductWhatsAppMessage(product.title, effectivePrice(product), window.location.href)
     )
     window.open(url, '_blank')
   }
 
   const handleShare = async () => {
     if (!product) return
-    const text = `Check this out: ${product.title} — GH₵ ${product.selling_price}`
+    const text = `Check this out: ${product.title} — GH₵ ${effectivePrice(product)}`
     const url = window.location.href
     if (navigator.share) {
       try { await navigator.share({ title: product.title, text, url }) } catch { /* user cancelled */ }
@@ -71,6 +72,13 @@ export default function ProductDetail() {
   }
 
   const images = product.images?.length > 0 ? product.images : ['https://placehold.co/600x600/1a1008/d4820a?text=No+Image']
+
+  const flashPrice = activeFlashSalePrice(product)
+  const onFlashSale = flashPrice != null
+  const displayPrice = flashPrice ?? product.selling_price
+  const strikePrice = onFlashSale
+    ? product.selling_price
+    : (product.original_price && product.original_price > product.selling_price ? product.original_price : null)
 
   return (
     <main className="flex-1 max-w-7xl mx-auto px-4 py-10 pb-28 lg:pb-10">
@@ -116,7 +124,14 @@ export default function ProductDetail() {
 
         {/* Details */}
         <div className="flex flex-col">
-          <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em] mb-2">{product.category}</span>
+          <div className="flex items-center gap-2 flex-wrap mb-2">
+            <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">{product.category}</span>
+            {product.is_preorder && (
+              <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                <Clock size={11} weight="fill" /> PREORDER
+              </span>
+            )}
+          </div>
           <h1 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white mb-4 leading-snug">{product.title}</h1>
 
           {product.rating && (
@@ -136,14 +151,20 @@ export default function ProductDetail() {
           )}
 
           {/* Price card */}
-          <div className="glass-amber rounded-2xl p-5 mb-6 shadow-amber-glow">
-            <p className="text-brand-400 text-4xl sm:text-5xl font-bold mb-1">{formatPrice(product.selling_price)}</p>
-            {product.original_price && product.original_price > product.selling_price && (
+          <div className={`rounded-2xl p-5 mb-6 ${onFlashSale ? 'bg-red-500/10 border border-red-500/30' : 'glass-amber shadow-amber-glow'}`}>
+            {onFlashSale && product.flash_sale_ends_at && (
+              <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-red-500/20">
+                <span className="inline-flex items-center gap-1.5 text-red-500 font-bold text-sm uppercase tracking-wide">
+                  <Lightning size={16} weight="fill" /> Flash Sale
+                </span>
+                <CountdownTimer endsAt={product.flash_sale_ends_at} variant="bar" />
+              </div>
+            )}
+            <p className={`text-4xl sm:text-5xl font-bold mb-1 ${onFlashSale ? 'text-red-500' : 'text-brand-400'}`}>{formatPrice(displayPrice)}</p>
+            {strikePrice && (
               <div className="flex items-center gap-2">
-                <p className="text-dark-800/40 dark:text-white/30 text-sm line-through">{formatPrice(product.original_price)}</p>
-                {product.discount_percent && (
-                  <span className="badge-discount">-{product.discount_percent}%</span>
-                )}
+                <p className="text-dark-800/40 dark:text-white/30 text-sm line-through">{formatPrice(strikePrice)}</p>
+                <span className="badge-discount">-{Math.round(((strikePrice - displayPrice) / strikePrice) * 100)}%</span>
               </div>
             )}
           </div>

@@ -435,13 +435,15 @@ function Field({
   )
 }
 
-function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function ToggleSwitch({ checked, onChange, ariaLabel }: { checked: boolean; onChange: (v: boolean) => void; ariaLabel?: string }) {
   return (
     <button
       type="button"
       onClick={() => onChange(!checked)}
       role="switch"
       aria-checked={checked}
+      aria-label={ariaLabel || 'Toggle setting'}
+      title={ariaLabel || 'Toggle setting'}
       className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors ${checked ? 'bg-brand-400' : 'bg-gray-200'}`}
     >
       <span

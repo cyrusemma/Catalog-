@@ -87,6 +87,22 @@ export function useCategoryTree() {
   })
 }
 
+export function useProductCategoryRefs() {
+  return useQuery({
+    queryKey: ['products', 'category-refs'],
+    queryFn: async () => {
+      const { supabase } = await import('../lib/supabase')
+      const { data, error } = await supabase
+        .from('products')
+        .select('category_id, category')
+        .eq('is_published', true)
+      if (error) throw error
+      return data as { category_id: string | null; category: string | null }[]
+    },
+    staleTime: 1000 * 60,
+  })
+}
+
 /** Given a category id, return its id plus the ids of all direct children. */
 export function expandCategoryIds(tree: Category[] | undefined, rootId: string): string[] {
   if (!tree) return [rootId]

@@ -1,5 +1,30 @@
+import type { Product } from '../types'
+
 export function formatPrice(amount: number, currency = 'GHS'): string {
   return `${currency} ${amount.toFixed(2)}`
+}
+
+type FlashSaleFields = Pick<Product, 'selling_price' | 'flash_sale_price' | 'flash_sale_ends_at'>
+
+/**
+ * Returns the active flash-sale price for a product, or null when there is no
+ * live sale. A sale is only active when a price and an end time are both set,
+ * the price is genuinely lower than the normal price, and the end time has not
+ * passed — so the UI reverts to the normal price the moment the timer expires.
+ */
+export function activeFlashSalePrice(product: FlashSaleFields, now: number = Date.now()): number | null {
+  const price = product.flash_sale_price
+  const endsAt = product.flash_sale_ends_at
+  if (price == null || !endsAt) return null
+  const end = new Date(endsAt).getTime()
+  if (Number.isNaN(end) || end <= now) return null
+  if (price <= 0 || price >= product.selling_price) return null
+  return price
+}
+
+/** The price the customer actually pays right now (flash-sale price if live, else selling price). */
+export function effectivePrice(product: FlashSaleFields, now: number = Date.now()): number {
+  return activeFlashSalePrice(product, now) ?? product.selling_price
 }
 
 export function slugify(text: string): string {

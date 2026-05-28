@@ -16,6 +16,7 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import ProductCard from '../components/ui/ProductCard'
+import ProductMarquee from '../components/ui/ProductMarquee'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import heroLandscape from '../assets/hero-landscape.jpg'
@@ -26,6 +27,8 @@ const heroPortraitDimensions = { width: 592, height: 1280 }
 export default function Home() {
   const { data: featured } = useProducts({ featured: true })
   const { data: newProducts } = useNewProducts(7)
+  const { data: allProducts } = useProducts()
+  const showcase = useMemo(() => (allProducts ?? []).slice(0, 14), [allProducts])
   const settings = useStoreSettings()
   const reduceMotion = useReducedMotion()
 
@@ -357,6 +360,29 @@ export default function Home() {
           </motion.div>
         </motion.div>
       </section>
+
+      {/* Auto-scrolling showcase */}
+      {showcase.length > 0 && (
+        <motion.section
+          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          className="py-16 overflow-hidden"
+        >
+          <div className="max-w-7xl mx-auto px-4 mb-8">
+            <div className="flex items-center gap-2 mb-2">
+              <ShoppingBagOpen size={14} weight="fill" className="text-brand-400" />
+              <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">In the Shop</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
+              Browse the Collection
+            </h2>
+            <p className="text-dark-800/50 dark:text-white/40 text-sm mt-4">A live look at what's on the shelves — hover to pause.</p>
+          </div>
+          <ProductMarquee products={showcase} />
+        </motion.section>
+      )}
 
       {/* New Arrivals */}
       {newProducts && newProducts.length > 0 && (

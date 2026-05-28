@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
 import { House, Storefront, ShoppingCart, Heart } from '@phosphor-icons/react'
-import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
@@ -38,25 +37,16 @@ export default function BottomNav() {
                   className={active ? 'text-brand-400' : 'text-dark-800/60 dark:text-white/60'}
                 />
                 {badgeValue > 0 && (
-                  <motion.span
-                    key={badgeValue}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 600, damping: 18 }}
-                    className="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 bg-brand-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center"
-                  >
+                  <span className="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 bg-brand-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-scale-in">
                     {badgeValue > 9 ? '9+' : badgeValue}
-                  </motion.span>
+                  </span>
                 )}
               </div>
               <span className={`text-[10px] font-medium ${active ? 'text-brand-400' : 'text-dark-800/60 dark:text-white/60'}`}>
                 {label}
               </span>
               {active && (
-                <motion.span
-                  layoutId="bottom-nav-indicator"
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-brand-400"
-                />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-brand-400 transition-transform" />
               )}
             </Link>
           )

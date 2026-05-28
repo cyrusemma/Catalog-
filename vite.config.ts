@@ -35,6 +35,11 @@ export default defineConfig({
     })
   ],
   build: {
+    modulePreload: {
+      resolveDependencies(_filename, deps) {
+        return deps.filter(dep => !dep.includes('/motion-'))
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -46,7 +51,6 @@ export default defineConfig({
           if (id.includes('@tanstack')) return 'react-query'
           if (id.includes('react-router-dom')) return 'router'
           if (id.includes('framer-motion')) return 'motion'
-          if (id.includes('lucide-react') || id.includes('@phosphor-icons')) return 'icons'
 
           return 'vendor'
         },

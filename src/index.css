@@ -74,6 +74,12 @@
     @apply animate-shimmer;
   }
 
+  /* Text wrap balance helper (modern browsers). Fallback will be ignored on older engines. */
+  .text-wrap-balance {
+    text-wrap: balance;
+    -webkit-wrap: balance;
+  }
+
   /* Underline gradient for section titles */
   .underline-gradient {
     position: relative;
@@ -96,7 +102,30 @@
     -ms-overflow-style: none;
   }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  /* Auto-scrolling product marquee. The track holds two identical copies of the
+     content, so translating by -50% loops seamlessly. Pauses on hover. */
+  @keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .animate-marquee {
+    animation: marquee-scroll var(--marquee-duration, 45s) linear infinite;
+    will-change: transform;
+  }
+  .marquee-pause:hover .animate-marquee,
+  .marquee-pause:focus-within .animate-marquee {
+    animation-play-state: paused;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-marquee { animation: none; }
+  }
 }
+
+/* Loader dot animation delays (avoid inline styles) */
+.shop-loader-dots > span:nth-child(1) { animation-delay: 0ms; }
+.shop-loader-dots > span:nth-child(2) { animation-delay: 180ms; }
+.shop-loader-dots > span:nth-child(3) { animation-delay: 360ms; }
 
 /* Default scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -108,3 +137,165 @@
 .safe-top { padding-top: env(safe-area-inset-top); }
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
+
+/* Admin themes */
+.admin-shell {
+  --admin-bg: #f8f4ef;
+  --admin-panel: #ffffff;
+  --admin-panel-soft: #f9fafb;
+  --admin-panel-strong: #f3f4f6;
+  --admin-border: #f3f4f6;
+  --admin-border-strong: #e5e7eb;
+  --admin-text: #111827;
+  --admin-text-muted: #4b5563;
+  --admin-text-soft: #9ca3af;
+  --admin-overlay: rgba(0, 0, 0, 0.4);
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  color-scheme: light;
+}
+
+.admin-theme-amoled {
+  --admin-bg: #000000;
+  --admin-panel: #050505;
+  --admin-panel-soft: #101010;
+  --admin-panel-strong: #171717;
+  --admin-border: #242424;
+  --admin-border-strong: #363636;
+  --admin-text: #f8f5ef;
+  --admin-text-muted: #c8c0b6;
+  --admin-text-soft: #8d857b;
+  --admin-overlay: rgba(0, 0, 0, 0.72);
+  color-scheme: dark;
+}
+
+.admin-theme-gold {
+  --admin-bg: #160d04;
+  --admin-panel: #241507;
+  --admin-panel-soft: #321f0d;
+  --admin-panel-strong: #3d270f;
+  --admin-border: #694412;
+  --admin-border-strong: #8b5a18;
+  --admin-text: #fff7df;
+  --admin-text-muted: #dec492;
+  --admin-text-soft: #b58a49;
+  --admin-overlay: rgba(9, 5, 1, 0.76);
+  color-scheme: dark;
+}
+
+.admin-shell .bg-white,
+.admin-shell .bg-white\/85 {
+  /* Fallback for older browsers */
+  background-color: rgba(36,21,7,0.92) !important;
+  /* Preferred modern API */
+  background-color: color-mix(in srgb, var(--admin-panel) 92%, transparent) !important;
+}
+
+.admin-shell .bg-gray-50,
+.admin-shell .bg-gray-100 {
+  background-color: var(--admin-panel-soft) !important;
+}
+
+.admin-shell .bg-gray-200 {
+  background-color: var(--admin-panel-strong) !important;
+}
+
+.admin-shell .border-gray-100,
+.admin-shell .border-gray-200 {
+  border-color: var(--admin-border) !important;
+}
+
+.admin-shell .border-gray-300 {
+  border-color: var(--admin-border-strong) !important;
+}
+
+.admin-shell .text-gray-900,
+.admin-shell .text-gray-800,
+.admin-shell .text-gray-700 {
+  color: var(--admin-text) !important;
+}
+
+.admin-shell .text-gray-600,
+.admin-shell .text-gray-500 {
+  color: var(--admin-text-muted) !important;
+}
+
+.admin-shell .text-gray-400,
+.admin-shell .text-gray-300 {
+  color: var(--admin-text-soft) !important;
+}
+
+.admin-shell input,
+.admin-shell textarea,
+.admin-shell select {
+  background-color: var(--admin-panel-soft) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+}
+
+.admin-shell input:focus,
+.admin-shell textarea:focus,
+.admin-shell select:focus {
+  background-color: var(--admin-panel) !important;
+  border-color: #d4820a !important;
+  box-shadow: 0 0 0 2px rgba(212, 130, 10, 0.18);
+}
+
+.admin-shell input::placeholder,
+.admin-shell textarea::placeholder {
+  color: var(--admin-text-soft) !important;
+}
+
+.admin-shell input:disabled,
+.admin-shell select:disabled,
+.admin-shell textarea:disabled {
+  opacity: 0.65;
+}
+
+.admin-shell .hover\:bg-gray-50:hover,
+.admin-shell .hover\:bg-gray-100:hover,
+.admin-shell .hover\:bg-gray-200:hover,
+.admin-shell .hover\:bg-white:hover {
+  background-color: var(--admin-panel-strong) !important;
+}
+
+.admin-shell .hover\:text-gray-900:hover,
+.admin-shell .hover\:text-gray-600:hover {
+  color: var(--admin-text) !important;
+}
+
+.admin-shell .bg-amber-50 {
+  background-color: rgba(212, 130, 10, 0.14) !important;
+}
+
+.admin-shell .border-amber-200 {
+  border-color: rgba(212, 130, 10, 0.35) !important;
+}
+
+.admin-shell .text-amber-800,
+.admin-shell .text-amber-900 {
+  color: #f4c46f !important;
+}
+
+.admin-shell .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.13) !important;
+}
+
+.admin-shell .border-red-100,
+.admin-shell .border-red-200 {
+  border-color: rgba(248, 113, 113, 0.34) !important;
+}
+
+.admin-shell .text-red-500,
+.admin-shell .text-red-600 {
+  color: #fb7185 !important;
+}
+
+.admin-shell .bg-green-500 {
+  background-color: #16a34a !important;
+}
+
+.admin-shell .bg-black\/40,
+.admin-shell .bg-black\/60 {
+  background-color: var(--admin-overlay) !important;
+}

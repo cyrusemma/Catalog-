@@ -58,10 +58,36 @@ export default {
           '0%, 100%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' },
         },
+        'scale-in': {
+          '0%': { transform: 'scale(0.75)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        'loader-mark-in': {
+          '0%': { transform: 'translateY(-0.5rem)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        'shop-sway': {
+          '0%, 100%': { transform: 'rotate(-6deg)' },
+          '50%': { transform: 'rotate(6deg)' },
+        },
+        'loader-line': {
+          '0%': { transform: 'translateY(0.625rem)', opacity: '0', filter: 'blur(4px)' },
+          '16%, 82%': { transform: 'translateY(0)', opacity: '1', filter: 'blur(0)' },
+          '100%': { transform: 'translateY(-0.625rem)', opacity: '0', filter: 'blur(4px)' },
+        },
+        'loader-dot': {
+          '0%, 100%': { transform: 'scale(0.85)', opacity: '0.25' },
+          '50%': { transform: 'scale(1)', opacity: '1' },
+        },
       },
       animation: {
         shimmer: 'shimmer 3s linear infinite',
         'gradient-x': 'gradient-x 3s ease infinite',
+        'scale-in': 'scale-in 160ms ease-out',
+        'loader-mark-in': 'loader-mark-in 500ms ease-out both',
+        'shop-sway': 'shop-sway 3.2s ease-in-out infinite',
+        'loader-line': 'loader-line 2.6s ease-out both',
+        'loader-dot': 'loader-dot 1.3s ease-in-out infinite',
       },
     },
   },

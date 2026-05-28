@@ -20,8 +20,14 @@ interface FormData {
   stock: string; stock_status: 'in_stock' | 'few_units_left' | 'out_of_stock'
   images: string[]; key_features: string[]; sizes: string[]
   is_featured: boolean; is_published: boolean
+  is_preorder: boolean
   free_delivery: boolean; delivery_fee: string
+  flash_sale_price: string; flash_sale_ends_at: string
 }
+
+// Default units assigned when "In Stock" is picked, so the admin never has to
+// type or clear the number for a generally-available product.
+const DEFAULT_IN_STOCK_UNITS = '10'
 
 const emptyForm: FormData = {
   title: '', brand: '', description: '',
@@ -30,7 +36,18 @@ const emptyForm: FormData = {
   stock: '1', stock_status: 'few_units_left',
   images: [], key_features: [], sizes: [],
   is_featured: false, is_published: false,
-  free_delivery: true, delivery_fee: '',
+  is_preorder: false,
+  free_delivery: false, delivery_fee: '20',
+  flash_sale_price: '', flash_sale_ends_at: '',
+}
+
+/** Convert a stored ISO timestamp to the value a <input type="datetime-local"> expects (local time, no seconds). */
+function isoToLocalInput(iso?: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const tzOffsetMs = d.getTimezoneOffset() * 60000
+  return new Date(d.getTime() - tzOffsetMs).toISOString().slice(0, 16)
 }
 
 async function resolveUniqueSlug(title: string, excludeId?: string): Promise<string> {
@@ -142,16 +159,32 @@ export default function AdminProductForm() {
         sizes: existingProduct.sizes || [],
         is_featured: existingProduct.is_featured || false,
         is_published: existingProduct.is_published || false,
+        is_preorder: existingProduct.is_preorder || false,
         free_delivery: !existingProduct.delivery_fee || Number(existingProduct.delivery_fee) === 0,
         delivery_fee: existingProduct.delivery_fee && Number(existingProduct.delivery_fee) > 0
           ? Number(existingProduct.delivery_fee).toString()
           : '',
+        flash_sale_price: existingProduct.flash_sale_price != null
+          ? Number(existingProduct.flash_sale_price).toString()
+          : '',
+        flash_sale_ends_at: isoToLocalInput(existingProduct.flash_sale_ends_at),
       })
     }
   }, [existingProduct, categoryTree])
 
   const set = (key: keyof FormData, val: FormData[keyof FormData]) =>
     setForm(f => ({ ...f, [key]: val }))
+
+  // Picking a stock status. Choosing "In Stock" auto-fills a sensible default
+  // unit count so the number field is ready without the admin clearing/typing it.
+  const selectStockStatus = (status: FormData['stock_status']) =>
+    setForm(f => ({
+      ...f,
+      stock_status: status,
+      stock: status === 'in_stock' && (!f.stock || f.stock === '0')
+        ? DEFAULT_IN_STOCK_UNITS
+        : f.stock,
+    }))
 
   const createCategory = async () => {
     const name = newCategoryName.trim()
@@ -219,9 +252,18 @@ export default function AdminProductForm() {
         sizes: form.sizes,
         is_featured: form.is_featured,
         is_published: publish ? true : form.is_published,
+        is_preorder: form.is_preorder,
         source_url: null,
         source_price: null,
         delivery_fee: form.free_delivery ? 0 : (parseFloat(form.delivery_fee) || 0),
+        // A flash sale only counts when both a price and an end time are set;
+        // otherwise clear both so the storefront treats it as no sale.
+        flash_sale_price: form.flash_sale_price && form.flash_sale_ends_at
+          ? parseFloat(form.flash_sale_price) || null
+          : null,
+        flash_sale_ends_at: form.flash_sale_price && form.flash_sale_ends_at
+          ? new Date(form.flash_sale_ends_at).toISOString()
+          : null,
       }
 
       const { error } = isEdit
@@ -555,7 +597,7 @@ export default function AdminProductForm() {
                   { value: 'few_units_left', label: 'Few Units Left' },
                   { value: 'out_of_stock', label: 'Out of Stock' },
                 ] as const).map(s => (
-                  <button key={s.value} onClick={() => set('stock_status', s.value)} className={`py-2 px-1 rounded-xl text-xs font-medium transition-colors ${form.stock_status === s.value ? 'bg-brand-400 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                  <button key={s.value} type="button" onClick={() => selectStockStatus(s.value)} className={`py-2 px-1 rounded-xl text-xs font-medium transition-colors ${form.stock_status === s.value ? 'bg-brand-400 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                     {s.label}
                   </button>
                 ))}
@@ -564,6 +606,9 @@ export default function AdminProductForm() {
                 <div>
                   <label className="block text-gray-600 text-xs font-medium mb-1.5">Units left</label>
                   <input type="number" min="0" value={form.stock} onChange={e => set('stock', e.target.value)} placeholder="e.g. 3" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
+                  {form.stock_status === 'in_stock' && (
+                    <p className="text-gray-400 text-[11px] mt-2">Pre-filled for you — adjust only if you want an exact count.</p>
+                  )}
                 </div>
               )}
             </div>
@@ -610,10 +655,54 @@ export default function AdminProductForm() {
               )}
             </div>
 
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Flash Sale</h2>
+              <p className="text-gray-400 text-[11px] mb-4">
+                Set a temporary sale price and an end time. Customers see a live countdown and the price reverts automatically when it ends. Leave blank for no sale.
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Sale price (GHS)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.flash_sale_price}
+                    onChange={e => set('flash_sale_price', e.target.value)}
+                    placeholder="Lower than selling price"
+                    className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Ends at</label>
+                  <input
+                    type="datetime-local"
+                    value={form.flash_sale_ends_at}
+                    onChange={e => set('flash_sale_ends_at', e.target.value)}
+                    aria-label="Flash sale end time"
+                    className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white"
+                  />
+                </div>
+                {form.selling_price && form.flash_sale_price && parseFloat(form.flash_sale_price) >= parseFloat(form.selling_price) && (
+                  <p className="text-amber-600 text-[11px]">Sale price should be lower than the selling price ({form.selling_price}) to show as a deal.</p>
+                )}
+                {(form.flash_sale_price || form.flash_sale_ends_at) && (
+                  <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, flash_sale_price: '', flash_sale_ends_at: '' }))}
+                    className="text-gray-500 hover:text-red-500 text-xs font-medium"
+                  >
+                    Clear flash sale
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Options</h2>
               {[
                 { key: 'is_featured', label: 'Featured product', desc: 'Show on homepage featured section' },
+                { key: 'is_preorder', label: 'Preorder', desc: 'Shows a "Preorder" badge — item not in hand yet' },
                 { key: 'is_published', label: 'Published', desc: 'Visible to customers' },
               ].map(opt => (
                 <label key={opt.key} className="flex items-start gap-3 cursor-pointer">

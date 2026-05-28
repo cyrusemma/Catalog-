@@ -7,6 +7,11 @@ import { supabase } from '../../lib/supabase'
 export default function AdminLogin() {
   const navigate = useNavigate()
   const location = useLocation()
+  const adminTheme = (() => {
+    if (typeof window === 'undefined') return 'light'
+    const stored = localStorage.getItem('catalog-admin-theme')
+    return stored === 'amoled' || stored === 'gold' ? stored : 'light'
+  })()
   const unauthorized = (location.state as { error?: string } | null)?.error === 'unauthorized'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -31,7 +36,7 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-dvh bg-[#f8f4ef] flex items-center justify-center px-4">
+    <div className={`admin-shell admin-theme-${adminTheme} min-h-dvh bg-[#f8f4ef] flex items-center justify-center px-4`}>
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">

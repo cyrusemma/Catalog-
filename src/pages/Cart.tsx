@@ -3,7 +3,7 @@ import { ArrowLeft, Trash, Plus, Minus, WhatsappLogo, ShoppingBag } from '@phosp
 import { motion } from 'framer-motion'
 import { useCartStore } from '../store/cartStore'
 import { useStoreSettings } from '../hooks/useStoreSettings'
-import { formatPrice, buildWhatsAppUrl, buildCartWhatsAppMessage } from '../lib/utils'
+import { formatPrice, buildWhatsAppUrl, buildCartWhatsAppMessage, effectivePrice } from '../lib/utils'
 
 export default function Cart() {
   const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCartStore()
@@ -19,7 +19,7 @@ export default function Cart() {
 
   const handleWhatsAppOrder = () => {
     const message = buildCartWhatsAppMessage(
-      items.map(i => ({ title: i.product.title, qty: i.quantity, price: i.product.selling_price })),
+      items.map(i => ({ title: i.product.title, qty: i.quantity, price: effectivePrice(i.product) })),
       subtotal,
       deliveryFee,
       settings.currency || 'GHS',
@@ -82,7 +82,7 @@ export default function Cart() {
                     {item.product.title}
                   </h3>
                 </Link>
-                <p className="text-brand-400 font-bold mt-1">{formatPrice(item.product.selling_price)}</p>
+                <p className="text-brand-400 font-bold mt-1">{formatPrice(effectivePrice(item.product))}</p>
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex items-center gap-2">
                     <button
@@ -102,7 +102,7 @@ export default function Cart() {
                     </button>
                   </div>
                   <div className="flex items-center gap-3">
-                    <p className="text-dark-800/70 dark:text-white/60 text-sm font-medium">{formatPrice(item.product.selling_price * item.quantity)}</p>
+                    <p className="text-dark-800/70 dark:text-white/60 text-sm font-medium">{formatPrice(effectivePrice(item.product) * item.quantity)}</p>
                     <button
                       onClick={() => removeItem(item.product.id)}
                       aria-label="Remove item"
@@ -128,7 +128,7 @@ export default function Cart() {
                     {item.product.title.length > 25 ? item.product.title.slice(0, 25) + '…' : item.product.title}
                   </span>
                   <span className="text-dark-800 dark:text-white flex-shrink-0 font-medium">
-                    {formatPrice(item.product.selling_price * item.quantity)}
+                    {formatPrice(effectivePrice(item.product) * item.quantity)}
                   </span>
                 </div>
               ))}

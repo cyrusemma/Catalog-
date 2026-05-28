@@ -20,6 +20,9 @@ export interface Product {
   key_features?: string[]
   is_featured: boolean
   is_published: boolean
+  is_preorder?: boolean
+  flash_sale_price?: number | null
+  flash_sale_ends_at?: string | null
   rating?: number
   rating_count?: number
   created_at: string

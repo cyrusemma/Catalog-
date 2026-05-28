@@ -7,6 +7,7 @@ import SkeletonCard from '../components/ui/SkeletonCard'
 import {
   useProducts,
   useCategoryTree,
+  useProductCategoryRefs,
   topLevelCategories,
   childCategories,
   expandCategoryIds,
@@ -42,6 +43,7 @@ export default function Shop() {
   const [visibleCount, setVisibleCount] = useState(PRODUCT_CHUNK_SIZE)
   const pendingScrollRef = useRef<number | null>(null)
   const { data: categoryTree } = useCategoryTree()
+  const { data: productCategoryRefs } = useProductCategoryRefs()
 
   // Pretty-URL routing: /shop, /shop/electronics, /shop/electronics/phones-tablets
   const parentSlug = params.parentSlug ?? null
@@ -51,6 +53,32 @@ export default function Shop() {
   const activeParent = parents.find(p => p.slug === parentSlug)
   const subs = activeParent ? childCategories(categoryTree, activeParent.id) : []
   const activeSub = subs.find(s => s.slug === subSlug)
+
+  const productCategoryIds = useMemo(
+    () => new Set((productCategoryRefs ?? []).map(ref => ref.category_id).filter(Boolean) as string[]),
+    [productCategoryRefs],
+  )
+
+  const productCategoryNames = useMemo(
+    () => new Set((productCategoryRefs ?? []).map(ref => ref.category?.trim().toLowerCase()).filter(Boolean) as string[]),
+    [productCategoryRefs],
+  )
+
+  const categoryHasDirectProducts = useMemo(() => {
+    return (categoryId: string, categoryName: string) =>
+      productCategoryIds.has(categoryId) || productCategoryNames.has(categoryName.trim().toLowerCase())
+  }, [productCategoryIds, productCategoryNames])
+
+  const visibleParents = useMemo(() => {
+    return parents.filter(parent => {
+      if (categoryHasDirectProducts(parent.id, parent.name)) return true
+      return childCategories(categoryTree, parent.id).some(child => categoryHasDirectProducts(child.id, child.name))
+    })
+  }, [parents, categoryTree, categoryHasDirectProducts])
+
+  const visibleSubs = useMemo(() => {
+    return subs.filter(sub => categoryHasDirectProducts(sub.id, sub.name))
+  }, [subs, categoryHasDirectProducts])
 
   const categoryIds = useMemo(() => {
     if (activeSub) return [activeSub.id]
@@ -281,7 +309,7 @@ export default function Shop() {
             >
               All
             </button>
-            {parents.map(cat => (
+            {visibleParents.map(cat => (
               <button
                 key={cat.id}
                 type="button"
@@ -306,7 +334,7 @@ export default function Shop() {
         </div>
 
         {/* Sub-category pills (only when a parent is selected and it has sub-categories) */}
-        {activeParent && subs.length > 0 && (
+        {activeParent && visibleSubs.length > 0 && (
           <div className="relative -mx-4 lg:mx-0 mt-2">
             <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide px-4 lg:px-0 scroll-smooth snap-x snap-proximity overscroll-x-contain [-webkit-overflow-scrolling:touch]">
               <button
@@ -320,7 +348,7 @@ export default function Shop() {
               >
                 All {activeParent.name}
               </button>
-              {subs.map(s => (
+              {visibleSubs.map(s => (
                 <button
                   key={s.id}
                   type="button"

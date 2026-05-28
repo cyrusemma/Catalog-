@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, Store, ExternalLink, Menu, X, MessageSquareQuote } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, Store, ExternalLink, Menu, X, MessageSquareQuote, Palette } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 
@@ -12,10 +12,31 @@ const navItems = [
   { path: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
+type AdminTheme = 'light' | 'amoled' | 'gold'
+
+const ADMIN_THEME_KEY = 'catalog-admin-theme'
+
+const adminThemes: { value: AdminTheme; label: string }[] = [
+  { value: 'light', label: 'Light' },
+  { value: 'amoled', label: 'AMOLED' },
+  { value: 'gold', label: 'Gold' },
+]
+
+function getInitialAdminTheme(): AdminTheme {
+  if (typeof window === 'undefined') return 'light'
+  const stored = localStorage.getItem(ADMIN_THEME_KEY)
+  return stored === 'amoled' || stored === 'gold' || stored === 'light' ? stored : 'light'
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [adminTheme, setAdminTheme] = useState<AdminTheme>(getInitialAdminTheme)
+
+  useEffect(() => {
+    localStorage.setItem(ADMIN_THEME_KEY, adminTheme)
+  }, [adminTheme])
 
   useEffect(() => {
     setDrawerOpen(false)
@@ -75,7 +96,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         ))}
       </nav>
 
-      <div className="p-3 border-t border-gray-100 space-y-1">
+      <div className="p-3 border-t border-gray-100 space-y-3">
+        <div className="px-3">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-2">
+            <Palette size={13} />
+            Admin theme
+          </div>
+          <div className="grid grid-cols-3 gap-1 rounded-xl bg-gray-100 p-1">
+            {adminThemes.map(theme => (
+              <button
+                key={theme.value}
+                type="button"
+                onClick={() => setAdminTheme(theme.value)}
+                className={`rounded-lg px-2 py-1.5 text-[11px] font-semibold transition-colors ${
+                  adminTheme === theme.value
+                    ? 'bg-brand-400 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-white hover:text-gray-900'
+                }`}
+              >
+                {theme.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <a
           href="/"
           target="_blank"
@@ -96,7 +139,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   )
 
   return (
-    <div className="min-h-dvh bg-[#f8f4ef]">
+    <div className={`admin-shell admin-theme-${adminTheme} min-h-dvh bg-[#f8f4ef]`}>
       {/* Mobile top bar */}
       <header className="lg:hidden sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-gray-100 safe-top">
         <div className="h-14 px-4 flex items-center justify-between">

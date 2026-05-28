@@ -1,11 +1,12 @@
 import { memo } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingCart, WhatsappLogo, Star, Sparkle, Lightning, Heart } from '@phosphor-icons/react'
+import { ShoppingCart, WhatsappLogo, Star, Sparkle, Lightning, Heart, Clock } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
-import { buildProductWhatsAppMessage, buildWhatsAppUrl, formatPrice, isNewProduct } from '../../lib/utils'
+import { activeFlashSalePrice, buildProductWhatsAppMessage, buildWhatsAppUrl, formatPrice, isNewProduct } from '../../lib/utils'
+import CountdownTimer from './CountdownTimer'
 import type { Product } from '../../types'
 
 interface Props {
@@ -20,6 +21,14 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
   const isWishlisted = useWishlistStore(s => s.has(product.id))
   const settings = useStoreSettings()
   const isNew = isNewProduct(product.created_at)
+  const flashPrice = activeFlashSalePrice(product)
+  const onFlashSale = flashPrice != null
+  const displayPrice = flashPrice ?? product.selling_price
+  // When on flash sale, the "was" price is the normal selling price; otherwise
+  // fall back to the compare-at original price if there is one.
+  const strikePrice = onFlashSale
+    ? product.selling_price
+    : (product.original_price && product.original_price > product.selling_price ? product.original_price : null)
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -61,12 +70,22 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
           />
           {/* Badges */}
           <div className={`absolute top-2 left-2 flex flex-col gap-1 ${compact ? 'scale-90 origin-top-left sm:scale-100' : ''}`}>
-            {isNew && (
+            {onFlashSale && (
+              <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
+                <Lightning size={10} weight="fill" /> FLASH
+              </span>
+            )}
+            {product.is_preorder && (
+              <span className="bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Clock size={10} weight="fill" /> PREORDER
+              </span>
+            )}
+            {isNew && !onFlashSale && (
               <span className="badge-new">
                 <Sparkle size={10} weight="fill" /> NEW
               </span>
             )}
-            {product.discount_percent && product.discount_percent > 0 && (
+            {!onFlashSale && product.discount_percent && product.discount_percent > 0 && (
               <span className="badge-discount">-{product.discount_percent}%</span>
             )}
             {product.is_featured && (
@@ -114,13 +133,20 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
             </div>
           )}
 
+          {onFlashSale && product.flash_sale_ends_at && (
+            <div className="flex items-center gap-1 mb-1.5 text-red-500">
+              <Clock size={11} weight="fill" />
+              <CountdownTimer endsAt={product.flash_sale_ends_at} className="text-[10px] sm:text-xs" />
+            </div>
+          )}
+
           {/* Price */}
           <div className={`mb-2 sm:mb-0 sm:flex sm:items-center sm:justify-between ${compact ? 'gap-2' : ''}`}>
             <div className="min-w-0">
-              <p className={`text-brand-400 font-bold truncate ${compact ? 'text-sm sm:text-base' : 'text-sm sm:text-base'}`}>{formatPrice(product.selling_price)}</p>
-              {product.original_price && product.original_price > product.selling_price && (
+              <p className={`font-bold truncate ${onFlashSale ? 'text-red-500' : 'text-brand-400'} ${compact ? 'text-sm sm:text-base' : 'text-sm sm:text-base'}`}>{formatPrice(displayPrice)}</p>
+              {strikePrice && (
                 <p className={`text-cream-400 dark:text-white/30 line-through truncate ${compact ? 'text-[9px] sm:text-xs' : 'text-[10px] sm:text-xs'}`}>
-                  {formatPrice(product.original_price)}
+                  {formatPrice(strikePrice)}
                 </p>
               )}
             </div>
