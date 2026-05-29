@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline — Catalog</title>
+  <link rel="icon" href="/favicon.svg" />
+  <style>
+    :root {
+      --bg: #0f0a05;
+      --panel: #1a1008;
+      --amber: #d4820a;
+      --amber-soft: #e8a020;
+      --text: #faf6f0;
+      --text-soft: rgba(250, 246, 240, 0.6);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100dvh;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(ellipse at top right, rgba(212, 130, 10, 0.16), transparent 60%),
+        radial-gradient(ellipse at bottom left, rgba(212, 130, 10, 0.08), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .card {
+      max-width: 28rem;
+      width: 100%;
+      background: rgba(26, 16, 8, 0.7);
+      border: 1px solid rgba(212, 130, 10, 0.25);
+      border-radius: 24px;
+      padding: 2.25rem 1.75rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.7);
+    }
+    .glyph {
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--amber), var(--amber-soft));
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      box-shadow: 0 0 50px -10px var(--amber);
+    }
+    .glyph svg { width: 28px; height: 28px; color: #fff; }
+    .label {
+      font-size: 0.7rem;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--amber);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.01em;
+    }
+    p {
+      color: var(--text-soft);
+      font-size: 0.95rem;
+      line-height: 1.55;
+      margin-bottom: 1.5rem;
+    }
+    button {
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #fff;
+      background: linear-gradient(135deg, var(--amber), var(--amber-soft));
+      border: none;
+      padding: 0.85rem 1.5rem;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 10px 30px -10px rgba(212, 130, 10, 0.7);
+      transition: transform 120ms ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    .footer {
+      margin-top: 1.5rem;
+      font-size: 0.75rem;
+      color: rgba(250, 246, 240, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="alert">
+    <span class="glyph" aria-hidden="true">
+      <!-- Cloud-off glyph -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 2l20 20" />
+        <path d="M5.62 11.62a5 5 0 0 1 6.76-6.76M22 18a4 4 0 0 0-4-4h-1.26A8 8 0 0 0 8.7 8.7" />
+      </svg>
+    </span>
+    <div class="label">Offline</div>
+    <h1>You're not online</h1>
+    <p>The catalog needs the internet to load the latest products. Already-visited pages should still work from the cache — try the back button, or retry once you're connected.</p>
+    <button type="button" onclick="location.reload()">Try again</button>
+    <p class="footer">This page was served by the offline cache.</p>
+  </main>
+</body>
+</html>

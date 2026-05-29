@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Package, Eye, ShoppingBag, TrendingUp, Plus, ArrowRight, Settings, MessageSquareQuote } from 'lucide-react'
+import { Package, Eye, ShoppingBag, TrendingUp, Plus, ArrowRight, Settings, MessageSquareQuote, Users } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils'
@@ -9,21 +9,27 @@ export default function AdminDashboard() {
   const { data: stats } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const [products, orders, reviews] = await Promise.all([
+      const [products, orders, reviews, visits] = await Promise.all([
         supabase.from('products').select('id, is_published, selling_price'),
         supabase.from('orders').select('id, total, status'),
         supabase.from('site_reviews').select('id, rating'),
+        // RLS already restricts this to admins; a wide select is fine at this volume.
+        supabase.from('visits').select('session_id'),
       ])
       const allProducts = products.data || []
       const allOrders = orders.data || []
       const allReviews = reviews.data || []
+      const allVisits = visits.data || []
       const revenue = allOrders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0)
+      const uniqueVisitors = new Set(allVisits.map(v => v.session_id)).size
       return {
         total: allProducts.length,
         published: allProducts.filter(p => p.is_published).length,
         orders: allOrders.length,
         reviews: allReviews.length,
         revenue,
+        visits: allVisits.length,
+        uniqueVisitors,
       }
     },
   })
@@ -49,6 +55,12 @@ export default function AdminDashboard() {
     { label: 'Orders', value: stats?.orders ?? '—', icon: ShoppingBag, color: 'bg-blue-500' },
     { label: 'Reviews', value: stats?.reviews ?? '—', icon: MessageSquareQuote, color: 'bg-emerald-500' },
     { label: 'Revenue', value: stats ? formatPrice(stats.revenue) : '—', icon: TrendingUp, color: 'bg-purple-500' },
+    {
+      label: 'Visits',
+      value: stats ? `${stats.visits.toLocaleString()} · ${stats.uniqueVisitors.toLocaleString()} unique` : '—',
+      icon: Users,
+      color: 'bg-amber-500',
+    },
   ]
 
   return (

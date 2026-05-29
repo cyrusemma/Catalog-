@@ -9,6 +9,10 @@ import Footer from './components/layout/Footer'
 import BottomNav from './components/layout/BottomNav'
 import AnnouncementBanner from './components/layout/AnnouncementBanner'
 import ShopLoader from './components/ui/ShopLoader'
+import VisitorChip from './components/ui/VisitorChip'
+import WelcomePopup from './components/ui/WelcomePopup'
+import OfflineIndicator from './components/ui/OfflineIndicator'
+import { useVisitorTracking } from './hooks/useVisitorTracking'
 
 const Home = lazy(() => import('./pages/Home'))
 const Shop = lazy(() => import('./pages/Shop'))
@@ -66,6 +70,7 @@ function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function StorefrontLayout({ children }: { children: React.ReactNode }) {
+  useVisitorTracking()
   return (
     <div className="flex flex-col min-h-dvh overflow-x-hidden">
       <AnnouncementBanner />
@@ -73,6 +78,9 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
       {children}
       <Footer />
       <BottomNav />
+      <VisitorChip />
+      <WelcomePopup />
+      <OfflineIndicator />
     </div>
   )
 }

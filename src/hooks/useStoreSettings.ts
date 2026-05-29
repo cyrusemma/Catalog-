@@ -17,6 +17,7 @@ export interface StoreSettings {
   social_tiktok: string | null
   social_facebook: string | null
   whatsapp_template: string | null
+  show_visitor_count: boolean
 }
 
 const ENV_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined
@@ -39,6 +40,7 @@ const DEFAULTS: StoreSettings = {
   social_tiktok: null,
   social_facebook: null,
   whatsapp_template: null,
+  show_visitor_count: false,
 }
 
 export function useStoreSettings() {

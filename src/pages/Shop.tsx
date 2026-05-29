@@ -49,6 +49,20 @@ export default function Shop() {
   const parentSlug = params.parentSlug ?? null
   const subSlug = params.subSlug ?? null
 
+  // Pick up `?q=` from the welcome popup (or any deep link) and seed the search
+  // once on mount / when the query string changes. After seeding, the URL param
+  // is cleared so it doesn't fight the user's own typing.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const q = params.get('q')
+    if (q && q.trim()) {
+      setSearch(q.trim())
+      setQuery(q.trim())
+      navigate(location.pathname, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search])
+
   const parents = topLevelCategories(categoryTree)
   const activeParent = parents.find(p => p.slug === parentSlug)
   const subs = activeParent ? childCategories(categoryTree, activeParent.id) : []

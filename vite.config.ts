@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'favicon-32.png', 'favicon-16.png', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.svg', 'favicon-32.png', 'favicon-16.png', 'apple-touch-icon.png', 'offline.html'],
       manifest: {
         name: 'Catalog by Cyrus',
         short_name: 'Catalog',
@@ -24,14 +24,51 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // When a navigation request fails (truly offline + not in cache), fall
+        // back to the standalone offline page instead of showing the browser's
+        // generic dino/error.
+        navigateFallback: '/offline.html',
+        navigateFallbackDenylist: [/^\/admin/, /^\/api\//],
         runtimeCaching: [
+          // Supabase Postgrest reads (products / categories / settings):
+          // stale-while-revalidate so the storefront paints instantly from the
+          // last known snapshot and quietly refreshes in the background.
           {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
-            options: { cacheName: 'supabase-cache', expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 } }
-          }
-        ]
-      }
+            urlPattern: ({ url }) =>
+              url.hostname.endsWith('.supabase.co') && url.pathname.startsWith('/rest/v1/'),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'supabase-rest',
+              expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          // Supabase storage objects (uploaded product images): cache-first with
+          // a long TTL — they're content-addressed by filename, so once you have
+          // a copy you can keep it.
+          {
+            urlPattern: ({ url }) =>
+              url.hostname.endsWith('.supabase.co') && url.pathname.includes('/storage/v1/object/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'supabase-images',
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          // Any other image URL (placeholder.co, external CDN) — same idea but
+          // shorter window since we don't own these.
+          {
+            urlPattern: ({ request }) => request.destination === 'image',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'external-images',
+              expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 7 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
     })
   ],
   build: {

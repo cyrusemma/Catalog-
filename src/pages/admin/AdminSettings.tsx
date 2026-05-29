@@ -20,6 +20,7 @@ interface SettingsForm {
   social_facebook: string
   logo_url: string
   whatsapp_template: string
+  show_visitor_count: boolean
 }
 
 const emptyForm: SettingsForm = {
@@ -37,6 +38,7 @@ const emptyForm: SettingsForm = {
   social_facebook: '',
   logo_url: '',
   whatsapp_template: '',
+  show_visitor_count: false,
 }
 
 export default function AdminSettings() {
@@ -75,6 +77,7 @@ export default function AdminSettings() {
         social_facebook: settings.social_facebook || '',
         logo_url: settings.logo_url || '',
         whatsapp_template: settings.whatsapp_template || '',
+        show_visitor_count: settings.show_visitor_count || false,
       })
     }
   }, [settings])
@@ -99,6 +102,7 @@ export default function AdminSettings() {
         social_facebook: form.social_facebook || null,
         logo_url: form.logo_url || null,
         whatsapp_template: form.whatsapp_template || null,
+        show_visitor_count: form.show_visitor_count,
       }
       if (settings) {
         const { error } = await supabase.from('store_settings').update(payload).eq('id', settings.id)
@@ -390,6 +394,19 @@ export default function AdminSettings() {
               rows={6}
               className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white resize-none"
             />
+          </section>
+
+          {/* Visitor counter */}
+          <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400">Visitor counter</h2>
+                <p className="text-gray-400 text-[11px] mt-1">
+                  Show a small floating eye + total-visits chip on the storefront. Off by default.
+                </p>
+              </div>
+              <ToggleSwitch checked={form.show_visitor_count} onChange={v => set('show_visitor_count', v)} />
+            </div>
           </section>
 
           {/* Save button */}
