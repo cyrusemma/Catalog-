@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { ShoppingCart, Storefront, Moon, Sun } from '@phosphor-icons/react'
+import { ShoppingCart, Storefront, Moon, Sun, MoonStars } from '@phosphor-icons/react'
 import { useCartStore } from '../../store/cartStore'
 import { useTheme } from '../../hooks/useTheme'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
@@ -52,15 +52,16 @@ export default function Navbar() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={toggle}
-            aria-label="Toggle theme"
+            aria-label={`Theme: ${theme}. Click to switch to ${theme === 'light' ? 'dark' : theme === 'dark' ? 'AMOLED' : 'light'}.`}
+            title={`Theme: ${theme}`}
             className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors"
           >
             <span className="inline-flex transition-transform duration-200 hover:rotate-12">
-              {theme === 'dark' ? (
-                <Sun size={18} weight="duotone" className="text-brand-400" />
-              ) : (
-                <Moon size={18} weight="duotone" className="text-brand-500" />
-              )}
+              {/* Icon shown = what you'll get on next click, so the button
+                  always feels "go to ___" instead of "you are ___". */}
+              {theme === 'light' && <Moon size={18} weight="duotone" className="text-brand-500" />}
+              {theme === 'dark' && <MoonStars size={18} weight="duotone" className="text-brand-400" />}
+              {theme === 'amoled' && <Sun size={18} weight="duotone" className="text-brand-400" />}
             </span>
           </button>
 

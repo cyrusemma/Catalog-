@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useProducts, useNewProducts, useCategoryTree } from '../../hooks/useProducts'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
 import { formatPrice, activeFlashSalePrice } from '../../lib/utils'
+import { useSwipe } from '../../hooks/useSwipe'
 import type { Category, Product } from '../../types'
 
 const MAX_CARDS = 8
@@ -100,6 +101,10 @@ export default function WelcomePopup() {
   const next = () => setActiveIndex(i => (i + 1) % Math.max(items.length, 1))
   const prev = () => setActiveIndex(i => (i - 1 + items.length) % Math.max(items.length, 1))
 
+  // Finger sweep across the carousel — left swipe shows the next card, right
+  // shows the previous, matching the chevron direction.
+  const swipe = useSwipe({ onSwipeLeft: next, onSwipeRight: prev, threshold: 40 })
+
   return (
     <AnimatePresence>
       {open && (
@@ -165,11 +170,12 @@ export default function WelcomePopup() {
 
               {/* Coverflow carousel */}
               <div
-                className="relative mx-auto my-6 h-[280px] sm:h-[340px] [perspective:1200px]"
+                className="relative mx-auto my-6 h-[280px] sm:h-[340px] [perspective:1200px] touch-pan-y"
                 onMouseEnter={() => setPaused(true)}
                 onMouseLeave={() => setPaused(false)}
                 onTouchStart={() => setPaused(true)}
                 onTouchEnd={() => setPaused(false)}
+                {...swipe}
                 role="group"
                 aria-roledescription="carousel"
                 aria-label="Featured products"

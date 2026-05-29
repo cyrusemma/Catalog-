@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { CaretLeft, CaretRight, Clock, Lightning } from '@phosphor-icons/react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { activeFlashSalePrice, formatPrice } from '../../lib/utils'
+import { useSwipe } from '../../hooks/useSwipe'
 import type { Product } from '../../types'
 
 interface Props {
@@ -65,16 +66,22 @@ export default function ProductCoverflow({ products, autoplayMs = 4000 }: Props)
   const next = () => setActiveIndex(i => (i + 1) % products.length)
   const prev = () => setActiveIndex(i => (i - 1 + products.length) % products.length)
 
+  // Drag/swipe across the carousel — finger sweep right (positive dx) shows
+  // the previous card, sweep left shows the next, matching natural feel.
+  const swipe = useSwipe({ onSwipeLeft: next, onSwipeRight: prev, threshold: 40 })
+
   return (
     <div className="relative">
       <div
         // Perspective container so rotateY on neighbours reads as 3D rather
-        // than flat shrink. min-h tracks the largest card height.
-        className="relative mx-auto h-[360px] sm:h-[440px] [perspective:1400px]"
+        // than flat shrink. touch-pan-y tells mobile that vertical scroll is
+        // ours but horizontal swipes belong to the carousel.
+        className="relative mx-auto h-[360px] sm:h-[440px] [perspective:1400px] touch-pan-y"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onTouchStart={() => setPaused(true)}
         onTouchEnd={() => setPaused(false)}
+        {...swipe}
         role="group"
         aria-roledescription="carousel"
         aria-label="Browse the collection"
