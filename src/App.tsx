@@ -10,15 +10,18 @@ import BottomNav from './components/layout/BottomNav'
 import AnnouncementBanner from './components/layout/AnnouncementBanner'
 import ShopLoader from './components/ui/ShopLoader'
 import VisitorChip from './components/ui/VisitorChip'
-import WelcomePopup from './components/ui/WelcomePopup'
 import OfflineIndicator from './components/ui/OfflineIndicator'
+import SignInModal from './components/ui/SignInModal'
+import SignInPromptToast from './components/ui/SignInPromptToast'
 import { useVisitorTracking } from './hooks/useVisitorTracking'
+import { useSignInStore } from './store/signInStore'
 
 const Home = lazy(() => import('./pages/Home'))
 const Shop = lazy(() => import('./pages/Shop'))
 const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const Cart = lazy(() => import('./pages/Cart'))
 const Wishlist = lazy(() => import('./pages/Wishlist'))
+const Account = lazy(() => import('./pages/Account'))
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
@@ -71,6 +74,9 @@ function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function StorefrontLayout({ children }: { children: React.ReactNode }) {
   useVisitorTracking()
+  const signInOpen = useSignInStore(s => s.open)
+  const closeSignIn = useSignInStore(s => s.closeModal)
+  const signInReason = useSignInStore(s => s.reason)
   return (
     <div className="flex flex-col min-h-dvh overflow-x-hidden">
       <AnnouncementBanner />
@@ -79,7 +85,8 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
       <Footer />
       <BottomNav />
       <VisitorChip />
-      <WelcomePopup />
+      <SignInPromptToast />
+      <SignInModal open={signInOpen} onClose={closeSignIn} reason={signInReason ?? undefined} />
       <OfflineIndicator />
     </div>
   )
@@ -97,6 +104,7 @@ function AnimatedRoutes() {
         <Route path="/product/:id" element={<StorefrontLayout><ProductDetail /></StorefrontLayout>} />
         <Route path="/cart" element={<StorefrontLayout><Cart /></StorefrontLayout>} />
         <Route path="/wishlist" element={<StorefrontLayout><Wishlist /></StorefrontLayout>} />
+        <Route path="/account" element={<StorefrontLayout><Account /></StorefrontLayout>} />
 
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />

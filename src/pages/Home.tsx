@@ -17,12 +17,9 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import ProductCard from '../components/ui/ProductCard'
 import ProductCoverflow from '../components/ui/ProductCoverflow'
+import ProceduralHero from '../components/ui/ProceduralHero'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
-import heroLandscape from '../assets/hero-landscape.jpg'
-import heroPortrait from '../assets/hero-portrait.jpg'
-
-const heroPortraitDimensions = { width: 592, height: 1280 }
 
 export default function Home() {
   const { data: featured } = useProducts({ featured: true })
@@ -32,13 +29,12 @@ export default function Home() {
   const settings = useStoreSettings()
   const reduceMotion = useReducedMotion()
 
-  // Hero carousel: cycle through settings.hero_images if any, otherwise use the bundled defaults
-  const heroSources = useMemo(() => {
-    if (settings.hero_images && settings.hero_images.length > 0) {
-      return settings.hero_images
-    }
-    return [heroLandscape]
-  }, [settings.hero_images])
+  // Hero carousel: cycle through admin-uploaded hero images if any. With none
+  // configured we render a procedural theme-aware hero instead, so brand-new
+  // stores still look polished and the visual re-tints when the user picks a
+  // different theme.
+  const heroSources = settings.hero_images ?? []
+  const usingCustomHero = heroSources.length > 0
   const [heroIdx, setHeroIdx] = useState(0)
   useEffect(() => {
     if (heroSources.length <= 1 || reduceMotion) return
@@ -48,7 +44,6 @@ export default function Home() {
     }, intervalMs)
     return () => window.clearInterval(id)
   }, [heroSources, settings.hero_rotation_seconds, reduceMotion])
-  const usingCustomHero = settings.hero_images && settings.hero_images.length > 0
   const currentHero = heroSources[heroIdx] ?? heroSources[0]
 
   const [reviewName, setReviewName] = useState('')
@@ -167,20 +162,7 @@ export default function Home() {
                   {...(heroIdx === 0 ? { fetchPriority: 'high' as 'high' } : {})}
                 />
               ) : (
-                <picture>
-                  <source media="(min-width: 641px)" srcSet={heroLandscape} />
-                  <img
-                    src={heroPortrait}
-                    alt=""
-                    role="presentation"
-                    className="w-full h-full object-cover object-[50%_18%] sm:object-center"
-                    width={heroPortraitDimensions.width}
-                    height={heroPortraitDimensions.height}
-                    loading="eager"
-                    decoding="async"
-                    fetchPriority="high"
-                  />
-                </picture>
+                <ProceduralHero />
               )}
             </motion.div>
           </AnimatePresence>
@@ -203,13 +185,17 @@ export default function Home() {
           </div>
         )}
 
-        {/* Cinematographer's vignette: bottom wash + left wash */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent pointer-events-none" />
-
-        {/* Soft amber glow echoing the rim-light in the photo */}
-        <div className="absolute -top-32 -right-32 w-[560px] h-[560px] bg-brand-400/25 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 -left-24 w-[320px] h-[320px] bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Heavy vignette + warm rim-light glows only make sense over a real
+            photo. The procedural hero ships with its own (lighter, theme-
+            aware) washes inside ProceduralHero. */}
+        {usingCustomHero && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute -top-32 -right-32 w-[560px] h-[560px] bg-brand-400/25 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-1/4 -left-24 w-[320px] h-[320px] bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+          </>
+        )}
 
         {/* Text - lower-left editorial composition */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pb-28 sm:pb-24 lg:pb-32">
@@ -393,25 +379,35 @@ export default function Home() {
           whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-7xl mx-auto px-4 py-16"
+          className="py-10 sm:py-16"
         >
-          <div className="flex items-center justify-between mb-10">
+          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between mb-5 sm:mb-10">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Sparkle size={14} weight="fill" className="text-brand-400" />
                 <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Just Dropped</span>
               </div>
-              <h2 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
+              <h2 className="text-2xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white sm:underline-gradient inline-block">
                 New Arrivals
               </h2>
-              <p className="text-dark-800/50 dark:text-white/40 text-sm mt-4">Fresh products added this week</p>
+              <p className="hidden sm:block text-dark-800/50 dark:text-white/40 text-sm mt-4">Fresh products added this week</p>
             </div>
-            <Link to="/shop" className="text-brand-400 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
-              View All <ArrowRight size={14} weight="bold" />
+            <Link
+              to="/shop"
+              className="inline-flex items-center gap-1 rounded-full bg-brand-400/10 text-brand-400 hover:bg-brand-400/15 text-xs sm:text-sm font-semibold px-3 py-1.5 transition-colors"
+            >
+              View all <ArrowRight size={13} weight="bold" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-            {newProducts.slice(0, 4).map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+          {/* Mobile = edge-to-edge swipe rail with snap. Desktop = grid. */}
+          <div className="sm:max-w-7xl sm:mx-auto sm:px-4">
+            <div className="flex sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible scrollbar-hide snap-x snap-mandatory px-4 sm:px-0 pb-2 sm:pb-0 -mx-0">
+              {newProducts.slice(0, 8).map((p, i) => (
+                <div key={p.id} className="snap-start flex-shrink-0 w-[44vw] sm:w-auto">
+                  <ProductCard product={p} index={i} />
+                </div>
+              ))}
+            </div>
           </div>
         </motion.section>
       )}
@@ -423,25 +419,34 @@ export default function Home() {
           whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-7xl mx-auto px-4 py-16"
+          className="py-10 sm:py-16"
         >
-          <div className="flex items-center justify-between mb-10">
+          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between mb-5 sm:mb-10">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Lightning size={14} weight="fill" className="text-brand-400" />
                 <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Featured</span>
               </div>
-              <h2 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
+              <h2 className="text-2xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white sm:underline-gradient inline-block">
                 Featured Products
               </h2>
-              <p className="text-dark-800/50 dark:text-white/40 text-sm mt-4">Hand-picked just for you</p>
+              <p className="hidden sm:block text-dark-800/50 dark:text-white/40 text-sm mt-4">Hand-picked just for you</p>
             </div>
-            <Link to="/shop" className="text-brand-400 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
-              View All <ArrowRight size={14} weight="bold" />
+            <Link
+              to="/shop"
+              className="inline-flex items-center gap-1 rounded-full bg-brand-400/10 text-brand-400 hover:bg-brand-400/15 text-xs sm:text-sm font-semibold px-3 py-1.5 transition-colors"
+            >
+              View all <ArrowRight size={13} weight="bold" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-            {featured.slice(0, 8).map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+          <div className="sm:max-w-7xl sm:mx-auto sm:px-4">
+            <div className="flex sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible scrollbar-hide snap-x snap-mandatory px-4 sm:px-0 pb-2 sm:pb-0">
+              {featured.slice(0, 8).map((p, i) => (
+                <div key={p.id} className="snap-start flex-shrink-0 w-[44vw] sm:w-auto">
+                  <ProductCard product={p} index={i} />
+                </div>
+              ))}
+            </div>
           </div>
         </motion.section>
       )}
@@ -452,26 +457,26 @@ export default function Home() {
         whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-80px' }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-7xl mx-auto px-4 py-16"
+        className="max-w-7xl mx-auto px-4 py-10 sm:py-16"
       >
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-2">
           <ChatCircleText size={16} weight="duotone" className="text-brand-400" />
           <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Reviews</span>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid gap-5 sm:gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
+            <h2 className="text-2xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white sm:underline-gradient inline-block">
               Send a site review
             </h2>
-            <p className="text-dark-800/50 dark:text-white/40 text-sm mt-4 max-w-2xl">
+            <p className="hidden sm:block text-dark-800/50 dark:text-white/40 text-sm mt-4 max-w-2xl">
               Leave a rating and a short review. Your feedback will appear in the admin dashboard so I can improve the site.
             </p>
 
-            <form onSubmit={handleReviewSubmit} className="mt-6 rounded-3xl border border-cream-200 dark:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-md p-5 sm:p-6 shadow-sm">
-              <div className="flex flex-col sm:flex-row gap-4 sm:items-center mb-4">
+            <form onSubmit={handleReviewSubmit} className="mt-5 sm:mt-6 rounded-3xl border border-cream-200 dark:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-md p-4 sm:p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row gap-4 sm:items-end mb-4">
                 <div className="flex-1">
-                  <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-2">Your name</label>
+                  <label className="block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-dark-800/60 dark:text-white/55 mb-2">Your name</label>
                   <input
                     value={reviewName}
                     onChange={e => setReviewName(e.target.value)}
@@ -480,8 +485,10 @@ export default function Home() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-2">Rating</label>
-                  <div className="flex items-center gap-2 rounded-2xl border border-cream-200 dark:border-white/10 bg-white dark:bg-dark-700 px-3 py-2.5">
+                  <label className="block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-dark-800/60 dark:text-white/55 mb-2">Rating</label>
+                  {/* Bigger tap targets on mobile — each star button gets its
+                      own padding so thumbs can hit it without precision. */}
+                  <div className="flex items-center gap-1 rounded-2xl border border-cream-200 dark:border-white/10 bg-white dark:bg-dark-700 px-2 py-1.5">
                     {Array.from({ length: 5 }).map((_, index) => {
                       const value = index + 1
                       const active = value <= reviewRating
@@ -490,12 +497,12 @@ export default function Home() {
                           key={value}
                           type="button"
                           onClick={() => setReviewRating(value)}
-                          className="group"
+                          className="group p-2 -m-0.5 rounded-xl active:bg-brand-400/10 transition-colors"
                           aria-label={`Rate ${value} star${value > 1 ? 's' : ''}`}
                         >
                           <Star
-                            size={18}
-                            className={`transition-all duration-200 ${active ? 'text-brand-400 fill-brand-400' : 'text-gray-300 group-hover:text-brand-400 group-hover:scale-110'}`}
+                            size={20}
+                            className={`transition-all duration-200 ${active ? 'text-brand-400 fill-brand-400' : 'text-dark-800/30 dark:text-white/30 group-hover:text-brand-400 group-hover:scale-110'}`}
                           />
                         </button>
                       )
@@ -505,7 +512,7 @@ export default function Home() {
               </div>
 
               <div className="mb-4">
-                <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 mb-2">Your review</label>
+                <label className="block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-dark-800/60 dark:text-white/55 mb-2">Your review</label>
                 <textarea
                   value={reviewMessage}
                   onChange={e => setReviewMessage(e.target.value)}
@@ -519,49 +526,64 @@ export default function Home() {
               {reviewSuccess && <p className="text-sm text-green-600 mb-3">{reviewSuccess}</p>}
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <button type="submit" disabled={reviewSending} className="btn-primary inline-flex items-center justify-center gap-2 disabled:opacity-60">
+                <button
+                  type="submit"
+                  disabled={reviewSending}
+                  className="btn-primary inline-flex items-center justify-center gap-2 disabled:opacity-60 w-full sm:w-auto"
+                >
                   {reviewSending ? 'Sending...' : 'Send Review'}
                 </button>
-                <p className="text-xs text-dark-800/45 dark:text-white/40">
+                <p className="text-[11px] sm:text-xs text-dark-800/45 dark:text-white/40">
                   By sending, you help improve the shop experience.
                 </p>
               </div>
             </form>
           </div>
 
-          <div className="rounded-3xl border border-brand-400/15 bg-dark-800 text-white p-6 sm:p-7 shadow-[0_24px_80px_-30px_rgba(0,0,0,0.55)]">
-            <div className="flex items-center gap-2 mb-4 text-brand-400">
-              <Envelope size={16} weight="duotone" />
-              <span className="text-xs font-bold uppercase tracking-[0.2em]">Contact</span>
-            </div>
-            <h3 className="text-2xl font-display font-bold mb-3">Need to reach me directly?</h3>
-            <p className="text-white/65 text-sm leading-relaxed mb-5">
-              These are the contact details I'll also use to follow up on reviews and suggestions.
-            </p>
+          {/* Brand-amber callout instead of a warm-brown card — pops cleanly
+              on every theme (light, dark, amoled, rose-light, rose-dark)
+              instead of fighting the rose palette. */}
+          <div className="relative rounded-3xl text-white p-5 sm:p-7 shadow-[0_24px_80px_-30px_rgba(212,130,10,0.55)] overflow-hidden bg-gradient-to-br from-brand-500 via-brand-400 to-brand-500">
+            {/* Soft inner glow */}
+            <div className="pointer-events-none absolute -top-20 -right-16 w-[260px] h-[260px] bg-white/15 rounded-full blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-12 w-[220px] h-[220px] bg-black/15 rounded-full blur-3xl" />
 
-            <div className="space-y-2.5">
-              {contactItems.map((item) => {
-                const Icon = item.Icon
-                return (
-                  <motion.a
-                    key={item.label}
-                    href={item.href}
-                    target={item.href.startsWith('http') ? '_blank' : undefined}
-                    rel={item.href.startsWith('http') ? 'noreferrer' : undefined}
-                    whileHover={{ scale: 1.04, x: 4 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ type: 'spring', stiffness: 320, damping: 16 }}
-                    className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white/70 hover:bg-brand-400 hover:text-white transition-colors"
-                  >
-                    <Icon className="h-4 w-4 text-gray-400 group-hover:text-white transition-colors" />
-                    <div className="min-w-0 flex-1">
-                      <span className="block text-[10px] uppercase tracking-[0.2em] text-white/40 group-hover:text-white/80">{item.label}</span>
-                      <span className="block truncate text-sm font-medium">{item.value}</span>
-                    </div>
-                    <ArrowRight size={14} className="text-white/40 group-hover:text-white transition-colors" />
-                  </motion.a>
-                )
-              })}
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3 text-white/85">
+                <Envelope size={16} weight="duotone" />
+                <span className="text-xs font-bold uppercase tracking-[0.2em]">Contact</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-display font-bold mb-2">Need to reach me directly?</h3>
+              <p className="text-white/80 text-sm leading-relaxed mb-5">
+                These are the channels I'll also use to follow up on reviews and suggestions.
+              </p>
+
+              <div className="space-y-2">
+                {contactItems.map((item) => {
+                  const Icon = item.Icon
+                  return (
+                    <motion.a
+                      key={item.label}
+                      href={item.href}
+                      target={item.href.startsWith('http') ? '_blank' : undefined}
+                      rel={item.href.startsWith('http') ? 'noreferrer' : undefined}
+                      whileHover={{ scale: 1.02, x: 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: 'spring', stiffness: 320, damping: 18 }}
+                      className="group flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 hover:bg-white/20 backdrop-blur-md px-3.5 py-3 text-white transition-colors"
+                    >
+                      <span className="flex-shrink-0 w-9 h-9 rounded-xl bg-white/15 group-hover:bg-white/25 flex items-center justify-center transition-colors">
+                        <Icon className="h-4 w-4 text-white" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-[10px] uppercase tracking-[0.2em] text-white/70">{item.label}</span>
+                        <span className="block truncate text-sm font-semibold">{item.value}</span>
+                      </div>
+                      <ArrowRight size={14} className="text-white/70 group-hover:text-white transition-colors flex-shrink-0" />
+                    </motion.a>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </div>

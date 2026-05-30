@@ -58,11 +58,46 @@ create table if not exists orders (
   customer_phone text not null,
   customer_address text,
   items jsonb not null default '[]',
+  subtotal numeric(10,2) not null default 0,
+  delivery_fee numeric(10,2) not null default 0,
+  discount_amount numeric(10,2) not null default 0,
   total numeric(10,2) not null default 0,
+  currency text default 'GHS',
+  -- Receipt / payment fields
+  receipt_number text,
+  payment_status text default 'pending' check (payment_status in ('pending','paid','refunded','failed')),
+  payment_method text,
+  payment_reference text,
+  paid_at timestamptz,
+  -- Status timestamps
+  confirmed_at timestamptz,
+  processing_at timestamptz,
+  shipped_at timestamptz,
+  delivered_at timestamptz,
+  cancelled_at timestamptz,
   status text default 'pending' check (status in ('pending','confirmed','processing','shipped','delivered','cancelled')),
   notes text,
   created_at timestamptz default now()
 );
+
+-- Backfill/upgrade helpers for existing installations: add missing columns safely
+alter table if exists orders
+  add column if not exists subtotal numeric(10,2) not null default 0,
+  add column if not exists delivery_fee numeric(10,2) not null default 0,
+  add column if not exists discount_amount numeric(10,2) not null default 0,
+  add column if not exists currency text default 'GHS',
+  add column if not exists receipt_number text,
+  add column if not exists payment_status text default 'pending',
+  add column if not exists payment_method text,
+  add column if not exists payment_reference text,
+  add column if not exists paid_at timestamptz,
+  add column if not exists confirmed_at timestamptz,
+  add column if not exists processing_at timestamptz,
+  add column if not exists shipped_at timestamptz,
+  add column if not exists delivered_at timestamptz,
+  add column if not exists cancelled_at timestamptz;
+
+create unique index if not exists orders_receipt_number_unique on orders (receipt_number) where receipt_number is not null;
 
 -- Store settings — enforced singleton (only one row ever exists)
 create table if not exists store_settings (

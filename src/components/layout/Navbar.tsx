@@ -1,14 +1,26 @@
 import { Link, useLocation } from 'react-router-dom'
-import { ShoppingCart, Storefront, Moon, Sun, MoonStars } from '@phosphor-icons/react'
+import { ShoppingCart, Storefront, SignIn } from '@phosphor-icons/react'
 import { useCartStore } from '../../store/cartStore'
-import { useTheme } from '../../hooks/useTheme'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
+import { useCustomerSession } from '../../hooks/useCustomerSession'
+import { useSignInStore } from '../../store/signInStore'
+import ThemePicker from '../ui/ThemePicker'
 
 export default function Navbar() {
   const location = useLocation()
   const totalItems = useCartStore(s => s.totalItems())
-  const { theme, toggle } = useTheme()
   const settings = useStoreSettings()
+  const { isLoggedIn, profile } = useCustomerSession()
+  const openSignIn = useSignInStore(s => s.openModal)
+
+  // Two-letter initials for the avatar fallback when there's no avatar_url.
+  const initials = profile
+    ? (profile.display_name || profile.email || '?')
+        .split(/\s+/)
+        .map(part => part.charAt(0).toUpperCase())
+        .slice(0, 2)
+        .join('') || '?'
+    : ''
 
   const navLink = (to: string, label: string) => {
     const active = location.pathname === to
@@ -50,20 +62,7 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          <button
-            onClick={toggle}
-            aria-label={`Theme: ${theme}. Click to switch to ${theme === 'light' ? 'dark' : theme === 'dark' ? 'AMOLED' : 'light'}.`}
-            title={`Theme: ${theme}`}
-            className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors"
-          >
-            <span className="inline-flex transition-transform duration-200 hover:rotate-12">
-              {/* Icon shown = what you'll get on next click, so the button
-                  always feels "go to ___" instead of "you are ___". */}
-              {theme === 'light' && <Moon size={18} weight="duotone" className="text-brand-500" />}
-              {theme === 'dark' && <MoonStars size={18} weight="duotone" className="text-brand-400" />}
-              {theme === 'amoled' && <Sun size={18} weight="duotone" className="text-brand-400" />}
-            </span>
-          </button>
+          <ThemePicker />
 
           <Link to="/cart" className="relative w-9 h-9 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors">
             <ShoppingCart size={20} weight="duotone" className="text-dark-800 dark:text-white" />
@@ -73,6 +72,29 @@ export default function Navbar() {
               </span>
             )}
           </Link>
+
+          {isLoggedIn && profile ? (
+            <Link
+              to="/account"
+              aria-label="Your account"
+              className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-brand-400 to-brand-500 text-white text-[11px] font-bold ring-1 ring-brand-400/30 hover:ring-brand-400/60 transition-shadow"
+            >
+              {profile.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span>{initials}</span>
+              )}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => openSignIn()}
+              aria-label="Sign in"
+              className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white"
+            >
+              <SignIn size={18} weight="duotone" />
+            </button>
+          )}
         </div>
       </div>
     </nav>

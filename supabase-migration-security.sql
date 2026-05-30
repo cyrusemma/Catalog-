@@ -28,8 +28,13 @@ create policy "Admin manage products" on products
   with check (public.is_admin());
 
 -- Orders: admin only (storefront uses WhatsApp, not DB inserts)
+-- Orders: allow public inserts (guest checkout via WhatsApp) but keep admin manage for other operations.
 drop policy if exists "Public insert orders" on orders;
 drop policy if exists "Admin all orders" on orders;
+
+create policy "Public insert orders" on orders
+  for insert
+  with check (true);
 
 create policy "Admin manage orders" on orders
   for all
@@ -41,29 +46,6 @@ drop policy if exists "Admin all settings" on store_settings;
 drop policy if exists "Admin manage settings" on store_settings;
 
 create policy "Admin manage settings" on store_settings
-  for all
-  using (public.is_admin())
-  with check (public.is_admin());
-
--- Reviews table
-create table if not exists site_reviews (
-  id uuid primary key default gen_random_uuid(),
-  name text,
-  rating int not null check (rating between 1 and 5),
-  message text not null,
-  page_url text,
-  created_at timestamptz default now()
-);
-
-alter table site_reviews enable row level security;
-
-drop policy if exists "Public submit reviews" on site_reviews;
-drop policy if exists "Admin manage reviews" on site_reviews;
-
-create policy "Public submit reviews" on site_reviews
-  for insert with check (true);
-
-create policy "Admin manage reviews" on site_reviews
   for all
   using (public.is_admin())
   with check (public.is_admin());
