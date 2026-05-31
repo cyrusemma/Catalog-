@@ -9,10 +9,8 @@ import Footer from './components/layout/Footer'
 import BottomNav from './components/layout/BottomNav'
 import AnnouncementBanner from './components/layout/AnnouncementBanner'
 import ShopLoader from './components/ui/ShopLoader'
-import VisitorChip from './components/ui/VisitorChip'
 import OfflineIndicator from './components/ui/OfflineIndicator'
 import SignInModal from './components/ui/SignInModal'
-import SignInPromptToast from './components/ui/SignInPromptToast'
 import { useVisitorTracking } from './hooks/useVisitorTracking'
 import { useSignInStore } from './store/signInStore'
 
@@ -84,8 +82,6 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
       {children}
       <Footer />
       <BottomNav />
-      <VisitorChip />
-      <SignInPromptToast />
       <SignInModal open={signInOpen} onClose={closeSignIn} reason={signInReason ?? undefined} />
       <OfflineIndicator />
     </div>

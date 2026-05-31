@@ -5,6 +5,7 @@ import { useStoreSettings } from '../../hooks/useStoreSettings'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
 import { useSignInStore } from '../../store/signInStore'
 import ThemePicker from '../ui/ThemePicker'
+import NotificationButton from '../ui/NotificationButton'
 
 export default function Navbar() {
   const location = useLocation()
@@ -63,6 +64,7 @@ export default function Navbar() {
 
         <div className="flex items-center gap-1.5">
           <ThemePicker />
+          <NotificationButton />
 
           <Link to="/cart" className="relative w-9 h-9 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors">
             <ShoppingCart size={20} weight="duotone" className="text-dark-800 dark:text-white" />
