@@ -1,7 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+// .trim() guards against a stray trailing newline/space in the Vercel env var
+// (a pasted key with a newline serialises as `%0A` and makes Supabase reject
+// every REST + realtime request with 401 — i.e. the storefront shows no data).
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string)?.trim()
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string)?.trim()
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase credentials missing. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env')
