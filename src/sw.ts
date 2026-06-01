@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching'
-import { CacheFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies'
+import { CacheFirst, NetworkFirst, NetworkOnly } from 'workbox-strategies'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
 import { ExpirationPlugin } from 'workbox-expiration'
 import { CacheableResponsePlugin } from 'workbox-cacheable-response'
@@ -26,12 +26,19 @@ registerRoute(
   }),
 )
 
-// Supabase REST reads (products, categories, settings): stale-while-revalidate
-// so the storefront paints instantly from cache and refreshes in the background.
+// Supabase REST reads (products, categories, settings): network-FIRST so the
+// storefront always shows fresh data when online, only falling back to cache
+// when the network is unavailable.
+//
+// This deliberately replaces stale-while-revalidate: SWR could pin a stale,
+// empty `[]` product response in the cache and keep serving it — making the
+// shop look empty even after products exist in the database. The cache name is
+// bumped (-v2) so any already-poisoned `supabase-rest` cache is abandoned.
 registerRoute(
   ({ url }) => url.hostname.endsWith('.supabase.co') && url.pathname.startsWith('/rest/v1/'),
-  new StaleWhileRevalidate({
-    cacheName: 'supabase-rest',
+  new NetworkFirst({
+    cacheName: 'supabase-rest-v2',
+    networkTimeoutSeconds: 4,
     plugins: [
       new ExpirationPlugin({ maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 }),
       new CacheableResponsePlugin({ statuses: [0, 200] }),
