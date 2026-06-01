@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { supabase } from '../lib/supabase'
 
 export interface StoreSettings {
   id: string
@@ -47,7 +48,6 @@ export function useStoreSettings() {
   const { data } = useQuery({
     queryKey: ['store-settings'],
     queryFn: async (): Promise<StoreSettings> => {
-      const { supabase } = await import('../lib/supabase')
       const { data } = await supabase.from('store_settings').select('*').maybeSingle()
       if (!data) return DEFAULTS
       return {

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { supabase } from '../lib/supabase'
 import type { Category, Product } from '../types'
 
 export function useProducts(filters?: {
@@ -9,7 +10,6 @@ export function useProducts(filters?: {
   return useQuery({
     queryKey: ['products', filters],
     queryFn: async () => {
-      const { supabase } = await import('../lib/supabase')
       let query = supabase
         .from('products')
         .select('*')
@@ -37,7 +37,6 @@ export function useProduct(id: string) {
   return useQuery({
     queryKey: ['product', id],
     queryFn: async () => {
-      const { supabase } = await import('../lib/supabase')
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -57,7 +56,6 @@ export function useNewProducts(days = 7) {
   return useQuery({
     queryKey: ['products', 'new', days],
     queryFn: async () => {
-      const { supabase } = await import('../lib/supabase')
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -75,7 +73,6 @@ export function useCategoryTree() {
   return useQuery({
     queryKey: ['categories', 'tree'],
     queryFn: async () => {
-      const { supabase } = await import('../lib/supabase')
       const { data, error } = await supabase
         .from('categories')
         .select('id, name, slug, parent_id, sort_order')
@@ -91,7 +88,6 @@ export function useProductCategoryRefs() {
   return useQuery({
     queryKey: ['products', 'category-refs'],
     queryFn: async () => {
-      const { supabase } = await import('../lib/supabase')
       const { data, error } = await supabase
         .from('products')
         .select('category_id, category')

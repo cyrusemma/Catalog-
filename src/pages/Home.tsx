@@ -21,6 +21,7 @@ import ProceduralHero from '../components/ui/ProceduralHero'
 import StarfieldBackground from '../components/ui/StarfieldBackground'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
+import { supabase } from '../lib/supabase'
 
 export default function Home() {
   const { data: featured, isError: featuredIsError, error: featuredError } = useProducts({ featured: true })
@@ -76,7 +77,6 @@ export default function Home() {
     }
 
     setReviewSending(true)
-    const { supabase } = await import('../lib/supabase')
     const { error } = await supabase.from('site_reviews').insert({
       name: reviewName.trim() || null,
       rating: reviewRating,

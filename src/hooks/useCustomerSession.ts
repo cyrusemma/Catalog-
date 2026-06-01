@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { supabase } from '../lib/supabase'
 import type { Session, User } from '@supabase/supabase-js'
 
 export interface CustomerProfile {
@@ -25,22 +26,18 @@ export function useCustomerSession() {
     let mounted = true
     let unsubscribe: (() => void) | undefined
 
-    import('../lib/supabase').then(({ supabase }) => {
+    supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return
-
-      supabase.auth.getSession().then(({ data }) => {
-        if (!mounted) return
-        setSession(data.session)
-        setLoading(false)
-      })
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-        setSession(s)
-        // Bust the profile cache so a fresh sign-in pulls the new row.
-        qc.invalidateQueries({ queryKey: ['customer-profile'] })
-      })
-      unsubscribe = () => subscription.unsubscribe()
+      setSession(data.session)
+      setLoading(false)
     })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s)
+      // Bust the profile cache so a fresh sign-in pulls the new row.
+      qc.invalidateQueries({ queryKey: ['customer-profile'] })
+    })
+    unsubscribe = () => subscription.unsubscribe()
 
     return () => {
       mounted = false
@@ -54,7 +51,6 @@ export function useCustomerSession() {
     queryKey: ['customer-profile', user?.id ?? null],
     queryFn: async (): Promise<CustomerProfile | null> => {
       if (!user) return null
-      const { supabase } = await import('../lib/supabase')
       const { data } = await supabase
         .from('profiles')
         .select('id, email, display_name, avatar_url, notify_new_arrivals, created_at')

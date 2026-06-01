@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { isAdminSession } from './lib/admin'
+import { supabase } from './lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 
 import Navbar from './components/layout/Navbar'
@@ -39,18 +40,14 @@ function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
     let mounted = true
     let unsubscribe: (() => void) | undefined
 
-    import('./lib/supabase').then(({ supabase }) => {
+    supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return
-
-      supabase.auth.getSession().then(({ data }) => {
-        if (!mounted) return
-        setSession(data.session)
-        setLoading(false)
-      })
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
-      unsubscribe = () => subscription.unsubscribe()
+      setSession(data.session)
+      setLoading(false)
     })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    unsubscribe = () => subscription.unsubscribe()
 
     return () => {
       mounted = false
@@ -125,25 +122,24 @@ export default function App() {
     let mounted = true
     let removeChannel: (() => void) | undefined
 
-    window.setTimeout(() => {
-      import('./lib/supabase').then(({ supabase }) => {
-        if (!mounted) return
-        const channel = supabase
-          .channel('store-settings-live')
-          .on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'store_settings' },
-            () => qc.invalidateQueries({ queryKey: ['store-settings'] })
-          )
-          .subscribe()
-        removeChannel = () => {
-          supabase.removeChannel(channel)
-        }
-      })
+    const timer = window.setTimeout(() => {
+      if (!mounted) return
+      const channel = supabase
+        .channel('store-settings-live')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'store_settings' },
+          () => qc.invalidateQueries({ queryKey: ['store-settings'] })
+        )
+        .subscribe()
+      removeChannel = () => {
+        supabase.removeChannel(channel)
+      }
     }, 3000)
 
     return () => {
       mounted = false
+      window.clearTimeout(timer)
       removeChannel?.()
     }
   }, [])

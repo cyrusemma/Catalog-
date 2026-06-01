@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 const SESSION_LOGGED_KEY = 'catalog-visit-logged'
 const SESSION_ID_KEY = 'catalog-session-id'
@@ -23,14 +24,12 @@ export function useVisitorTracking() {
     }
     window.sessionStorage.setItem(SESSION_LOGGED_KEY, '1')
 
-    import('../lib/supabase').then(({ supabase }) => {
-      supabase
-        .from('visits')
-        .insert({ session_id: sessionId })
-        .then(
-          () => {},
-          () => {},
-        )
-    })
+    supabase
+      .from('visits')
+      .insert({ session_id: sessionId })
+      .then(
+        () => {},
+        () => {},
+      )
   }, [])
 }
