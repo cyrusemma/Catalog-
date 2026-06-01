@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Loader2, Plus, X, ImagePlus, Upload } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
-import { supabase } from '../../lib/supabase'
+import { supabase, supabaseUrl } from '../../lib/supabase'
 import { slugify } from '../../lib/utils'
 import { useCategoryTree, topLevelCategories, childCategories, findCategory } from '../../hooks/useProducts'
 import {
@@ -243,7 +243,6 @@ export default function AdminProductForm() {
         setNotifyMessage({ kind: 'err', text: 'You need to be signed in as admin.' })
         return
       }
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
       const res = await fetch(`${supabaseUrl}/functions/v1/notify-new-arrival`, {
         method: 'POST',
         headers: {

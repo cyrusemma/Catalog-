@@ -1,13 +1,22 @@
 import { createClient } from '@supabase/supabase-js'
 
-// .trim() guards against a stray trailing newline/space in the Vercel env var
-// (a pasted key with a newline serialises as `%0A` and makes Supabase reject
-// every REST + realtime request with 401 — i.e. the storefront shows no data).
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string)?.trim()
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string)?.trim()
+export function normalizeEnvValue(value: string | undefined): string {
+  return (value ?? '').trim().replace(/\s+/g, '')
+}
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase credentials missing. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env')
+const defaultSupabaseUrl = 'https://tktakogedsdvrslkyfuh.supabase.co'
+const defaultSupabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIa3Rha29nZWRzZHZyc2xreWZ1aCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzc4Nzk2MTg3LCJleHAiOjIwOTQzNzIxODd9.u8mCNThy6xvek8Riq_ZugNEYRooU1DW-CEvE2Z94R3Q'
+
+// Strip all whitespace, not just a trailing trim, because pasted secrets can
+// pick up invisible line breaks that turn into `%0A` in the Supabase URL.
+const envSupabaseUrl = normalizeEnvValue(import.meta.env.VITE_SUPABASE_URL as string | undefined)
+const envSupabaseAnonKey = normalizeEnvValue(import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)
+
+export const supabaseUrl = envSupabaseUrl || defaultSupabaseUrl
+const supabaseAnonKey = envSupabaseAnonKey || defaultSupabaseAnonKey
+
+if (!envSupabaseUrl || !envSupabaseAnonKey) {
+  console.warn('Supabase env vars missing; using the public catalog Supabase defaults. Add clean VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY values in the deployment settings.')
 }
 
 /**
@@ -21,7 +30,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
  *    magic-link + OAuth; it stores a one-time code_verifier in localStorage
  *    while the user is away in their email client.
  */
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,

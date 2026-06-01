@@ -100,7 +100,7 @@ export default function Shop() {
     return undefined
   }, [activeParent, activeSub, categoryTree])
 
-  const { data: products, isLoading } = useProducts({
+  const { data: products, isLoading, isError: productsIsError, error: productsError } = useProducts({
     categoryIds,
     search: query || undefined,
   })
@@ -399,8 +399,17 @@ export default function Shop() {
         </div>
       )}
 
+      {productsIsError && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-200">
+          <p className="font-semibold">Products could not load.</p>
+          <p className="mt-1 text-red-700/80 dark:text-red-200/80">
+            {productsError instanceof Error ? productsError.message : 'Check the Supabase deployment environment variables.'}
+          </p>
+        </div>
+      )}
+
       {/* Netflix-style category rows (shown when "All" is selected, no search) */}
-      {!isLoading && showRowsView && (
+      {!isLoading && !productsIsError && showRowsView && (
         <div className="space-y-8 sm:space-y-10">
           {[...productsByCategory.entries()].map(([catId, { name, products: prods }]) => {
             const parent = categoryTree?.find(c => c.id === catId)
@@ -441,7 +450,7 @@ export default function Shop() {
       )}
 
       {/* Filtered shelf (specific category, search, or filters active) */}
-      {!isLoading && !showRowsView && visibleProducts && visibleProducts.length > 0 && (
+      {!isLoading && !productsIsError && !showRowsView && visibleProducts && visibleProducts.length > 0 && (
         <section>
           <div className="flex items-end justify-between mb-3 sm:mb-4">
             <h2 className="text-lg sm:text-2xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
@@ -481,7 +490,7 @@ export default function Shop() {
       )}
 
       {/* Empty state */}
-      {!isLoading && (!visibleProducts || visibleProducts.length === 0) && (
+      {!isLoading && !productsIsError && (!visibleProducts || visibleProducts.length === 0) && (
         <div className="text-center py-24">
           <MagnifyingGlassMinus size={56} weight="duotone" className="text-brand-400 mx-auto mb-4" />
           <h3 className="text-dark-800 dark:text-white font-semibold mb-2">No products found</h3>

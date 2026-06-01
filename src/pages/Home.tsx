@@ -23,10 +23,12 @@ import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 
 export default function Home() {
-  const { data: featured } = useProducts({ featured: true })
-  const { data: newProducts } = useNewProducts(7)
-  const { data: allProducts } = useProducts()
+  const { data: featured, isError: featuredIsError, error: featuredError } = useProducts({ featured: true })
+  const { data: newProducts, isError: newProductsIsError, error: newProductsError } = useNewProducts(7)
+  const { data: allProducts, isError: allProductsIsError, error: allProductsError } = useProducts()
   const showcase = useMemo(() => (allProducts ?? []).slice(0, 14), [allProducts])
+  const productsError = allProductsError ?? featuredError ?? newProductsError
+  const productsLoadFailed = allProductsIsError || featuredIsError || newProductsIsError
   const settings = useStoreSettings()
   const reduceMotion = useReducedMotion()
 
@@ -353,6 +355,17 @@ export default function Home() {
         </motion.div>
       </section>
 
+      {productsLoadFailed && (
+        <section className="max-w-7xl mx-auto px-4 py-10">
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-200">
+            <p className="font-semibold">Products could not load.</p>
+            <p className="mt-1 text-red-700/80 dark:text-red-200/80">
+              {productsError instanceof Error ? productsError.message : 'Check the Supabase deployment environment variables.'}
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Coverflow showcase */}
       {showcase.length > 0 && (
         <motion.section
@@ -610,7 +623,7 @@ export default function Home() {
       </motion.section>
 
       {/* Empty state */}
-      {(!featured || featured.length === 0) && (!newProducts || newProducts.length === 0) && (
+      {!productsLoadFailed && (!featured || featured.length === 0) && (!newProducts || newProducts.length === 0) && (
         <section className="max-w-7xl mx-auto px-4 py-32 text-center">
           <ShoppingBagOpen size={64} weight="duotone" className="text-brand-400 mx-auto mb-4" />
           <h2 className="text-2xl font-display font-bold text-dark-800 dark:text-white mb-2">Coming Soon</h2>
