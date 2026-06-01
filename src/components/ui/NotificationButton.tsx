@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bell, Users, X } from '@phosphor-icons/react'
+import { Bell, Users, X, BellRinging, BellSlash } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useQueryClient } from '@tanstack/react-query'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
 import { useVisitorCount } from '../../hooks/useVisitorCount'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
 import { useSignInStore } from '../../store/signInStore'
+import { supabase } from '../../lib/supabase'
+import { getActiveSubscription, pushIsSupported, subscribeToPush, unsubscribeFromPush } from '../../lib/pushSubscription'
 
 const SIGNIN_DISMISSED_KEY = 'catalog-signin-prompt-seen-v1'
 
@@ -29,14 +32,72 @@ function formatCount(n: number) {
 export default function NotificationButton() {
   const settings = useStoreSettings()
   const { data: count } = useVisitorCount(settings.show_visitor_count)
-  const { isLoggedIn, loading: sessionLoading } = useCustomerSession()
+  const { isLoggedIn, loading: sessionLoading, user, profile } = useCustomerSession()
   const openSignIn = useSignInStore(s => s.openModal)
+  const qc = useQueryClient()
   const [open, setOpen] = useState(false)
   const [signInDismissed, setSignInDismissed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false
     return !!window.localStorage.getItem(SIGNIN_DISMISSED_KEY)
   })
   const rootRef = useRef<HTMLDivElement>(null)
+
+  // Browser-side push subscription state. We check on mount and whenever the
+  // signed-in user changes, so the UI reflects "already subscribed" without
+  // re-prompting permission.
+  const [pushSubscribed, setPushSubscribed] = useState<boolean | null>(null)
+  const [pushWorking, setPushWorking] = useState(false)
+  const [pushError, setPushError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    if (!isLoggedIn || !pushIsSupported()) {
+      setPushSubscribed(null)
+      return
+    }
+    getActiveSubscription().then(sub => {
+      if (active) setPushSubscribed(!!sub)
+    })
+    return () => { active = false }
+  }, [isLoggedIn])
+
+  const handleSubscribePush = async () => {
+    if (!user) return
+    setPushError(null)
+    setPushWorking(true)
+    try {
+      const sub = await subscribeToPush(user.id)
+      if (!sub) {
+        setPushError('Notifications were blocked. Enable them in your browser settings to receive new-arrival alerts.')
+        setPushSubscribed(false)
+        return
+      }
+      // Flip the profile flag so the Account toggle reflects reality.
+      await supabase.from('profiles').update({ notify_new_arrivals: true }).eq('id', user.id)
+      qc.invalidateQueries({ queryKey: ['customer-profile'] })
+      setPushSubscribed(true)
+    } catch (err) {
+      setPushError(err instanceof Error ? err.message : 'Could not subscribe.')
+    } finally {
+      setPushWorking(false)
+    }
+  }
+
+  const handleUnsubscribePush = async () => {
+    if (!user) return
+    setPushError(null)
+    setPushWorking(true)
+    try {
+      await unsubscribeFromPush(user.id)
+      await supabase.from('profiles').update({ notify_new_arrivals: false }).eq('id', user.id)
+      qc.invalidateQueries({ queryKey: ['customer-profile'] })
+      setPushSubscribed(false)
+    } catch (err) {
+      setPushError(err instanceof Error ? err.message : 'Could not unsubscribe.')
+    } finally {
+      setPushWorking(false)
+    }
+  }
 
   // Close on outside click + Escape.
   useEffect(() => {
@@ -57,10 +118,11 @@ export default function NotificationButton() {
 
   const showSignInCard = !sessionLoading && !isLoggedIn && !signInDismissed
   const showVisitorCard = settings.show_visitor_count
+  const showPushCard = !sessionLoading && isLoggedIn && pushIsSupported()
 
   // Hide the bell entirely when there's literally nothing to surface — saves
   // navbar space for stores that haven't enabled any of this.
-  if (!showSignInCard && !showVisitorCard) return null
+  if (!showSignInCard && !showVisitorCard && !showPushCard) return null
 
   const dismissSignIn = () => {
     if (typeof window !== 'undefined') {
@@ -76,8 +138,12 @@ export default function NotificationButton() {
   }
 
   // Only pulse when there's something the user can *act* on. The visitor
-  // counter is informational, not a notification — no nag for it.
-  const hasUnreadAction = showSignInCard
+  // counter is informational, not a notification — no nag for it. Push gets
+  // a pulse only when the user could turn it on but hasn't yet AND the
+  // profile flag suggests they want it (the toggle is on but the device isn't
+  // subscribed).
+  const pushWantedButOff = showPushCard && profile?.notify_new_arrivals === true && pushSubscribed === false
+  const hasUnreadAction = showSignInCard || pushWantedButOff
   const total = count ?? 0
 
   return (
@@ -150,6 +216,57 @@ export default function NotificationButton() {
                       >
                         Not now
                       </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Push notifications — subscribe / unsubscribe for new arrivals. */}
+            {showPushCard && (
+              <div className="rounded-xl bg-cream-100 dark:bg-white/5 p-3">
+                <div className="flex items-start gap-3">
+                  <span className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${
+                    pushSubscribed ? 'bg-gradient-to-br from-brand-400 to-brand-500 shadow-amber-glow' : 'bg-dark-800/10 dark:bg-white/10'
+                  }`}>
+                    {pushSubscribed ? (
+                      <BellRinging size={15} weight="fill" className="text-white" />
+                    ) : (
+                      <BellSlash size={15} weight="duotone" className="text-dark-800/55 dark:text-white/55" />
+                    )}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-dark-800 dark:text-white leading-tight">New-arrival alerts</p>
+                    <p className="text-[12px] text-dark-800/60 dark:text-white/55 leading-snug mt-1">
+                      {pushSubscribed === null
+                        ? 'Checking your device…'
+                        : pushSubscribed
+                          ? 'Subscribed on this device. We\'ll ping you when a new product drops.'
+                          : 'Tap to get a notification on this device when new products drop.'}
+                    </p>
+                    {pushError && (
+                      <p className="text-[11px] text-red-500 mt-1.5 leading-snug">{pushError}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-2.5">
+                      {pushSubscribed ? (
+                        <button
+                          type="button"
+                          onClick={handleUnsubscribePush}
+                          disabled={pushWorking}
+                          className="bg-dark-800/10 dark:bg-white/10 hover:bg-dark-800/15 dark:hover:bg-white/15 text-dark-800 dark:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
+                        >
+                          {pushWorking ? 'Working…' : 'Turn off'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleSubscribePush}
+                          disabled={pushWorking || pushSubscribed === null}
+                          className="bg-brand-400 hover:bg-brand-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
+                        >
+                          {pushWorking ? 'Working…' : 'Turn on'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

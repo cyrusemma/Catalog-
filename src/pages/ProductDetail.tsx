@@ -142,7 +142,7 @@ export default function ProductDetail() {
                     key={i}
                     size={14}
                     weight={i < Math.round(product.rating!) ? 'fill' : 'regular'}
-                    className={i < Math.round(product.rating!) ? 'text-brand-400' : 'text-cream-300 dark:text-white/20'}
+                    className={i < Math.round(product.rating!) ? 'text-brand-400 fill-brand-400 drop-shadow-[0_0_6px_rgba(212,130,10,0.6)]' : 'text-cream-300 dark:text-white/20'}
                   />
                 ))}
               </div>

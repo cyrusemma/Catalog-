@@ -126,7 +126,7 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
 
           {product.rating && (
             <div className="hidden sm:flex items-center gap-1 mb-2">
-              <Star size={11} weight="fill" className="text-brand-400" />
+              <Star size={11} weight="fill" className="text-brand-400 fill-brand-400 drop-shadow-[0_0_4px_rgba(212,130,10,0.55)]" />
               <span className="text-dark-800/60 dark:text-white/60 text-xs">
                 {product.rating} ({product.rating_count})
               </span>

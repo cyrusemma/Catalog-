@@ -20,6 +20,7 @@ const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const Cart = lazy(() => import('./pages/Cart'))
 const Wishlist = lazy(() => import('./pages/Wishlist'))
 const Account = lazy(() => import('./pages/Account'))
+const Settings = lazy(() => import('./pages/Settings'))
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
@@ -101,6 +102,7 @@ function AnimatedRoutes() {
         <Route path="/cart" element={<StorefrontLayout><Cart /></StorefrontLayout>} />
         <Route path="/wishlist" element={<StorefrontLayout><Wishlist /></StorefrontLayout>} />
         <Route path="/account" element={<StorefrontLayout><Account /></StorefrontLayout>} />
+        <Route path="/settings" element={<StorefrontLayout><Settings /></StorefrontLayout>} />
 
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />

@@ -1,9 +1,24 @@
 import { useEffect, useState, useCallback } from 'react'
 
-export type Theme = 'light' | 'dark' | 'amoled' | 'rose-light' | 'rose-dark'
+export type Theme =
+  | 'light'
+  | 'dark'
+  | 'amoled'
+  | 'rose-light'
+  | 'rose-dark'
+  | 'turquoise-light'
+  | 'turquoise-dark'
 
 const STORAGE_KEY = 'catalog-theme'
-const THEME_ORDER: Theme[] = ['light', 'dark', 'amoled', 'rose-light', 'rose-dark']
+const THEME_ORDER: Theme[] = [
+  'light',
+  'dark',
+  'amoled',
+  'rose-light',
+  'rose-dark',
+  'turquoise-light',
+  'turquoise-dark',
+]
 
 export const THEMES: { value: Theme; label: string; swatch: string; subtitle: string }[] = [
   { value: 'light', label: 'Light', swatch: 'linear-gradient(135deg, #faecc6, #f0dfae)', subtitle: 'Bright cream' },
@@ -11,6 +26,8 @@ export const THEMES: { value: Theme; label: string; swatch: string; subtitle: st
   { value: 'amoled', label: 'AMOLED', swatch: 'linear-gradient(135deg, #050505, #000000)', subtitle: 'Pure black' },
   { value: 'rose-light', label: 'Rose Light', swatch: 'linear-gradient(135deg, #fde4ea, #f7c3d0)', subtitle: 'Soft dusty rose' },
   { value: 'rose-dark', label: 'Rose Dark', swatch: 'linear-gradient(135deg, #3a1a25, #1c0a12)', subtitle: 'Deep wine rose' },
+  { value: 'turquoise-light', label: 'Turquoise Light', swatch: 'linear-gradient(135deg, #d6f7f1, #9fe8df)', subtitle: 'Cool aqua' },
+  { value: 'turquoise-dark', label: 'Turquoise Dark', swatch: 'linear-gradient(135deg, #0a3f38, #03201c)', subtitle: 'Deep teal' },
 ]
 
 function isTheme(v: unknown): v is Theme {
@@ -33,7 +50,8 @@ function detectInitial(): Theme {
  */
 export function applyThemeClass(theme: Theme) {
   const root = document.documentElement
-  const isDarkVariant = theme === 'dark' || theme === 'amoled' || theme === 'rose-dark'
+  const isDarkVariant =
+    theme === 'dark' || theme === 'amoled' || theme === 'rose-dark' || theme === 'turquoise-dark'
   root.classList.toggle('dark', isDarkVariant)
   for (const name of THEME_ORDER) {
     root.classList.toggle(`theme-${name}`, theme === name)

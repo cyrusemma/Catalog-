@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { ShoppingCart, Storefront, SignIn } from '@phosphor-icons/react'
+import { ShoppingCart, Storefront, UserCircle, Gear } from '@phosphor-icons/react'
 import { useCartStore } from '../../store/cartStore'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
@@ -66,6 +66,14 @@ export default function Navbar() {
           <ThemePicker />
           <NotificationButton />
 
+          <Link
+            to="/settings"
+            aria-label="Settings"
+            className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white"
+          >
+            <Gear size={18} weight="duotone" />
+          </Link>
+
           <Link to="/cart" className="relative w-9 h-9 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors">
             <ShoppingCart size={20} weight="duotone" className="text-dark-800 dark:text-white" />
             {totalItems > 0 && (
@@ -94,7 +102,7 @@ export default function Navbar() {
               aria-label="Sign in"
               className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white"
             >
-              <SignIn size={18} weight="duotone" />
+              <UserCircle size={20} weight="duotone" />
             </button>
           )}
         </div>

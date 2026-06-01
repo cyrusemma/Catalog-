@@ -11,7 +11,7 @@ function RatingStars({ rating }: { rating: number }) {
         <Star
           key={index}
           size={14}
-          className={index < rating ? 'text-brand-400 fill-brand-400' : 'text-gray-300'}
+          className={index < rating ? 'text-brand-400 fill-brand-400 drop-shadow-[0_0_5px_rgba(212,130,10,0.55)]' : 'text-gray-300'}
         />
       ))}
     </div>

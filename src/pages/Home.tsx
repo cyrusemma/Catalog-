@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from 'react'
 import ProductCard from '../components/ui/ProductCard'
 import ProductCoverflow from '../components/ui/ProductCoverflow'
 import ProceduralHero from '../components/ui/ProceduralHero'
+import StarfieldBackground from '../components/ui/StarfieldBackground'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 
@@ -48,6 +49,7 @@ export default function Home() {
 
   const [reviewName, setReviewName] = useState('')
   const [reviewRating, setReviewRating] = useState(5)
+  const [hoverRating, setHoverRating] = useState(0)
   const [reviewMessage, setReviewMessage] = useState('')
   const [reviewSending, setReviewSending] = useState(false)
   const [reviewSuccess, setReviewSuccess] = useState('')
@@ -167,6 +169,10 @@ export default function Home() {
             </motion.div>
           </AnimatePresence>
         </motion.div>
+
+        {/* Drifting starfield layered over the hero image — warm cream stars,
+            non-interactive, sits behind the headline (z-10) text. */}
+        <StarfieldBackground />
 
         {/* Carousel dot indicators */}
         {heroSources.length > 1 && (
@@ -488,21 +494,35 @@ export default function Home() {
                   <label className="block text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-dark-800/60 dark:text-white/55 mb-2">Rating</label>
                   {/* Bigger tap targets on mobile — each star button gets its
                       own padding so thumbs can hit it without precision. */}
-                  <div className="flex items-center gap-1 rounded-2xl border border-cream-200 dark:border-white/10 bg-white dark:bg-dark-700 px-2 py-1.5">
+                  <div
+                    className="flex items-center gap-1 rounded-2xl border border-cream-200 dark:border-white/10 bg-white dark:bg-dark-700 px-2 py-1.5"
+                    onMouseLeave={() => setHoverRating(0)}
+                  >
                     {Array.from({ length: 5 }).map((_, index) => {
                       const value = index + 1
-                      const active = value <= reviewRating
+                      // Hover preview wins over the committed rating, so the row
+                      // fills up to whichever star the thumb/cursor is on.
+                      const shown = hoverRating || reviewRating
+                      const active = value <= shown
                       return (
                         <button
                           key={value}
                           type="button"
                           onClick={() => setReviewRating(value)}
-                          className="group p-2 -m-0.5 rounded-xl active:bg-brand-400/10 transition-colors"
+                          onMouseEnter={() => setHoverRating(value)}
+                          className="group relative p-2 -m-0.5 rounded-xl transition-transform duration-300 hover:scale-110"
                           aria-label={`Rate ${value} star${value > 1 ? 's' : ''}`}
                         >
+                          {/* particle-explosion dots — pop above & below the star on hover */}
+                          <span aria-hidden className="pointer-events-none absolute left-1/2 top-0.5 h-1.5 w-1.5 -translate-x-1/2 scale-0 rounded-full bg-brand-400 opacity-0 transition-all duration-300 group-hover:-translate-y-1.5 group-hover:scale-150 group-hover:opacity-100" />
+                          <span aria-hidden className="pointer-events-none absolute bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 scale-0 rounded-full bg-brand-400 opacity-0 transition-all duration-300 group-hover:translate-y-1.5 group-hover:scale-150 group-hover:opacity-100" />
                           <Star
                             size={20}
-                            className={`transition-all duration-200 ${active ? 'text-brand-400 fill-brand-400' : 'text-dark-800/30 dark:text-white/30 group-hover:text-brand-400 group-hover:scale-110'}`}
+                            className={`relative transition-all duration-300 ${
+                              active
+                                ? 'text-brand-400 fill-brand-400 drop-shadow-[0_0_8px_rgba(212,130,10,0.7)] group-hover:drop-shadow-[0_0_12px_rgba(212,130,10,0.95)]'
+                                : 'text-dark-800/30 dark:text-white/30'
+                            } ${!hoverRating && value === reviewRating ? 'animate-star-pop' : ''}`}
                           />
                         </button>
                       )

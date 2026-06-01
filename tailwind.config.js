@@ -79,6 +79,10 @@ export default {
           '0%, 100%': { transform: 'scale(0.85)', opacity: '0.25' },
           '50%': { transform: 'scale(1)', opacity: '1' },
         },
+        'star-pop': {
+          '0%': { transform: 'scale(1)' },
+          '100%': { transform: 'scale(1.12)' },
+        },
       },
       animation: {
         shimmer: 'shimmer 3s linear infinite',
@@ -88,6 +92,7 @@ export default {
         'shop-sway': 'shop-sway 3.2s ease-in-out infinite',
         'loader-line': 'loader-line 2.6s ease-out both',
         'loader-dot': 'loader-dot 1.3s ease-in-out infinite',
+        'star-pop': 'star-pop 0.7s ease-in-out infinite alternate',
       },
     },
   },

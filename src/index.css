@@ -196,6 +196,24 @@ html.theme-rose-dark {
   --hero-accent:  #f08fb0;
   --hero-shape:   rgba(232, 116, 156, 0.2);
 }
+html.theme-turquoise-light {
+  --hero-bg-from: #e8fdfa;
+  --hero-bg-via:  #c0f2ec;
+  --hero-bg-to:   #93e6db;
+  --hero-glow-a:  rgba(13, 148, 136, 0.22);
+  --hero-glow-b:  rgba(45, 212, 191, 0.14);
+  --hero-accent:  #0c8577;
+  --hero-shape:   rgba(13, 148, 136, 0.16);
+}
+html.theme-turquoise-dark {
+  --hero-bg-from: #0a3f38;
+  --hero-bg-via:  #062f2a;
+  --hero-bg-to:   #03201c;
+  --hero-glow-a:  rgba(45, 212, 191, 0.32);
+  --hero-glow-b:  rgba(20, 184, 166, 0.14);
+  --hero-accent:  #5eead4;
+  --hero-shape:   rgba(45, 212, 191, 0.2);
+}
 
 /* Storefront AMOLED — sits on top of `.dark` so every `dark:` Tailwind
    utility still applies. The overrides flatten the warm dark-brown palette
@@ -239,6 +257,28 @@ html.theme-rose-dark .via-dark-900 { --tw-gradient-via: #14060c !important; }
 html.theme-rose-dark .to-dark-900 { --tw-gradient-to: #14060c !important; }
 html.theme-rose-dark .dark\:border-brand-400\/15 { border-color: rgba(232, 116, 156, 0.16) !important; }
 html.theme-rose-dark .card { background-color: #260f18 !important; border-color: rgba(232, 116, 156, 0.14) !important; }
+
+/* Turquoise-light — cools the cream palette into a soft aqua. Brand amber
+   accents stay for contrast so the identity holds. */
+html.theme-turquoise-light body { background-color: #effdfb !important; }
+html.theme-turquoise-light .bg-cream-50 { background-color: #effdfb !important; }
+html.theme-turquoise-light .bg-cream-100 { background-color: #d6f7f1 !important; }
+html.theme-turquoise-light .bg-cream-200 { background-color: #b3ede4 !important; }
+html.theme-turquoise-light .border-cream-200 { border-color: #a5e7dd !important; }
+html.theme-turquoise-light .text-cream-400 { color: #4ba89c !important; }
+html.theme-turquoise-light .bg-cream-50\/75,
+html.theme-turquoise-light .bg-cream-50\/90 { background-color: rgba(239, 253, 251, 0.85) !important; }
+
+/* Turquoise-dark — deep teal background with bright aqua accents. */
+html.theme-turquoise-dark body { background-color: #03201c !important; }
+html.theme-turquoise-dark .dark\:bg-dark-900 { background-color: #03201c !important; }
+html.theme-turquoise-dark .dark\:bg-dark-800 { background-color: #062f2a !important; }
+html.theme-turquoise-dark .dark\:bg-dark-700 { background-color: #0a3f38 !important; }
+html.theme-turquoise-dark .from-dark-800 { --tw-gradient-from: #062f2a !important; }
+html.theme-turquoise-dark .via-dark-900 { --tw-gradient-via: #03201c !important; }
+html.theme-turquoise-dark .to-dark-900 { --tw-gradient-to: #03201c !important; }
+html.theme-turquoise-dark .dark\:border-brand-400\/15 { border-color: rgba(45, 212, 191, 0.16) !important; }
+html.theme-turquoise-dark .card { background-color: #062f2a !important; border-color: rgba(45, 212, 191, 0.14) !important; }
 
 /* Admin themes */
 .admin-shell {

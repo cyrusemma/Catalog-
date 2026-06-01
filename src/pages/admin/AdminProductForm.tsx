@@ -75,6 +75,8 @@ export default function AdminProductForm() {
   const [newImageUrl, setNewImageUrl] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [notifying, setNotifying] = useState(false)
+  const [notifyMessage, setNotifyMessage] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [creatingCategory, setCreatingCategory] = useState<'parent' | 'sub' | null>(null)
@@ -223,6 +225,52 @@ export default function AdminProductForm() {
       }
       return next
     })
+
+  /**
+   * Call the notify-new-arrival Edge Function to fan a Web Push out to every
+   * subscriber whose profile has notify_new_arrivals=true. Only meaningful for
+   * existing, published products — we hide the button otherwise so you can't
+   * accidentally push a draft.
+   */
+  const notifySubscribers = async () => {
+    if (!isEdit || !id) return
+    setNotifyMessage(null)
+    setNotifying(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        setNotifyMessage({ kind: 'err', text: 'You need to be signed in as admin.' })
+        return
+      }
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
+      const res = await fetch(`${supabaseUrl}/functions/v1/notify-new-arrival`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ product_id: id }),
+      })
+      const result = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setNotifyMessage({ kind: 'err', text: result.error || `Request failed (${res.status})` })
+        return
+      }
+      const sent = result.sent ?? 0
+      const total = result.total ?? 0
+      setNotifyMessage({
+        kind: 'ok',
+        text: total === 0
+          ? 'No subscribers yet — nothing to notify.'
+          : `Sent to ${sent} of ${total} subscriber${total === 1 ? '' : 's'}.`,
+      })
+    } catch (err) {
+      setNotifyMessage({ kind: 'err', text: err instanceof Error ? err.message : 'Could not notify.' })
+    } finally {
+      setNotifying(false)
+    }
+  }
 
   const handleSave = async (publish = false) => {
     setSaveError('')
@@ -725,6 +773,30 @@ export default function AdminProductForm() {
               <button onClick={() => handleSave(false)} disabled={saving || !form.title} className="w-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-semibold py-3 rounded-xl transition-colors text-sm">
                 Save as Draft
               </button>
+
+              {/* Push fan-out. Only meaningful for products that already exist
+                  and have been published — otherwise nothing exists for the
+                  subscriber to open. */}
+              {isEdit && form.is_published && (
+                <div className="pt-2 mt-2 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={notifySubscribers}
+                    disabled={notifying}
+                    className="w-full bg-white border border-brand-400/40 hover:bg-brand-400/5 text-brand-500 font-semibold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {notifying ? 'Sending…' : 'Notify subscribers'}
+                  </button>
+                  {notifyMessage && (
+                    <p className={`text-xs mt-2 ${notifyMessage.kind === 'ok' ? 'text-green-600' : 'text-red-500'}`}>
+                      {notifyMessage.text}
+                    </p>
+                  )}
+                  <p className="text-gray-400 text-[11px] mt-2 leading-snug">
+                    Sends a Web Push to every customer who opted in for new-arrival alerts. Safe to tap repeatedly — duplicate notifications collapse into one on the customer's device.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
