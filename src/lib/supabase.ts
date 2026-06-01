@@ -4,8 +4,12 @@ export function normalizeEnvValue(value: string | undefined): string {
   return (value ?? '').trim().replace(/\s+/g, '')
 }
 
+// These public defaults keep the storefront working even if the deployment's
+// env vars are missing or malformed. The anon key is RLS-protected and already
+// ships in the client bundle, so it is safe to embed — but it MUST be the real,
+// valid key (a mistyped JWT payload silently 401s every request).
 const defaultSupabaseUrl = 'https://tktakogedsdvrslkyfuh.supabase.co'
-const defaultSupabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIa3Rha29nZWRzZHZyc2xreWZ1aCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzc4Nzk2MTg3LCJleHAiOjIwOTQzNzIxODd9.u8mCNThy6xvek8Riq_ZugNEYRooU1DW-CEvE2Z94R3Q'
+const defaultSupabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrdGFrb2dlZHNkdnJzbGt5ZnVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3OTYxODcsImV4cCI6MjA5NDM3MjE4N30.u8mCNThy6xvek8Riq_ZugNEYRooU1DW-CEvE2Z94R3Q'
 
 // Strip all whitespace, not just a trailing trim, because pasted secrets can
 // pick up invisible line breaks that turn into `%0A` in the Supabase URL.
