@@ -1,9 +1,9 @@
 /// <reference lib="webworker" />
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { cleanupOutdatedCaches, createHandlerBoundToURL, matchPrecache, precacheAndRoute } from 'workbox-precaching'
+import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching'
 import { CacheFirst, NetworkFirst, NetworkOnly } from 'workbox-strategies'
-import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing'
+import { NavigationRoute, registerRoute } from 'workbox-routing'
 import { ExpirationPlugin } from 'workbox-expiration'
 import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 
@@ -20,24 +20,15 @@ cleanupOutdatedCaches()
 // Navigation fallback for the SPA. Deep links like /shop or /product/:id have
 // no precached entry of their own, so every navigation is served the precached
 // app shell (index.html) and the router renders the right route. index.html is
-// precached, so a real offline refresh still boots the app (which then shows
-// its in-app offline banner) — instead of dropping to a static offline page.
+// precached, so a refresh always returns the already-loaded app — even with no
+// connection. There is no static offline page; if the device is genuinely
+// offline the app just shows its in-app offline toast.
 const appShellHandler = createHandlerBoundToURL('/index.html')
 registerRoute(
   new NavigationRoute(appShellHandler, {
     denylist: [/^\/admin/, /^\/api\//],
   }),
 )
-
-// Last resort: only if the app shell itself can't be served (e.g. offline and
-// somehow uncached) do we fall back to the static offline page.
-setCatchHandler(async ({ request }) => {
-  if (request.mode === 'navigate') {
-    const offline = await matchPrecache('/offline.html')
-    if (offline) return offline
-  }
-  return Response.error()
-})
 
 // Supabase REST reads (products, categories, settings): network-FIRST so the
 // storefront always shows fresh data when online, only falling back to cache

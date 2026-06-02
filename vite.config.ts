@@ -6,13 +6,13 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // Custom SW so we can layer Workbox runtime caching + the offline page
+      // Custom SW so we can layer Workbox runtime caching + the SPA app-shell
       // navigation fallback PLUS our own push event handlers in one file.
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'favicon-32.png', 'favicon-16.png', 'apple-touch-icon.png', 'offline.html'],
+      includeAssets: ['favicon.svg', 'favicon-32.png', 'favicon-16.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Catalog by Cyrus',
         short_name: 'Catalog',
