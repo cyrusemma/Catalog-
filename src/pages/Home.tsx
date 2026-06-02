@@ -91,8 +91,10 @@ export default function Home() {
     setReviewError('')
     setReviewSuccess('')
 
-    if (reviewMessage.trim().length < 5) {
-      setReviewError('Please write a short review or suggestion.')
+    // A rating is always set, so even a one-word note like "good" is enough —
+    // we only block an entirely empty message (the DB column is NOT NULL).
+    if (reviewMessage.trim().length === 0) {
+      setReviewError('Please add a word or two before sending.')
       return
     }
 
