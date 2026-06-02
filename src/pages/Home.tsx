@@ -13,11 +13,13 @@ import {
   Star,
 } from '@phosphor-icons/react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ProductCard from '../components/ui/ProductCard'
+import HeroShowcase from '../components/ui/HeroShowcase'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { supabase } from '../lib/supabase'
+import type { Product } from '../types'
 
 // Single shared reveal — used for the staggered hero load.
 const fadeUp = {
@@ -42,6 +44,19 @@ export default function Home() {
   const settings = useStoreSettings()
   const reduceMotion = useReducedMotion()
   const headline = splitHeadline(settings.tagline || 'Discover Amazing Products Brought to you By Cyrus')
+
+  // Hero product showcase — featured first, topped up with new arrivals, deduped.
+  const heroShowcase = useMemo(() => {
+    const seen = new Set<string>()
+    const out: Product[] = []
+    for (const p of [...(featured ?? []), ...(newProducts ?? [])]) {
+      if (!seen.has(p.id)) {
+        seen.add(p.id)
+        out.push(p)
+      }
+    }
+    return out.slice(0, 6)
+  }, [featured, newProducts])
 
   // Hero carousel: cycle through admin-uploaded hero images if any. With none
   // configured we fall back to a theme-tinted gradient, so brand-new stores
@@ -140,8 +155,8 @@ export default function Home() {
 
   return (
     <main className="flex-1">
-      {/* Hero — editorial, photography-led */}
-      <section className="relative min-h-[92dvh] flex items-end overflow-hidden bg-dark-900 -mt-16">
+      {/* Hero — editorial split: copy + product showcase */}
+      <section className="relative min-h-[92dvh] flex items-center overflow-hidden bg-dark-900 -mt-16 pt-20">
         {/* Background: hero photo carousel, or a theme-tinted gradient fallback */}
         <div aria-hidden="true" className="absolute inset-0">
           {usingCustomHero ? (
@@ -193,7 +208,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Headline composition — one staggered reveal on load */}
+        {/* Content — staggered reveal: copy on the left, product showcase right */}
         <motion.div
           initial={reduceMotion ? false : 'hidden'}
           animate={reduceMotion ? undefined : 'show'}
@@ -201,9 +216,10 @@ export default function Home() {
             hidden: {},
             show: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
           }}
-          className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pb-24 sm:pb-24 lg:pb-32"
+          className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-16 sm:py-20 grid lg:grid-cols-2 gap-12 lg:gap-10 items-center"
         >
-          <div className="max-w-2xl">
+          {/* Copy */}
+          <div className="max-w-xl">
             <motion.div variants={fadeUp} className="flex items-center gap-3 mb-6">
               <span className="block h-px w-10 bg-[var(--hero-accent)]" />
               <span className="text-[var(--hero-accent)] text-[10px] sm:text-xs uppercase tracking-[0.32em] font-semibold">
@@ -213,7 +229,7 @@ export default function Home() {
 
             <motion.h1
               variants={fadeUp}
-              className="font-display font-semibold leading-[1.04] tracking-[-0.02em] mb-6 text-white text-[2.4rem] sm:text-6xl lg:text-7xl max-w-xl text-wrap-balance"
+              className="font-display font-semibold leading-[1.04] tracking-[-0.02em] mb-6 text-white text-[2.4rem] sm:text-6xl lg:text-[4.2rem] text-wrap-balance"
             >
               {headline.before}
               {headline.accent && (
@@ -244,6 +260,13 @@ export default function Home() {
               </Link>
             </motion.div>
           </div>
+
+          {/* Product showcase */}
+          {heroShowcase.length > 0 && (
+            <motion.div variants={fadeUp}>
+              <HeroShowcase products={heroShowcase} />
+            </motion.div>
+          )}
         </motion.div>
       </section>
 
