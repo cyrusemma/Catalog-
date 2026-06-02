@@ -19,7 +19,7 @@ import {
 import { motion } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { THEMES, useTheme } from '../hooks/useTheme'
+import { COLOR_THEMES, useThemeStore } from '../store/themeStore'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useSignInStore } from '../store/signInStore'
@@ -44,7 +44,10 @@ function socialUrl(value: string, base: string): string {
 }
 
 export default function Settings() {
-  const { theme, setTheme } = useTheme()
+  const color = useThemeStore(s => s.color)
+  const setColor = useThemeStore(s => s.setColor)
+  const mode = useThemeStore(s => s.mode)
+  const setMode = useThemeStore(s => s.setMode)
   const { isLoggedIn, user, profile } = useCustomerSession()
   const settings = useStoreSettings()
   const openSignIn = useSignInStore(s => s.openModal)
@@ -155,16 +158,19 @@ export default function Settings() {
           <h2 className="text-dark-800 dark:text-white font-semibold">Appearance</h2>
         </div>
         <p className="text-dark-800/55 dark:text-white/50 text-sm mb-4">
-          Pick a theme for the storefront. It's saved to this device.
+          Choose a colour theme. Switch between light and dark from the navbar. Saved to this device.
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-          {THEMES.map(t => {
-            const active = t.value === theme
+
+        {/* Colour theme */}
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-800/50 dark:text-white/40 mb-2">Colour</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-5">
+          {COLOR_THEMES.map(t => {
+            const active = t.value === color
             return (
               <button
                 key={t.value}
                 type="button"
-                onClick={() => setTheme(t.value)}
+                onClick={() => setColor(t.value)}
                 aria-pressed={active}
                 className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all ${
                   active
@@ -189,6 +195,26 @@ export default function Settings() {
               </button>
             )
           })}
+        </div>
+
+        {/* Light / dark */}
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-800/50 dark:text-white/40 mb-2">Mode</p>
+        <div className="inline-flex rounded-2xl bg-cream-100 dark:bg-white/5 p-1">
+          {(['light', 'dark'] as const).map(m => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              aria-pressed={mode === m}
+              className={`px-5 py-2 rounded-xl text-sm font-semibold capitalize transition-colors ${
+                mode === m
+                  ? 'bg-brand-400 text-white shadow-sm'
+                  : 'text-dark-800/60 dark:text-white/55 hover:text-dark-800 dark:hover:text-white'
+              }`}
+            >
+              {m}
+            </button>
+          ))}
         </div>
       </motion.section>
 

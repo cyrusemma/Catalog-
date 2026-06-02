@@ -4,7 +4,7 @@ import { useCartStore } from '../../store/cartStore'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
 import { useSignInStore } from '../../store/signInStore'
-import ThemePicker from '../ui/ThemePicker'
+import ThemeToggle from '../ui/ThemeToggle'
 import NotificationButton from '../ui/NotificationButton'
 
 export default function Navbar() {
@@ -63,7 +63,7 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          <ThemePicker />
+          <ThemeToggle />
           <NotificationButton />
 
           <Link
