@@ -145,10 +145,9 @@ stable
 security definer
 set search_path = public
 as $$
-  select coalesce(
-    auth.jwt() -> 'app_metadata' ->> 'role',
-    auth.jwt() -> 'user_metadata' ->> 'role'
-  ) = 'admin';
+  -- Only trust app_metadata.role. user_metadata is editable by the user via
+  -- supabase.auth.updateUser, so including it would allow self-granted admin.
+  select (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin';
 $$;
 
 -- =========================================================================

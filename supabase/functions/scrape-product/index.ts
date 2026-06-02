@@ -18,7 +18,9 @@ const ALLOWED_HOST_SUFFIXES = [
 ]
 
 function isAdminUser(user: { app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> }): boolean {
-  const role = user.app_metadata?.role ?? user.user_metadata?.role
+  // Only trust app_metadata.role — user_metadata is user-editable via
+  // supabase.auth.updateUser, so it must never be used for authorization.
+  const role = user.app_metadata?.role
   return role === 'admin'
 }
 
