@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bell, Users, X, BellRinging, BellSlash } from '@phosphor-icons/react'
+import { Bell, X, BellRinging, BellSlash } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
-import { useStoreSettings } from '../../hooks/useStoreSettings'
-import { useVisitorCount } from '../../hooks/useVisitorCount'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
 import { useSignInStore } from '../../store/signInStore'
 import { supabase } from '../../lib/supabase'
@@ -11,27 +9,16 @@ import { getActiveSubscription, pushIsSupported, subscribeToPush, unsubscribeFro
 
 const SIGNIN_DISMISSED_KEY = 'catalog-signin-prompt-seen-v1'
 
-function formatCount(n: number) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M`
-  if (n >= 10_000) return `${(n / 1_000).toFixed(0)}k`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
-  return n.toLocaleString()
-}
-
 /**
  * Notification bell in the Navbar. The single home for in-product
  * notifications:
  *   - A "Stay in the loop" sign-in card for guests who haven't dismissed it
- *   - The visitor counter (when the admin has enabled show_visitor_count)
- *   - More notification types will plug in here later (push, new arrivals...)
+ *   - Push subscription controls for signed-in users
  *
  * The bell only renders when there's actually something to show — clean
- * navbar for stores that haven't enabled anything. A pulsing dot signals
- * actionable items (currently: the sign-in prompt).
+ * navbar otherwise. A pulsing dot signals actionable items.
  */
 export default function NotificationButton() {
-  const settings = useStoreSettings()
-  const { data: count } = useVisitorCount(settings.show_visitor_count)
   const { isLoggedIn, loading: sessionLoading, user, profile } = useCustomerSession()
   const openSignIn = useSignInStore(s => s.openModal)
   const qc = useQueryClient()
@@ -117,12 +104,11 @@ export default function NotificationButton() {
   }, [open])
 
   const showSignInCard = !sessionLoading && !isLoggedIn && !signInDismissed
-  const showVisitorCard = settings.show_visitor_count
   const showPushCard = !sessionLoading && isLoggedIn && pushIsSupported()
 
   // Hide the bell entirely when there's literally nothing to surface — saves
   // navbar space for stores that haven't enabled any of this.
-  if (!showSignInCard && !showVisitorCard && !showPushCard) return null
+  if (!showSignInCard && !showPushCard) return null
 
   const dismissSignIn = () => {
     if (typeof window !== 'undefined') {
@@ -144,7 +130,6 @@ export default function NotificationButton() {
   // subscribed).
   const pushWantedButOff = showPushCard && profile?.notify_new_arrivals === true && pushSubscribed === false
   const hasUnreadAction = showSignInCard || pushWantedButOff
-  const total = count ?? 0
 
   return (
     <div ref={rootRef} className="relative">
@@ -269,23 +254,6 @@ export default function NotificationButton() {
                       )}
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Visitor counter card — admin-toggleable, informational. */}
-            {showVisitorCard && (
-              <div className="flex items-center gap-3 rounded-xl bg-cream-100 dark:bg-white/5 px-3 py-2.5">
-                <span className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-brand-400 to-brand-500 flex items-center justify-center">
-                  <Users size={14} weight="fill" className="text-white" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-dark-800/55 dark:text-white/50">
-                    Visitors so far
-                  </p>
-                  <p className="text-lg font-bold text-dark-800 dark:text-white tabular-nums leading-tight mt-0.5">
-                    {formatCount(total)}
-                  </p>
                 </div>
               </div>
             )}

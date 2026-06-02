@@ -1,73 +1,72 @@
-# React + TypeScript + Vite
+# Catalog
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A progressive web app storefront with a self-service admin dashboard. Products
+are managed from the admin panel and published to a mobile-first storefront;
+customers browse, build a cart, and check out over WhatsApp.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React 18 + TypeScript**, built with **Vite**
+- **Supabase** — Postgres, Auth, Storage, and Realtime
+- **TanStack Query** for server state, **Zustand** for client state
+- **Tailwind CSS** with a small set of switchable themes
+- **vite-plugin-pwa** (Workbox) for offline support and installability
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Storefront with category browsing, search, filtering, and product detail pages
+- Cart and wishlist with persisted client state
+- WhatsApp checkout with a configurable order-message template
+- Customer accounts (email magic-link auth)
+- Admin dashboard: products, orders, reviews, and store settings
+- Role-based access enforced by Postgres row-level security
+- Realtime settings/category updates pushed to the storefront
+- Installable PWA with offline-aware caching
 
-## Expanding the ESLint configuration
+## Getting started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Create a `.env` from `.env.example` and set:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+VITE_SUPABASE_URL=https://<project>.supabase.co
+VITE_SUPABASE_ANON_KEY=<anon-key>
+VITE_WHATSAPP_NUMBER=233244000000
+```
+
+Apply the database schema by running `supabase-schema.sql` in the Supabase SQL
+editor. Existing projects can run the incremental migrations
+(`supabase-migration-*.sql`). See [SETUP.md](SETUP.md) for the full walkthrough,
+including granting your account the admin role.
+
+## Scripts
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start the dev server |
+| `npm run build` | Type-check and build for production |
+| `npm run preview` | Preview the production build locally |
+
+## Project structure
+
+```
+src/
+  components/   Shared UI and layout (storefront + admin)
+  pages/        Route-level screens
+  hooks/        Data fetching and shared behavior
+  lib/          Supabase client and helpers
+  store/        Zustand stores (cart, wishlist, etc.)
+supabase/       Edge functions
+api/            Serverless endpoints (Open Graph images)
+```
+
+## Security
+
+Access control is enforced in the database, not the client. The `is_admin()`
+helper checks `app_metadata.role` only — `user_metadata` is user-editable and is
+never trusted for authorization. Public reads are limited to published products
+and a few public tables; all writes to managed tables require the admin role.

@@ -37,8 +37,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Georgia', 'serif'],
+        sans: ['"Hanken Grotesk"', 'system-ui', 'sans-serif'],
+        display: ['Fraunces', 'Georgia', 'serif'],
       },
       backgroundImage: {
         'amber-glow': 'radial-gradient(ellipse at 60% 30%, rgba(212,130,10,0.20) 0%, transparent 65%)',

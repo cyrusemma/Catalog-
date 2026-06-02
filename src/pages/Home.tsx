@@ -4,7 +4,6 @@ import {
   Sparkle,
   Lightning,
   ShoppingBagOpen,
-  CaretDown,
   Envelope,
   WhatsappLogo,
   Phone,
@@ -13,30 +12,40 @@ import {
   ChatCircleText,
   Star,
 } from '@phosphor-icons/react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { useEffect, useMemo, useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 import ProductCard from '../components/ui/ProductCard'
-import ProductCoverflow from '../components/ui/ProductCoverflow'
-import ProceduralHero from '../components/ui/ProceduralHero'
-import StarfieldBackground from '../components/ui/StarfieldBackground'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { supabase } from '../lib/supabase'
 
+// Single shared reveal — used for the staggered hero load.
+const fadeUp = {
+  hidden: { opacity: 0, y: 18 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const } },
+}
+
+// Splits the tagline so a trailing brand word (e.g. "Cyrus") can be accented.
+function splitHeadline(tagline: string) {
+  const accent = 'Cyrus'
+  const idx = tagline.lastIndexOf(accent)
+  if (idx < 0) return { before: tagline, accent: '' }
+  return { before: tagline.slice(0, idx), accent: tagline.slice(idx) }
+}
+
 export default function Home() {
   const { data: featured, isError: featuredIsError, error: featuredError } = useProducts({ featured: true })
   const { data: newProducts, isError: newProductsIsError, error: newProductsError } = useNewProducts(7)
-  const { data: allProducts, isError: allProductsIsError, error: allProductsError } = useProducts()
-  const showcase = useMemo(() => (allProducts ?? []).slice(0, 14), [allProducts])
+  const { isError: allProductsIsError, error: allProductsError } = useProducts()
   const productsError = allProductsError ?? featuredError ?? newProductsError
   const productsLoadFailed = allProductsIsError || featuredIsError || newProductsIsError
   const settings = useStoreSettings()
   const reduceMotion = useReducedMotion()
+  const headline = splitHeadline(settings.tagline || 'Discover Amazing Products Brought to you By Cyrus')
 
   // Hero carousel: cycle through admin-uploaded hero images if any. With none
-  // configured we render a procedural theme-aware hero instead, so brand-new
-  // stores still look polished and the visual re-tints when the user picks a
-  // different theme.
+  // configured we fall back to a theme-tinted gradient, so brand-new stores
+  // still look polished and the visual re-tints when the user picks a theme.
   const heroSources = settings.hero_images ?? []
   const usingCustomHero = heroSources.length > 0
   const [heroIdx, setHeroIdx] = useState(0)
@@ -48,7 +57,6 @@ export default function Home() {
     }, intervalMs)
     return () => window.clearInterval(id)
   }, [heroSources, settings.hero_rotation_seconds, reduceMotion])
-  const currentHero = heroSources[heroIdx] ?? heroSources[0]
 
   const [reviewName, setReviewName] = useState('')
   const [reviewRating, setReviewRating] = useState(5)
@@ -132,53 +140,45 @@ export default function Home() {
 
   return (
     <main className="flex-1">
-      {/* Cinematic Hero */}
-      <section className="relative min-h-[100dvh] flex items-end overflow-hidden bg-dark-900 -mt-16">
-        {/* Background image with Ken Burns drift + carousel crossfade */}
-        <motion.div
-          aria-hidden="true"
-          className="absolute inset-0"
-          initial={reduceMotion ? { scale: 1 } : { scale: 1.08 }}
-          animate={reduceMotion ? { scale: 1 } : { scale: [1.08, 1, 1.08] }}
-          transition={
-            reduceMotion
-              ? { duration: 0 }
-              : { duration: 22, ease: 'easeInOut', repeat: Infinity }
-          }
-        >
-          <AnimatePresence mode="sync" initial={false}>
-            <motion.div
-              key={`hero-${heroIdx}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1.2, ease: 'easeInOut' }}
+      {/* Hero — editorial, photography-led */}
+      <section className="relative min-h-[92dvh] flex items-end overflow-hidden bg-dark-900 -mt-16">
+        {/* Background: hero photo carousel, or a theme-tinted gradient fallback */}
+        <div aria-hidden="true" className="absolute inset-0">
+          {usingCustomHero ? (
+            heroSources.map((src, i) => (
+              <img
+                key={src}
+                src={src}
+                alt=""
+                role="presentation"
+                className={`absolute inset-0 w-full h-full object-cover object-[50%_25%] sm:object-center transition-opacity duration-700 ease-out ${
+                  i === heroIdx ? 'opacity-100' : 'opacity-0'
+                }`}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                {...(i === 0 ? { fetchPriority: 'high' as 'high' } : {})}
+              />
+            ))
+          ) : (
+            <div
               className="absolute inset-0"
-            >
-              {usingCustomHero ? (
-                <img
-                  src={currentHero}
-                  alt=""
-                  role="presentation"
-                  className="w-full h-full object-cover object-[50%_25%] sm:object-center"
-                  loading={heroIdx === 0 ? 'eager' : 'lazy'}
-                  decoding="async"
-                  {...(heroIdx === 0 ? { fetchPriority: 'high' as 'high' } : {})}
-                />
-              ) : (
-                <ProceduralHero />
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
+              style={{
+                backgroundImage:
+                  'radial-gradient(120% 120% at 80% 0%, var(--hero-glow-a), transparent 55%),' +
+                  'radial-gradient(100% 100% at 0% 100%, var(--hero-glow-b), transparent 50%),' +
+                  'linear-gradient(160deg, var(--hero-bg-from), var(--hero-bg-via) 55%, var(--hero-bg-to))',
+              }}
+            />
+          )}
+        </div>
 
-        {/* Drifting starfield layered over the hero image — warm cream stars,
-            non-interactive, sits behind the headline (z-10) text. */}
-        <StarfieldBackground />
+        {/* Legibility scrim — kept simple; reads well over photo and gradient alike */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-transparent to-transparent pointer-events-none" />
 
-        {/* Carousel dot indicators */}
+        {/* Carousel dots */}
         {heroSources.length > 1 && (
-          <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
             {heroSources.map((_, i) => (
               <button
                 key={i}
@@ -193,165 +193,57 @@ export default function Home() {
           </div>
         )}
 
-        {/* Heavy vignette + warm rim-light glows only make sense over a real
-            photo. The procedural hero ships with its own (lighter, theme-
-            aware) washes inside ProceduralHero. */}
-        {usingCustomHero && (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15 pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent pointer-events-none" />
-            <div className="absolute -top-32 -right-32 w-[560px] h-[560px] bg-brand-400/25 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-1/4 -left-24 w-[320px] h-[320px] bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
-          </>
-        )}
-
-        {/* Text - lower-left editorial composition */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pb-28 sm:pb-24 lg:pb-32">
+        {/* Headline composition — one staggered reveal on load */}
+        <motion.div
+          initial={reduceMotion ? false : 'hidden'}
+          animate={reduceMotion ? undefined : 'show'}
+          variants={{
+            hidden: {},
+            show: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } },
+          }}
+          className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pb-24 sm:pb-24 lg:pb-32"
+        >
           <div className="max-w-2xl">
-            {/* Hairline rule + label */}
-            <motion.div
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, ease: 'easeOut', delay: 0.05 }}
-              className="flex items-center gap-3 mb-5 sm:mb-7"
-            >
-              <span className="block h-px w-10 bg-brand-400" />
-              <span className="text-brand-400 text-[10px] sm:text-xs uppercase tracking-[0.32em] font-semibold">
-                New Season - Now Live
+            <motion.div variants={fadeUp} className="flex items-center gap-3 mb-6">
+              <span className="block h-px w-10 bg-[var(--hero-accent)]" />
+              <span className="text-[var(--hero-accent)] text-[10px] sm:text-xs uppercase tracking-[0.32em] font-semibold">
+                New Season — Now Live
               </span>
             </motion.div>
 
-            {/* Headline - letter-by-letter wave, shimmer scoped to "Cyrus" */}
-            <h1 className="font-display font-bold leading-[1.05] tracking-tight mb-5 sm:mb-7 text-white text-[2rem] sm:text-5xl lg:text-6xl xl:text-7xl max-w-md sm:max-w-xl text-wrap-balance">
-              {(() => {
-                const tagline = settings.tagline || 'Discover Amazing Products Brought to you By Cyrus'
-                const accent = 'Cyrus'
-                const idx = tagline.lastIndexOf(accent)
-                const hasAccent = idx >= 0
-                const beforeRaw = hasAccent ? tagline.slice(0, idx) : tagline
-                const accentWord = hasAccent ? tagline.slice(idx) : ''
-                const baseDelay = 0.55
-                const charDelay = reduceMotion ? 0 : 0.028
-                const beforeWords = beforeRaw.split(/\s+/).filter(Boolean)
-                let charIdx = 0
-                return (
-                  <>
-                    {beforeWords.map((word, wi) => {
-                      const isLast = wi === beforeWords.length - 1 && !hasAccent
-                      return (
-                        <span key={`g-${wi}`}>
-                          <span className="inline-block whitespace-nowrap">
-                            {[...word].map(char => {
-                              const i = charIdx++
-                              return (
-                                <motion.span
-                                  key={i}
-                                  initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 36, filter: 'blur(8px)' }}
-                                  animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
-                                  transition={{
-                                    duration: reduceMotion ? 0.3 : 0.55,
-                                    ease: [0.22, 1, 0.36, 1],
-                                    delay: baseDelay + i * charDelay,
-                                  }}
-                                  className="inline-block will-change-transform"
-                                >
-                                  {char}
-                                </motion.span>
-                              )
-                            })}
-                          </span>
-                          {!isLast && ' '}
-                        </span>
-                      )
-                    })}
-                    {hasAccent && (
-                      <motion.span
-                        initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 36, filter: 'blur(10px)' }}
-                        animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
-                        transition={{
-                          duration: reduceMotion ? 0.3 : 0.85,
-                          ease: [0.22, 1, 0.36, 1],
-                          delay: baseDelay + charIdx * charDelay + 0.18,
-                        }}
-                        className="inline-block whitespace-nowrap text-shimmer"
-                      >
-                        {accentWord}
-                      </motion.span>
-                    )}
-                  </>
-                )
-              })()}
-            </h1>
-
-            {/* Subhead */}
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: 'easeOut', delay: 0.55 }}
-              className="text-white/80 text-sm sm:text-base lg:text-lg max-w-lg mb-8 sm:mb-10 leading-relaxed"
+            <motion.h1
+              variants={fadeUp}
+              className="font-display font-semibold leading-[1.04] tracking-[-0.02em] mb-6 text-white text-[2.4rem] sm:text-6xl lg:text-7xl max-w-xl text-wrap-balance"
             >
-              Shop the finest selection, curated just for you. Fast delivery, great prices, premium quality.
+              {headline.before}
+              {headline.accent && (
+                <span className="italic font-light text-[var(--hero-accent)]">{headline.accent}</span>
+              )}
+            </motion.h1>
+
+            <motion.p
+              variants={fadeUp}
+              className="text-white/75 text-sm sm:text-base lg:text-lg max-w-md mb-9 leading-relaxed"
+            >
+              A considered selection, curated for you. Fast delivery, fair prices, pieces worth keeping.
             </motion.p>
 
-            {/* CTAs - bouncy liquid buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: 'easeOut', delay: 0.78 }}
-              className="flex items-center gap-3 sm:gap-4 flex-wrap"
-            >
-              {/* Primary liquid amber */}
-              <motion.div
-                whileHover={reduceMotion ? undefined : { scale: 1.03, y: -1 }}
-                whileTap={reduceMotion ? undefined : { scale: 0.94 }}
-                transition={{ type: 'spring', stiffness: 380, damping: 16 }}
-                className="inline-block"
+            <motion.div variants={fadeUp} className="flex items-center gap-3 flex-wrap">
+              <Link
+                to="/shop"
+                className="group inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-white text-dark-900 font-semibold text-sm sm:text-base transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0"
               >
-                <Link
-                  to="/shop"
-                  className="group relative overflow-hidden inline-flex items-center gap-2.5 px-7 sm:px-8 py-3.5 sm:py-4 rounded-full bg-gradient-to-br from-brand-400 to-brand-500 text-white font-semibold text-sm sm:text-base shadow-[0_10px_40px_-10px_rgba(212,130,10,0.7),inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-1px_0_rgba(0,0,0,0.15)]"
-                >
-                  {/* Sheen sweep on hover */}
-                  <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/35 to-transparent transition-transform duration-[900ms] ease-out group-hover:translate-x-full" />
-                  <span className="relative">Shop Now</span>
-                  <ArrowRight size={16} weight="bold" className="relative transition-transform duration-300 group-hover:translate-x-0.5" />
-                </Link>
-              </motion.div>
-
-              {/* Secondary liquid glass */}
-              <motion.div
-                whileHover={reduceMotion ? undefined : { scale: 1.03, y: -1 }}
-                whileTap={reduceMotion ? undefined : { scale: 0.94 }}
-                transition={{ type: 'spring', stiffness: 380, damping: 16 }}
-                className="inline-block"
+                Shop the collection
+                <ArrowRight size={16} weight="bold" className="transition-transform duration-300 group-hover:translate-x-0.5" />
+              </Link>
+              <Link
+                to="/shop"
+                className="inline-flex items-center gap-2 px-7 py-4 rounded-full border border-white/25 text-white font-medium text-sm sm:text-base hover:bg-white/10 transition-colors duration-200"
               >
-                <Link
-                  to="/shop"
-                  className="group relative inline-flex items-center gap-2 px-6 sm:px-7 py-3.5 sm:py-4 rounded-full bg-white/[0.08] backdrop-blur-xl backdrop-saturate-150 border border-white/20 text-white font-medium text-sm sm:text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_4px_30px_rgba(0,0,0,0.15)] hover:bg-white/[0.14] hover:border-white/30 transition-colors duration-300"
-                >
-                  Browse categories
-                  <ArrowRight size={14} weight="bold" className="opacity-80 transition-transform duration-300 group-hover:translate-x-0.5" />
-                </Link>
-              </motion.div>
+                Browse categories
+              </Link>
             </motion.div>
           </div>
-        </div>
-
-        {/* Scroll cue - desktop only (mobile bottom-nav covers this area) */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1.4 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 hidden lg:flex flex-col items-center gap-3"
-        >
-          <span className="text-white/55 text-[9px] uppercase tracking-[0.42em] font-medium">Scroll</span>
-          <motion.div
-            animate={reduceMotion ? {} : { y: [0, 6, 0] }}
-            transition={reduceMotion ? {} : { duration: 1.6, ease: 'easeInOut', repeat: Infinity }}
-            className="w-9 h-9 rounded-full border border-white/30 backdrop-blur-sm flex items-center justify-center"
-          >
-            <CaretDown size={12} weight="bold" className="text-white/75" />
-          </motion.div>
         </motion.div>
       </section>
 
@@ -364,31 +256,6 @@ export default function Home() {
             </p>
           </div>
         </section>
-      )}
-
-      {/* Coverflow showcase */}
-      {showcase.length > 0 && (
-        <motion.section
-          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="py-16 overflow-hidden"
-        >
-          <div className="max-w-7xl mx-auto px-4 mb-8 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <ShoppingBagOpen size={14} weight="fill" className="text-brand-400" />
-              <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">In the Shop</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
-              Browse the Collection
-            </h2>
-            <p className="text-dark-800/50 dark:text-white/40 text-sm mt-4">Tap a card to open it — hover to pause.</p>
-          </div>
-          <div className="max-w-5xl mx-auto px-4">
-            <ProductCoverflow products={showcase} />
-          </div>
-        </motion.section>
       )}
 
       {/* New Arrivals */}

@@ -12,7 +12,6 @@ import AnnouncementBanner from './components/layout/AnnouncementBanner'
 import ShopLoader from './components/ui/ShopLoader'
 import OfflineIndicator from './components/ui/OfflineIndicator'
 import SignInModal from './components/ui/SignInModal'
-import { useVisitorTracking } from './hooks/useVisitorTracking'
 import { useSignInStore } from './store/signInStore'
 
 const Home = lazy(() => import('./pages/Home'))
@@ -69,7 +68,6 @@ function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function StorefrontLayout({ children }: { children: React.ReactNode }) {
-  useVisitorTracking()
   const signInOpen = useSignInStore(s => s.open)
   const closeSignIn = useSignInStore(s => s.closeModal)
   const signInReason = useSignInStore(s => s.reason)
