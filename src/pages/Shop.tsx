@@ -244,7 +244,7 @@ export default function Shop() {
     <main className="flex-1 max-w-7xl mx-auto px-4 py-5 sm:py-10 pb-28 lg:pb-10">
       {/* Header */}
       <div className="mb-5 sm:mb-8">
-        <h1 className="text-2xl sm:text-5xl font-display font-bold text-dark-800 dark:text-white mb-1 sm:mb-2 underline-gradient inline-block">
+        <h1 className="text-2xl sm:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white mb-1 sm:mb-2">
           Shop
         </h1>
         <p className="text-dark-800/50 dark:text-white/40 text-xs sm:text-sm mt-2 sm:mt-4">
@@ -416,7 +416,7 @@ export default function Shop() {
             return (
               <section key={catId}>
                 <div className="flex items-end justify-between mb-3 sm:mb-4">
-                  <h2 className="text-lg sm:text-2xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
+                  <h2 className="text-lg sm:text-2xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
                     {name}
                   </h2>
                   {parent?.slug && prods.length > PRODUCT_CHUNK_SIZE && (
@@ -453,7 +453,7 @@ export default function Shop() {
       {!isLoading && !productsIsError && !showRowsView && visibleProducts && visibleProducts.length > 0 && (
         <section>
           <div className="flex items-end justify-between mb-3 sm:mb-4">
-            <h2 className="text-lg sm:text-2xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
+            <h2 className="text-lg sm:text-2xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
               {activeSub?.name || activeParent?.name || (query ? 'Search results' : 'Products')}
             </h2>
           </div>

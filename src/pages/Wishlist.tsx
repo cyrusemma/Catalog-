@@ -17,7 +17,7 @@ export default function Wishlist() {
             <Heart size={14} weight="fill" className="text-red-500" />
             <span className="text-red-500 text-xs font-bold uppercase tracking-[0.2em]">Saved</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-display font-bold text-dark-800 dark:text-white underline-gradient inline-block">
+          <h1 className="text-3xl sm:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
             Wishlist
           </h1>
           <p className="text-dark-800/50 dark:text-white/40 text-sm mt-3">

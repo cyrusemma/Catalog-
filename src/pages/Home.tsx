@@ -1,15 +1,12 @@
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
-  Sparkle,
-  Lightning,
   ShoppingBagOpen,
   Envelope,
   WhatsappLogo,
   Phone,
   WarningOctagon,
   InstagramLogo,
-  ChatCircleText,
   Star,
 } from '@phosphor-icons/react'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -290,22 +287,20 @@ export default function Home() {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="py-10 sm:py-16"
         >
-          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between mb-5 sm:mb-10">
+          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between mb-6 sm:mb-10">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkle size={14} weight="fill" className="text-brand-400" />
-                <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Just Dropped</span>
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white sm:underline-gradient inline-block">
+              <span className="block text-[var(--hero-accent)] text-[11px] uppercase tracking-[0.28em] font-semibold mb-2.5">
+                Just Dropped
+              </span>
+              <h2 className="text-3xl sm:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
                 New Arrivals
               </h2>
-              <p className="hidden sm:block text-dark-800/50 dark:text-white/40 text-sm mt-4">Fresh products added this week</p>
             </div>
             <Link
               to="/shop"
-              className="inline-flex items-center gap-1 rounded-full bg-brand-400/10 text-brand-400 hover:bg-brand-400/15 text-xs sm:text-sm font-semibold px-3 py-1.5 transition-colors"
+              className="group inline-flex items-center gap-1.5 text-sm font-medium text-dark-800/70 dark:text-white/70 hover:text-[var(--hero-accent)] transition-colors"
             >
-              View all <ArrowRight size={13} weight="bold" />
+              View all <ArrowRight size={14} weight="bold" className="transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
           {/* Mobile = edge-to-edge swipe rail with snap. Desktop = grid. */}
@@ -330,22 +325,20 @@ export default function Home() {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="py-10 sm:py-16"
         >
-          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between mb-5 sm:mb-10">
+          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between mb-6 sm:mb-10">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Lightning size={14} weight="fill" className="text-brand-400" />
-                <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Featured</span>
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white sm:underline-gradient inline-block">
+              <span className="block text-[var(--hero-accent)] text-[11px] uppercase tracking-[0.28em] font-semibold mb-2.5">
+                Featured
+              </span>
+              <h2 className="text-3xl sm:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
                 Featured Products
               </h2>
-              <p className="hidden sm:block text-dark-800/50 dark:text-white/40 text-sm mt-4">Hand-picked just for you</p>
             </div>
             <Link
               to="/shop"
-              className="inline-flex items-center gap-1 rounded-full bg-brand-400/10 text-brand-400 hover:bg-brand-400/15 text-xs sm:text-sm font-semibold px-3 py-1.5 transition-colors"
+              className="group inline-flex items-center gap-1.5 text-sm font-medium text-dark-800/70 dark:text-white/70 hover:text-[var(--hero-accent)] transition-colors"
             >
-              View all <ArrowRight size={13} weight="bold" />
+              View all <ArrowRight size={14} weight="bold" className="transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
           <div className="sm:max-w-7xl sm:mx-auto sm:px-4">
@@ -368,14 +361,13 @@ export default function Home() {
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         className="max-w-7xl mx-auto px-4 py-10 sm:py-16"
       >
-        <div className="flex items-center gap-2 mb-2">
-          <ChatCircleText size={16} weight="duotone" className="text-brand-400" />
-          <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Reviews</span>
-        </div>
+        <span className="block text-[var(--hero-accent)] text-[11px] uppercase tracking-[0.28em] font-semibold mb-2.5">
+          Reviews
+        </span>
 
         <div className="grid gap-5 sm:gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
-            <h2 className="text-2xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white sm:underline-gradient inline-block">
+            <h2 className="text-3xl sm:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
               Send a site review
             </h2>
             <p className="hidden sm:block text-dark-800/50 dark:text-white/40 text-sm mt-4 max-w-2xl">
@@ -413,19 +405,15 @@ export default function Home() {
                           type="button"
                           onClick={() => setReviewRating(value)}
                           onMouseEnter={() => setHoverRating(value)}
-                          className="group relative p-2 -m-0.5 rounded-xl transition-transform duration-300 hover:scale-110"
+                          className="p-2 -m-0.5 rounded-xl"
                           aria-label={`Rate ${value} star${value > 1 ? 's' : ''}`}
                         >
-                          {/* particle-explosion dots — pop above & below the star on hover */}
-                          <span aria-hidden className="pointer-events-none absolute left-1/2 top-0.5 h-1.5 w-1.5 -translate-x-1/2 scale-0 rounded-full bg-brand-400 opacity-0 transition-all duration-300 group-hover:-translate-y-1.5 group-hover:scale-150 group-hover:opacity-100" />
-                          <span aria-hidden className="pointer-events-none absolute bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 scale-0 rounded-full bg-brand-400 opacity-0 transition-all duration-300 group-hover:translate-y-1.5 group-hover:scale-150 group-hover:opacity-100" />
                           <Star
                             size={20}
-                            className={`relative transition-all duration-300 ${
-                              active
-                                ? 'text-brand-400 fill-brand-400 drop-shadow-[0_0_8px_rgba(212,130,10,0.7)] group-hover:drop-shadow-[0_0_12px_rgba(212,130,10,0.95)]'
-                                : 'text-dark-800/30 dark:text-white/30'
-                            } ${!hoverRating && value === reviewRating ? 'animate-star-pop' : ''}`}
+                            weight={active ? 'fill' : 'regular'}
+                            className={`transition-colors duration-150 ${
+                              active ? 'text-[var(--hero-accent)]' : 'text-dark-800/25 dark:text-white/25'
+                            }`}
                           />
                         </button>
                       )

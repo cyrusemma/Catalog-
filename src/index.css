@@ -64,37 +64,12 @@
     @apply bg-white/70 dark:bg-white/10 backdrop-blur-md text-dark-800 dark:text-white text-xs font-medium px-2 py-0.5 rounded-full border border-cream-200 dark:border-white/20 flex items-center gap-1;
   }
 
-  /* Shimmer for hero text */
-  .text-shimmer {
-    background: linear-gradient(90deg, #d4820a 0%, #e8a020 25%, #faecc6 50%, #e8a020 75%, #d4820a 100%);
-    background-size: 200% 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    @apply animate-shimmer;
-  }
-
   /* Text wrap balance helper (modern browsers). Fallback will be ignored on older engines. */
   .text-wrap-balance {
     overflow-wrap: anywhere;
     word-break: normal;
   }
 
-  /* Underline gradient for section titles */
-  .underline-gradient {
-    position: relative;
-  }
-  .underline-gradient::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -8px;
-    height: 2px;
-    width: 60px;
-    background: linear-gradient(90deg, #d4820a, #e8a020, #d4820a);
-    background-size: 200% 100%;
-    @apply animate-gradient-x rounded-full;
-  }
 }
 
 @layer utilities {
@@ -103,23 +78,6 @@
   }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  /* Auto-scrolling product marquee. The track holds two identical copies of the
-     content, so translating by -50% loops seamlessly. Pauses on hover. */
-  @keyframes marquee-scroll {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-  }
-  .animate-marquee {
-    animation: marquee-scroll var(--marquee-duration, 45s) linear infinite;
-    will-change: transform;
-  }
-  .marquee-pause:hover .animate-marquee,
-  .marquee-pause:focus-within .animate-marquee {
-    animation-play-state: paused;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .animate-marquee { animation: none; }
-  }
 }
 
 /* Loader dot animation delays (avoid inline styles) */
