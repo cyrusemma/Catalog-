@@ -32,12 +32,6 @@ where email = 'you@example.com';
 ## Step 4b: Security migration (existing projects only)
 If you already ran an older `supabase-schema.sql`, also run `supabase-migration-security.sql`.
 
-## Step 4c: Deploy scrape edge function
-```bash
-npx supabase functions deploy scrape-product
-```
-Requires the [Supabase CLI](https://supabase.com/docs/guides/cli) linked to your project.
-
 ## Step 5: Configure environment
 1. Copy `.env.example` to `.env`
 2. Fill in your Supabase URL, anon key, and WhatsApp number:
