@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { House, Storefront, ShoppingCart, Heart } from '@phosphor-icons/react'
+import { House, Storefront, Images, ShoppingCart, Heart } from '@phosphor-icons/react'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
@@ -9,6 +9,7 @@ type NavItem = { to: string; label: string; Icon: PhosphorIcon; badgeKind?: 'car
 const items: NavItem[] = [
   { to: '/', label: 'Home', Icon: House },
   { to: '/shop', label: 'Shop', Icon: Storefront },
+  { to: '/gallery', label: 'Gallery', Icon: Images },
   { to: '/wishlist', label: 'Wishlist', Icon: Heart, badgeKind: 'wishlist' },
   { to: '/cart', label: 'Cart', Icon: ShoppingCart, badgeKind: 'cart' },
 ]
@@ -20,7 +21,7 @@ export default function BottomNav() {
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-cream-50/90 dark:bg-dark-900/90 backdrop-blur-xl border-t border-brand-400/15 pb-safe">
-      <div className="grid grid-cols-4 max-w-md mx-auto px-2">
+      <div className="grid grid-cols-5 max-w-2xl mx-auto px-1">
         {items.map(({ to, label, Icon, badgeKind }) => {
           const active = location.pathname === to
           const badgeValue = badgeKind === 'cart' ? totalItems : badgeKind === 'wishlist' ? wishlistCount : 0

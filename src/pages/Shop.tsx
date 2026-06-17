@@ -4,6 +4,8 @@ import { MagnifyingGlass, Faders, MagnifyingGlassMinus, CaretRight, ArrowRight, 
 import { AnimatePresence, motion } from 'framer-motion'
 import ProductCard from '../components/ui/ProductCard'
 import SkeletonCard from '../components/ui/SkeletonCard'
+import InfiniteScrollSentinel from '../components/ui/InfiniteScrollSentinel'
+
 import {
   useProducts,
   useCategoryTree,
@@ -12,7 +14,9 @@ import {
   childCategories,
   expandCategoryIds,
 } from '../hooks/useProducts'
+
 import type { Product } from '../types'
+
 
 type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'featured'
 
@@ -239,6 +243,13 @@ export default function Shop() {
 
   const visibleGridProducts = visibleProducts?.slice(0, visibleCount) ?? []
   const hasMoreGridProducts = Boolean(visibleProducts && visibleProducts.length > visibleCount)
+
+  const canLoadMore = hasMoreGridProducts
+
+  const handleReachEnd = () => {
+    if (!canLoadMore) return
+    setVisibleCount(c => c + PRODUCT_CHUNK_SIZE)
+  }
 
   return (
     <main className="flex-1 max-w-7xl mx-auto px-4 py-5 sm:py-10 pb-28 lg:pb-10">
@@ -486,6 +497,8 @@ export default function Shop() {
               </button>
             )}
           </div>
+
+          <InfiniteScrollSentinel onReach={handleReachEnd} disabled={!canLoadMore} />
         </section>
       )}
 

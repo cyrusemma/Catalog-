@@ -5,9 +5,8 @@ import { MagnifyingGlass, X } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useProducts } from '../hooks/useProducts'
 import SkeletonCard from '../components/ui/SkeletonCard'
-import type { Product } from '../types'
-
 // Note: Product type uses `images: string[]` (not `image_url`).
+
 
 const PRODUCT_CHUNK_SIZE = 20
 
@@ -129,12 +128,12 @@ export default function Gallery() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
-            {visibleProducts.map((product, idx) => (
+            {visibleProducts.map((product) => (
               <motion.div
                 key={product.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
+                transition={{ delay: 0 }}
                 onClick={() => navigate(`/product/${product.id}`)}
                 className="group cursor-pointer"
               >

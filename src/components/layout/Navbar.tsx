@@ -60,6 +60,7 @@ export default function Navbar() {
         <div className="hidden sm:flex items-center gap-7">
           {navLink('/', 'Home')}
           {navLink('/shop', 'Shop')}
+          {navLink('/gallery', 'Gallery')}
         </div>
 
         <div className="flex items-center gap-1.5">

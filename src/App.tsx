@@ -16,6 +16,7 @@ import { useSignInStore } from './store/signInStore'
 
 const Home = lazy(() => import('./pages/Home'))
 const Shop = lazy(() => import('./pages/Shop'))
+const Gallery = lazy(() => import('./pages/Gallery'))
 const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const Cart = lazy(() => import('./pages/Cart'))
 const Wishlist = lazy(() => import('./pages/Wishlist'))
@@ -93,6 +94,7 @@ function AnimatedRoutes() {
         <Route path="/shop" element={<StorefrontLayout><Shop /></StorefrontLayout>} />
         <Route path="/shop/:parentSlug" element={<StorefrontLayout><Shop /></StorefrontLayout>} />
         <Route path="/shop/:parentSlug/:subSlug" element={<StorefrontLayout><Shop /></StorefrontLayout>} />
+        <Route path="/gallery" element={<StorefrontLayout><Gallery /></StorefrontLayout>} />
         <Route path="/product/:id" element={<StorefrontLayout><ProductDetail /></StorefrontLayout>} />
         <Route path="/cart" element={<StorefrontLayout><Cart /></StorefrontLayout>} />
         <Route path="/wishlist" element={<StorefrontLayout><Wishlist /></StorefrontLayout>} />

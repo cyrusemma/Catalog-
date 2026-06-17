@@ -33,6 +33,41 @@ export function useProducts(filters?: {
   })
 }
 
+export async function fetchProductsPage(args: {
+  categoryIds?: string[]
+
+  search?: string
+  featured?: boolean
+  pageSize: number
+  cursorCreatedAt?: string | null
+}) {
+  let q = supabase
+    .from('products')
+    .select('*')
+    .eq('is_published', true)
+    .order('created_at', { ascending: false })
+    .limit(args.pageSize)
+
+  if (args.cursorCreatedAt) {
+    q = q.lt('created_at', args.cursorCreatedAt)
+  }
+
+  if (args.categoryIds && args.categoryIds.length > 0) {
+    q = q.in('category_id', args.categoryIds)
+  }
+  if (args.search) {
+    q = q.ilike('title', `%${args.search}%`)
+  }
+  if (args.featured) {
+    q = q.eq('is_featured', true)
+  }
+
+  const { data, error } = await q
+  if (error) throw error
+  return data as Product[]
+}
+
+
 export function useProduct(id: string) {
   return useQuery({
     queryKey: ['product', id],
