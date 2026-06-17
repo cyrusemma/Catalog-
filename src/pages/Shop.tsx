@@ -460,45 +460,43 @@ export default function Shop() {
         </div>
       )}
 
-      {/* Filtered shelf (specific category, search, or filters active) */}
+      {/* Filtered shelf — vertical grid with infinite scroll (category / search / filters active) */}
       {!isLoading && !productsIsError && !showRowsView && visibleProducts && visibleProducts.length > 0 && (
         <section>
           <div className="flex items-end justify-between mb-3 sm:mb-4">
             <h2 className="text-lg sm:text-2xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
               {activeSub?.name || activeParent?.name || (query ? 'Search results' : 'Products')}
             </h2>
+            <p className="text-xs text-dark-800/45 dark:text-white/40 flex-shrink-0 ml-4">
+              {visibleGridProducts.length} / {visibleProducts.length}
+            </p>
           </div>
 
-          <div className="relative -mx-4 lg:mx-0">
-            <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-4 lg:px-0 scrollbar-hide scroll-smooth snap-x snap-mandatory overscroll-x-contain [-webkit-overflow-scrolling:touch]">
-              {visibleGridProducts.map((p, i) => (
-                <div key={p.id} className="flex-shrink-0 w-40 sm:w-48 snap-start">
-                  <ProductCard product={p} index={i} compact />
-                </div>
+          {/* Vertical grid — shows every product, scrolls down infinitely */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            {visibleGridProducts.map((p, i) => (
+              <ProductCard key={p.id} product={p} index={i} />
+            ))}
+          </div>
+
+          {/* Skeleton rows while loading more */}
+          {hasMoreGridProducts && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <SkeletonCard key={i} />
               ))}
             </div>
-            <div
-              aria-hidden="true"
-              className="lg:hidden pointer-events-none absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-cream-50/95 dark:from-dark-900/95 to-transparent"
-            />
-          </div>
+          )}
 
-          <div className="mt-7 flex flex-col items-center gap-3">
-            <p className="text-xs text-dark-800/45 dark:text-white/40">
-              Showing {visibleGridProducts.length} of {visibleProducts.length}
-            </p>
-            {hasMoreGridProducts && (
-              <button
-                type="button"
-                onClick={() => setVisibleCount(count => count + PRODUCT_CHUNK_SIZE)}
-                className="inline-flex items-center gap-2 rounded-full bg-brand-400 px-5 py-2.5 text-sm font-semibold text-white shadow-amber-glow hover:bg-brand-500 transition-colors"
-              >
-                Load more <ArrowRight size={14} weight="bold" />
-              </button>
-            )}
-          </div>
-
+          {/* Sentinel — triggers next page load when scrolled into view */}
           <InfiniteScrollSentinel onReach={handleReachEnd} disabled={!canLoadMore} />
+
+          {/* End-of-results label */}
+          {!hasMoreGridProducts && visibleProducts.length > 0 && (
+            <p className="text-center text-xs text-dark-800/35 dark:text-white/30 mt-8 pb-2">
+              All {visibleProducts.length} product{visibleProducts.length !== 1 ? 's' : ''} shown
+            </p>
+          )}
         </section>
       )}
 
