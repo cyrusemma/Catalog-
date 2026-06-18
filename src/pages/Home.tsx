@@ -306,12 +306,10 @@ export default function Home() {
             </Link>
           </div>
           {/* Mobile = edge-to-edge swipe rail with snap. Desktop = grid. */}
-          <div className="sm:max-w-7xl sm:mx-auto sm:px-4">
-            <div className="flex sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible scrollbar-hide snap-x snap-mandatory px-4 sm:px-0 pb-2 sm:pb-0 -mx-0">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {newProducts.slice(0, 8).map((p, i) => (
-                <div key={p.id} className="snap-start flex-shrink-0 w-[44vw] sm:w-auto">
-                  <ProductCard product={p} index={i} />
-                </div>
+                <ProductCard key={p.id} product={p} index={i} />
               ))}
             </div>
           </div>
@@ -343,12 +341,10 @@ export default function Home() {
               View all <ArrowRight size={14} weight="bold" className="transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
-          <div className="sm:max-w-7xl sm:mx-auto sm:px-4">
-            <div className="flex sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible scrollbar-hide snap-x snap-mandatory px-4 sm:px-0 pb-2 sm:pb-0">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {featured.slice(0, 8).map((p, i) => (
-                <div key={p.id} className="snap-start flex-shrink-0 w-[44vw] sm:w-auto">
-                  <ProductCard product={p} index={i} />
-                </div>
+                <ProductCard key={p.id} product={p} index={i} />
               ))}
             </div>
           </div>

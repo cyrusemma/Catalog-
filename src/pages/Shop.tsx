@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useNavigationType, useParams } from 'react-router-dom'
-import { MagnifyingGlass, Faders, MagnifyingGlassMinus, CaretRight, ArrowRight, X } from '@phosphor-icons/react'
+import { MagnifyingGlass, Faders, MagnifyingGlassMinus, CaretRight, ArrowRight, X, SquaresFour, GridNine, Rows } from '@phosphor-icons/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import ProductCard from '../components/ui/ProductCard'
 import SkeletonCard from '../components/ui/SkeletonCard'
 import InfiniteScrollSentinel from '../components/ui/InfiniteScrollSentinel'
+
+type LayoutMode = 'grid' | 'magazine' | 'compact'
+
+const layoutButtons: { mode: LayoutMode; Icon: typeof SquaresFour; label: string }[] = [
+  { mode: 'grid',     Icon: SquaresFour, label: 'Grid' },
+  { mode: 'magazine', Icon: Rows,        label: 'Magazine' },
+  { mode: 'compact',  Icon: GridNine,    label: 'Compact' },
+]
 
 import {
   useProducts,
@@ -45,6 +53,7 @@ export default function Shop() {
   const params = useParams<{ parentSlug?: string; subSlug?: string }>()
   const [query, setQuery] = useState('')
   const [visibleCount, setVisibleCount] = useState(PRODUCT_CHUNK_SIZE)
+  const [layout, setLayout] = useState<LayoutMode>('grid')
   const pendingScrollRef = useRef<number | null>(null)
   const { data: categoryTree } = useCategoryTree()
   const { data: productCategoryRefs } = useProductCategoryRefs()
@@ -251,6 +260,14 @@ export default function Shop() {
     setVisibleCount(c => c + PRODUCT_CHUNK_SIZE)
   }
 
+  const gridClass = {
+    grid:     'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4',
+    magazine: 'grid grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4',
+    compact:  'grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2',
+  }[layout]
+
+  const isFeatured = (index: number) => layout === 'magazine' && index % 5 === 0
+
   return (
     <main className="flex-1 max-w-7xl mx-auto px-4 py-5 sm:py-10 pb-28 lg:pb-10">
       {/* Header */}
@@ -400,11 +417,9 @@ export default function Shop() {
       {/* Loading skeletons */}
       {isLoading && (
         <div className="relative -mx-4 lg:mx-0">
-          <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-4 lg:px-0 scrollbar-hide scroll-smooth snap-x snap-mandatory overscroll-x-contain [-webkit-overflow-scrolling:touch]">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 pb-2 px-4 lg:px-0">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-40 sm:w-48 snap-start">
-                <SkeletonCard compact />
-              </div>
+              <SkeletonCard key={i} compact />
             ))}
           </div>
         </div>
@@ -440,19 +455,10 @@ export default function Shop() {
                     </button>
                   )}
                 </div>
-                <div className="relative -mx-4 lg:mx-0">
-                  <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-4 lg:px-0 scrollbar-hide scroll-smooth snap-x snap-mandatory overscroll-x-contain [-webkit-overflow-scrolling:touch]">
-                    {prods.slice(0, PRODUCT_CHUNK_SIZE).map((p, i) => (
-                      <div key={p.id} className="flex-shrink-0 w-40 sm:w-48 snap-start">
-                        <ProductCard product={p} index={i} compact />
-                      </div>
-                    ))}
-                  </div>
-                  {/* Right-edge fade hint on mobile */}
-                  <div
-                    aria-hidden="true"
-                    className="lg:hidden pointer-events-none absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-cream-50/95 dark:from-dark-900/95 to-transparent"
-                  />
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {prods.slice(0, PRODUCT_CHUNK_SIZE).map((p, i) => (
+                    <ProductCard key={p.id} product={p} index={i} />
+                  ))}
                 </div>
               </section>
             )
@@ -463,27 +469,56 @@ export default function Shop() {
       {/* Filtered shelf — vertical grid with infinite scroll (category / search / filters active) */}
       {!isLoading && !productsIsError && !showRowsView && visibleProducts && visibleProducts.length > 0 && (
         <section>
-          <div className="flex items-end justify-between mb-3 sm:mb-4">
-            <h2 className="text-lg sm:text-2xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
-              {activeSub?.name || activeParent?.name || (query ? 'Search results' : 'Products')}
-            </h2>
-            <p className="text-xs text-dark-800/45 dark:text-white/40 flex-shrink-0 ml-4">
-              {visibleGridProducts.length} / {visibleProducts.length}
-            </p>
+          <div className="flex items-end justify-between mb-3 sm:mb-4 gap-4 flex-wrap">
+            <div>
+              <h2 className="text-lg sm:text-2xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
+                {activeSub?.name || activeParent?.name || (query ? 'Search results' : 'Products')}
+              </h2>
+              <p className="text-xs text-dark-800/45 dark:text-white/40 mt-1">
+                {visibleGridProducts.length} / {visibleProducts.length}
+              </p>
+            </div>
+            
+            {/* Layout Toggle */}
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-cream-100 dark:bg-white/5 border border-cream-200 dark:border-white/10">
+              {layoutButtons.map(({ mode, Icon, label }) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-label={`Switch to ${label} layout`}
+                  title={label}
+                  onClick={() => setLayout(mode)}
+                  className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    layout === mode
+                      ? 'bg-white dark:bg-white/10 text-brand-400 shadow-sm'
+                      : 'text-dark-800/50 dark:text-white/50 hover:text-dark-800 dark:hover:text-white'
+                  }`}
+                >
+                  <Icon size={15} weight={layout === mode ? 'fill' : 'regular'} />
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Vertical grid — shows every product, scrolls down infinitely */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-            {visibleGridProducts.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} />
-            ))}
+          <div className={gridClass}>
+            {visibleGridProducts.map((p, i) => {
+              const featured = isFeatured(i)
+              const spanClass = featured ? 'col-span-2 row-span-2' : ''
+              return (
+                <div key={p.id} className={spanClass}>
+                  <ProductCard product={p} index={i} compact={layout === 'compact'} />
+                </div>
+              )
+            })}
           </div>
 
           {/* Skeleton rows while loading more */}
           {hasMoreGridProducts && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-3">
+            <div className={`${gridClass} mt-3`}>
               {Array.from({ length: 4 }).map((_, i) => (
-                <SkeletonCard key={i} />
+                <SkeletonCard key={i} compact={layout === 'compact'} />
               ))}
             </div>
           )}

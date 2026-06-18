@@ -57,8 +57,9 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.05, ease: 'easeOut' }}
       whileHover={{ scale: 1.02 }}
+      className="h-full min-w-0"
     >
-      <Link to={`/product/${product.id}`} className={`card card-hover group block ${compact ? 'rounded-2xl' : ''}`}>
+      <Link to={`/product/${product.id}`} className={`card card-hover group flex flex-col h-full min-w-0 ${compact ? 'rounded-2xl' : ''}`}>
         {/* Image */}
         <div className={`relative overflow-hidden bg-cream-100 dark:bg-dark-700 ${compact ? 'aspect-[4/5] sm:aspect-square' : 'aspect-square'}`}>
           <img
@@ -116,7 +117,7 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
         </div>
 
         {/* Info */}
-        <div className={compact ? 'p-2 sm:p-3' : 'p-2.5 sm:p-3.5'}>
+        <div className={`flex flex-col flex-grow ${compact ? 'p-2 sm:p-3' : 'p-2.5 sm:p-3.5'}`}>
           <p className={`text-cream-400 dark:text-white/50 uppercase tracking-wider mb-0.5 sm:mb-1 font-medium truncate ${compact ? 'text-[8px] sm:text-[10px]' : 'text-[9px] sm:text-[10px]'}`}>
             {product.category}
           </p>
@@ -141,7 +142,7 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
           )}
 
           {/* Price */}
-          <div className={`mb-2 sm:mb-0 sm:flex sm:items-center sm:justify-between ${compact ? 'gap-2' : ''}`}>
+          <div className={`mt-auto mb-2 sm:mb-0 sm:flex sm:items-center sm:justify-between ${compact ? 'gap-2' : ''}`}>
             <div className="min-w-0">
               <p className={`font-bold truncate ${onFlashSale ? 'text-red-500' : 'text-brand-400'} ${compact ? 'text-sm sm:text-base' : 'text-sm sm:text-base'}`}>{formatPrice(displayPrice)}</p>
               {strikePrice && (
@@ -174,20 +175,20 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
 
           {/* Mobile: stacked full-width buttons */}
           {product.stock_status !== 'out_of_stock' && (
-            <div className={`flex gap-1.5 sm:hidden ${compact ? 'mt-1' : ''}`}>
+            <div className={`flex sm:hidden ${compact ? 'flex-col gap-1 mt-1' : 'flex-row gap-1.5'}`}>
               <button
                 onClick={handleAddToCart}
-                className={`flex-1 bg-cream-100 dark:bg-dark-700 active:bg-brand-400 active:text-white rounded-lg flex items-center justify-center transition-colors text-dark-800 dark:text-white ${compact ? 'h-7' : 'h-8'}`}
+                className={`flex-1 bg-cream-100 dark:bg-dark-700 active:bg-brand-400 active:text-white rounded-lg flex items-center justify-center transition-colors text-dark-800 dark:text-white ${compact ? 'h-6 sm:h-7' : 'h-8'}`}
                 aria-label="Add to cart"
               >
-                <ShoppingCart size={compact ? 13 : 14} weight="duotone" />
+                <ShoppingCart size={compact ? 12 : 14} weight="duotone" />
               </button>
               <button
                 onClick={handleWhatsApp}
-                className={`flex-1 bg-whatsapp active:bg-whatsapp-hover rounded-lg flex items-center justify-center transition-colors text-white ${compact ? 'h-7' : 'h-8'}`}
+                className={`flex-1 bg-whatsapp active:bg-whatsapp-hover rounded-lg flex items-center justify-center transition-colors text-white ${compact ? 'h-6 sm:h-7' : 'h-8'}`}
                 aria-label="Order via WhatsApp"
               >
-                <WhatsappLogo size={compact ? 13 : 14} weight="fill" />
+                <WhatsappLogo size={compact ? 12 : 14} weight="fill" />
               </button>
             </div>
           )}
