@@ -1,14 +1,18 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import type { Category, Product } from '../types'
 
-export function useProducts(filters?: {
-  categoryIds?: string[]
-  search?: string
-  featured?: boolean
-}) {
+export function useProducts(
+  filters?: {
+    categoryIds?: string[]
+    search?: string
+    featured?: boolean
+  },
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: ['products', filters],
+    ...options,
     queryFn: async () => {
       let query = supabase
         .from('products')
@@ -33,38 +37,48 @@ export function useProducts(filters?: {
   })
 }
 
-export async function fetchProductsPage(args: {
-  categoryIds?: string[]
+export function useInfiniteProducts(
+  filters?: {
+    categoryIds?: string[]
+    search?: string
+    featured?: boolean
+  },
+  options?: { enabled?: boolean },
+  pageSize = 10
+) {
+  return useInfiniteQuery({
+    queryKey: ['products', 'infinite', filters, pageSize],
+    queryFn: async ({ pageParam = 0 }) => {
+      let q = supabase
+        .from('products')
+        .select('*')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .range(pageParam, pageParam + pageSize - 1)
 
-  search?: string
-  featured?: boolean
-  pageSize: number
-  cursorCreatedAt?: string | null
-}) {
-  let q = supabase
-    .from('products')
-    .select('*')
-    .eq('is_published', true)
-    .order('created_at', { ascending: false })
-    .limit(args.pageSize)
+      if (filters?.categoryIds && filters.categoryIds.length > 0) {
+        q = q.in('category_id', filters.categoryIds)
+      }
+      if (filters?.search) {
+        q = q.ilike('title', `%${filters.search}%`)
+      }
+      if (filters?.featured) {
+        q = q.eq('is_featured', true)
+      }
 
-  if (args.cursorCreatedAt) {
-    q = q.lt('created_at', args.cursorCreatedAt)
-  }
-
-  if (args.categoryIds && args.categoryIds.length > 0) {
-    q = q.in('category_id', args.categoryIds)
-  }
-  if (args.search) {
-    q = q.ilike('title', `%${args.search}%`)
-  }
-  if (args.featured) {
-    q = q.eq('is_featured', true)
-  }
-
-  const { data, error } = await q
-  if (error) throw error
-  return data as Product[]
+      const { data, error } = await q
+      if (error) throw error
+      
+      const products = data as Product[]
+      return {
+        data: products,
+        nextOffset: products.length === pageSize ? pageParam + pageSize : null,
+      }
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    ...options,
+  })
 }
 
 

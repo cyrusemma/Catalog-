@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle, Info, WarningCircle, X } from '@phosphor-icons/react'
-import { useToastStore, ToastType } from '../../store/toastStore'
+import { useToastStore, type ToastType } from '../../store/toastStore'
 import { Link } from 'react-router-dom'
 
 const iconMap: Record<ToastType, React.ElementType> = {

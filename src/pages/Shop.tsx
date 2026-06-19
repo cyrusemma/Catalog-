@@ -16,6 +16,7 @@ const layoutButtons: { mode: LayoutMode; Icon: typeof SquaresFour; label: string
 
 import {
   useProducts,
+  useInfiniteProducts,
   useCategoryTree,
   useProductCategoryRefs,
   topLevelCategories,
@@ -52,7 +53,6 @@ export default function Shop() {
   const navType = useNavigationType()
   const params = useParams<{ parentSlug?: string; subSlug?: string }>()
   const [query, setQuery] = useState('')
-  const [visibleCount, setVisibleCount] = useState(PRODUCT_CHUNK_SIZE)
   const [layout, setLayout] = useState<LayoutMode>('grid')
   const pendingScrollRef = useRef<number | null>(null)
   const { data: categoryTree } = useCategoryTree()
@@ -113,11 +113,6 @@ export default function Shop() {
     return undefined
   }, [activeParent, activeSub, categoryTree])
 
-  const { data: products, isLoading, isError: productsIsError, error: productsError } = useProducts({
-    categoryIds,
-    search: query || undefined,
-  })
-
   const [filters, setFilters] = useState(defaultFilters)
   const [filterOpen, setFilterOpen] = useState(false)
 
@@ -127,6 +122,32 @@ export default function Shop() {
     (filters.maxPrice ? 1 : 0) +
     (filters.inStockOnly ? 1 : 0) +
     (filters.freeDeliveryOnly ? 1 : 0)
+
+  const isMainShopView = !activeParent && !query && activeFilterCount === 0
+
+  const { data: allProducts, isLoading: isLoadingAll, isError: allProductsIsError, error: allProductsError } = useProducts(
+    { categoryIds: undefined, search: undefined },
+    { enabled: isMainShopView }
+  )
+
+  const { 
+    data: infiniteData, 
+    isLoading: isInfiniteLoading, 
+    isError: infiniteIsError, 
+    error: infiniteError,
+    fetchNextPage,
+    hasNextPage
+  } = useInfiniteProducts(
+    { categoryIds, search: query || undefined },
+    { enabled: !isMainShopView },
+    PRODUCT_CHUNK_SIZE
+  )
+
+  const isLoading = isMainShopView ? isLoadingAll : isInfiniteLoading
+  const productsIsError = isMainShopView ? allProductsIsError : infiniteIsError
+  const productsError = isMainShopView ? allProductsError : infiniteError
+  
+  const products = isMainShopView ? allProducts : infiniteData?.pages.flatMap(p => p.data)
 
   // Apply price / stock / delivery filters then sort
   const visibleProducts = useMemo(() => {
@@ -168,17 +189,15 @@ export default function Shop() {
 
   const showRowsView = !activeParent && !query && activeFilterCount === 0 && productsByCategory.size > 1
 
-  // Reset Load More state on filter changes — but on Back/Forward,
-  // restore the saved chunk count and scroll position so the shopper
+  // On Back/Forward,
+  // restore the saved scroll position so the shopper
   // lands exactly where they left off.
   useEffect(() => {
     if (navType === 'POP') {
       const saved = sessionStorage.getItem(`shop-scroll:${location.pathname}`)
       if (saved) {
         try {
-          const { visibleCount: vc, scrollY } = JSON.parse(saved) as { visibleCount?: number; scrollY?: number }
-          if (typeof vc === 'number' && vc > 0) setVisibleCount(vc)
-          else setVisibleCount(PRODUCT_CHUNK_SIZE)
+          const { scrollY } = JSON.parse(saved) as { scrollY?: number }
           if (typeof scrollY === 'number') pendingScrollRef.current = scrollY
           return
         } catch {
@@ -186,7 +205,6 @@ export default function Shop() {
         }
       }
     }
-    setVisibleCount(PRODUCT_CHUNK_SIZE)
   }, [
     parentSlug,
     subSlug,
@@ -218,7 +236,7 @@ export default function Shop() {
       timer = window.setTimeout(() => {
         sessionStorage.setItem(
           `shop-scroll:${location.pathname}`,
-          JSON.stringify({ scrollY: window.scrollY, visibleCount }),
+          JSON.stringify({ scrollY: window.scrollY }),
         )
         timer = null
       }, 200)
@@ -228,7 +246,7 @@ export default function Shop() {
       window.removeEventListener('scroll', save)
       if (timer !== null) window.clearTimeout(timer)
     }
-  }, [visibleCount, location.pathname])
+  }, [location.pathname])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -250,14 +268,14 @@ export default function Shop() {
     ...(activeSub ? [{ label: activeSub.name, onClick: () => handleSubChange(activeSub.slug) }] : []),
   ]
 
-  const visibleGridProducts = visibleProducts?.slice(0, visibleCount) ?? []
-  const hasMoreGridProducts = Boolean(visibleProducts && visibleProducts.length > visibleCount)
+  const visibleGridProducts = visibleProducts ?? []
+  const hasMoreGridProducts = isMainShopView ? false : hasNextPage
 
   const canLoadMore = hasMoreGridProducts
 
   const handleReachEnd = () => {
     if (!canLoadMore) return
-    setVisibleCount(c => c + PRODUCT_CHUNK_SIZE)
+    if (!isMainShopView) fetchNextPage()
   }
 
   const gridClass = {
