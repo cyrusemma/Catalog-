@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartItem, Product } from '../types'
 import { effectivePrice } from '../lib/utils'
+import { useToastStore } from './toastStore'
 
 interface CartStore {
   items: CartItem[]
@@ -24,6 +25,11 @@ export const useCartStore = create<CartStore>()(
         } else {
           set({ items: [...get().items, { product, quantity }] })
         }
+        useToastStore.getState().addToast({
+          title: 'Added to cart',
+          message: `${product.title}`,
+          type: 'success',
+        })
       },
       removeItem: (productId) => set({ items: get().items.filter(i => i.product.id !== productId) }),
       updateQuantity: (productId, quantity) => {

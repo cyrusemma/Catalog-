@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Product } from '../types'
+import { useToastStore } from './toastStore'
 
 interface WishlistStore {
   items: Product[]
@@ -21,6 +22,11 @@ export const useWishlistStore = create<WishlistStore>()(
           set({ items: get().items.filter(p => p.id !== product.id) })
         } else {
           set({ items: [product, ...get().items] })
+          useToastStore.getState().addToast({
+            title: 'Added to wishlist',
+            message: `${product.title}`,
+            type: 'success',
+          })
         }
       },
       remove: (productId) => set({ items: get().items.filter(p => p.id !== productId) }),

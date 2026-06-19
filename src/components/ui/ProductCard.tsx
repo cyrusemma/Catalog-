@@ -1,9 +1,10 @@
 import { memo } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingCart, WhatsappLogo, Star, Sparkle, Lightning, Heart, Clock } from '@phosphor-icons/react'
+import { ShoppingCart, WhatsappLogo, Star, Sparkle, Lightning, Heart, Clock, Eye } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
+import { useQuickViewStore } from '../../store/quickViewStore'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
 import { activeFlashSalePrice, buildProductWhatsAppMessage, buildWhatsAppUrl, formatPrice, isNewProduct } from '../../lib/utils'
 import CountdownTimer from './CountdownTimer'
@@ -19,6 +20,7 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
   const addItem = useCartStore(s => s.addItem)
   const toggleWishlist = useWishlistStore(s => s.toggle)
   const isWishlisted = useWishlistStore(s => s.has(product.id))
+  const openQuickView = useQuickViewStore(s => s.openModal)
   const settings = useStoreSettings()
   const isNew = isNewProduct(product.created_at)
   const flashPrice = activeFlashSalePrice(product)
@@ -114,6 +116,20 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
               <span className="text-white font-semibold text-sm tracking-wide">Out of Stock</span>
             </div>
           )}
+          {/* Quick View Button (Desktop Hover) */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              openQuickView(product)
+            }}
+            aria-label="Quick view"
+            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/5"
+          >
+            <div className="bg-white/90 dark:bg-dark-800/90 backdrop-blur-md text-dark-800 dark:text-white rounded-full p-2.5 shadow-xl transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+              <Eye size={20} weight="duotone" />
+            </div>
+          </button>
         </div>
 
         {/* Info */}

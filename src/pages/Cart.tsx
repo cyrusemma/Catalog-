@@ -32,14 +32,29 @@ export default function Cart() {
   if (items.length === 0) {
     return (
       <main className="flex-1 flex items-center justify-center px-4 pb-28 lg:pb-10">
-        <div className="text-center">
-          <ShoppingBag size={64} weight="duotone" className="text-brand-400/40 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-dark-800 dark:text-white mb-2">Your cart is empty</h2>
-          <p className="text-dark-800/50 dark:text-white/40 text-sm mb-6">Looks like you haven't added anything yet</p>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center justify-center text-center py-10"
+        >
+          <div className="relative mb-6">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-500/10 dark:to-brand-500/5 flex items-center justify-center">
+              <ShoppingBag size={42} weight="duotone" className="text-brand-400" />
+            </div>
+            <motion.div
+              animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute inset-0 rounded-full border-2 border-brand-200 dark:border-brand-500/30"
+            />
+          </div>
+          <h2 className="text-xl font-display font-bold text-dark-800 dark:text-white mb-2">Your cart is empty</h2>
+          <p className="text-dark-800/50 dark:text-white/40 text-sm max-w-xs mb-6">
+            Looks like you haven't added anything yet. Start exploring our collection!
+          </p>
           <Link to="/shop" className="btn-primary inline-flex items-center gap-2">
             <ArrowLeft size={16} /> Start Shopping
           </Link>
-        </div>
+        </motion.div>
       </main>
     )
   }

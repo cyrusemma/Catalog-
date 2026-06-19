@@ -12,6 +12,9 @@ import AnnouncementBanner from './components/layout/AnnouncementBanner'
 import ShopLoader from './components/ui/ShopLoader'
 import OfflineIndicator from './components/ui/OfflineIndicator'
 import SignInModal from './components/ui/SignInModal'
+import ToastContainer from './components/ui/ToastContainer'
+import QuickViewModal from './components/ui/QuickViewModal'
+import BackToTop from './components/ui/BackToTop'
 import { useSignInStore } from './store/signInStore'
 
 const Home = lazy(() => import('./pages/Home'))
@@ -81,6 +84,9 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
       <BottomNav />
       <SignInModal open={signInOpen} onClose={closeSignIn} reason={signInReason ?? undefined} />
       <OfflineIndicator />
+      <ToastContainer />
+      <QuickViewModal />
+      <BackToTop />
     </div>
   )
 }
