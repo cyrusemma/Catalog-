@@ -26,6 +26,10 @@ export interface Product {
   rating?: number
   rating_count?: number
   created_at: string
+  store_id?: string | null
+  approval_status?: 'pending' | 'approved' | 'rejected'
+  is_approved_for_marketplace?: boolean
+  marketplace_price?: number | null
 }
 
 export interface Order {

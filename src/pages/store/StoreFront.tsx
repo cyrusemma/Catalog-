@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Store, ShoppingBag, Package, Star, MessageSquare } from 'lucide-react'
+import { Store, ShoppingBag, Package, Star } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils'
-import StorefrontLayout from '../../App' // Reuses the storefront layout wrapper if applicable
 
 interface StoreDetails {
   id: string
