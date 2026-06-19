@@ -1,20 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ShoppingCart, WhatsappLogo, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck, Lightning, Clock } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProduct } from '../hooks/useProducts'
 import { useCartStore } from '../store/cartStore'
+import { useRecentStore } from '../store/recentStore'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { formatPrice, buildWhatsAppUrl, buildProductWhatsAppMessage, activeFlashSalePrice, effectivePrice } from '../lib/utils'
 import CountdownTimer from '../components/ui/CountdownTimer'
+import ProductCard from '../components/ui/ProductCard'
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>()
   const { data: product, isLoading } = useProduct(id!)
   const addItem = useCartStore(s => s.addItem)
+  const addRecent = useRecentStore(s => s.addRecent)
+  const recentItems = useRecentStore(s => s.recent)
   const settings = useStoreSettings()
   const [activeImg, setActiveImg] = useState(0)
   const [added, setAdded] = useState(false)
+
+  useEffect(() => {
+    if (product) {
+      addRecent(product)
+      setActiveImg(0)
+    }
+  }, [product, addRecent])
 
   const handleAddToCart = () => {
     if (!product) return
@@ -277,6 +288,22 @@ export default function ProductDetail() {
           </button>
         </div>
       </div>
+
+      {recentItems.filter(p => p.id !== product.id).length > 0 && (
+        <div className="mt-16 sm:mt-24 pt-10 border-t border-cream-200 dark:border-dark-700/50">
+          <h2 className="text-xl sm:text-2xl font-display font-bold text-dark-800 dark:text-white mb-6">
+            Recently Viewed
+          </h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            {recentItems
+              .filter(p => p.id !== product.id)
+              .slice(0, 4)
+              .map((p, index) => (
+                <ProductCard key={p.id} product={p} index={index} />
+              ))}
+          </div>
+        </div>
+      )}
     </main>
   )
 }

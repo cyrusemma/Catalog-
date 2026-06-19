@@ -12,6 +12,7 @@ import {
   validateImageFile,
   validateProductForm,
 } from '../../lib/productValidation'
+import ImageCropper from '../../components/admin/ImageCropper'
 
 interface FormData {
   title: string; brand: string; description: string
@@ -79,6 +80,8 @@ export default function AdminProductForm() {
   const [notifyMessage, setNotifyMessage] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const [currentCropFile, setCurrentCropFile] = useState<{ url: string; file: File } | null>(null)
   const [creatingCategory, setCreatingCategory] = useState<'parent' | 'sub' | null>(null)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [categoryError, setCategoryError] = useState('')
@@ -99,34 +102,64 @@ export default function AdminProductForm() {
     setNewImageUrl('')
   }
 
-  const handleFileUpload = async (files: FileList | null) => {
+  const handleFileUpload = (files: FileList | null) => {
     if (!files || files.length === 0) return
-    setUploading(true)
     setUploadError('')
-    const uploaded: string[] = []
+    const fileArray = Array.from(files)
     try {
-      for (const file of Array.from(files)) {
+      for (const file of fileArray) {
         const fileError = validateImageFile(file)
         if (fileError) throw new Error(fileError)
-
-        const ext = extensionForMime(file.type)
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
-        const { error } = await supabase.storage.from('product-images').upload(path, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: file.type,
-        })
-        if (error) throw error
-        const { data } = supabase.storage.from('product-images').getPublicUrl(path)
-        uploaded.push(data.publicUrl)
       }
-      setForm(f => ({ ...f, images: [...f.images, ...uploaded] }))
+      setPendingFiles(prev => [...prev, ...fileArray])
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  useEffect(() => {
+    if (pendingFiles.length > 0 && !currentCropFile && !uploading) {
+      const file = pendingFiles[0]
+      setCurrentCropFile({ url: URL.createObjectURL(file), file })
+    }
+  }, [pendingFiles, currentCropFile, uploading])
+
+  const proceedWithUpload = async (fileToUpload: Blob | File, contentType: string) => {
+    setUploading(true)
+    setUploadError('')
+    try {
+      const ext = extensionForMime(contentType) || 'webp'
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+      const { error } = await supabase.storage.from('product-images').upload(path, fileToUpload, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType,
+      })
+      if (error) throw error
+      const { data } = supabase.storage.from('product-images').getPublicUrl(path)
+      setForm(f => ({ ...f, images: [...f.images, data.publicUrl] }))
     } catch (err: unknown) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
       setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
+      setCurrentCropFile(prev => {
+        if (prev) URL.revokeObjectURL(prev.url)
+        return null
+      })
+      setPendingFiles(prev => prev.slice(1))
     }
+  }
+
+  const onCropDone = (croppedBlob: Blob) => {
+    if (!currentCropFile) return
+    proceedWithUpload(croppedBlob, 'image/webp')
+  }
+
+  const onCropSkip = () => {
+    if (!currentCropFile) return
+    proceedWithUpload(currentCropFile.file, currentCropFile.file.type)
   }
 
   const { data: existingProduct } = useQuery({
@@ -800,6 +833,13 @@ export default function AdminProductForm() {
           </div>
         </div>
       </div>
+      {currentCropFile && (
+        <ImageCropper
+          imageSrc={currentCropFile.url}
+          onCropDone={onCropDone}
+          onCancel={onCropSkip}
+        />
+      )}
     </AdminLayout>
   )
 }

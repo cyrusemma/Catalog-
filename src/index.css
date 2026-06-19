@@ -255,8 +255,7 @@ html.theme-turquoise-dark .card { background-color: #062f2a !important; border-c
 
 .admin-shell .bg-white,
 .admin-shell .bg-white\/85 {
-  /* Fallback for older browsers */
-  background-color: rgba(36,21,7,0.92) !important;
+  background-color: var(--admin-panel) !important;
 }
 
 .admin-shell .bg-gray-50,
@@ -332,30 +331,39 @@ html.theme-turquoise-dark .card { background-color: #062f2a !important; border-c
   color: var(--admin-text) !important;
 }
 
-.admin-shell .bg-amber-50 {
+.admin-theme-amoled .bg-amber-50,
+.admin-theme-gold .bg-amber-50 {
   background-color: rgba(212, 130, 10, 0.14) !important;
 }
 
-.admin-shell .border-amber-200 {
+.admin-theme-amoled .border-amber-200,
+.admin-theme-gold .border-amber-200 {
   border-color: rgba(212, 130, 10, 0.35) !important;
 }
 
-.admin-shell .text-amber-800,
-.admin-shell .text-amber-900 {
+.admin-theme-amoled .text-amber-800,
+.admin-theme-amoled .text-amber-900,
+.admin-theme-gold .text-amber-800,
+.admin-theme-gold .text-amber-900 {
   color: #f4c46f !important;
 }
 
-.admin-shell .bg-red-50 {
+.admin-theme-amoled .bg-red-50,
+.admin-theme-gold .bg-red-50 {
   background-color: rgba(239, 68, 68, 0.13) !important;
 }
 
-.admin-shell .border-red-100,
-.admin-shell .border-red-200 {
+.admin-theme-amoled .border-red-100,
+.admin-theme-amoled .border-red-200,
+.admin-theme-gold .border-red-100,
+.admin-theme-gold .border-red-200 {
   border-color: rgba(248, 113, 113, 0.34) !important;
 }
 
-.admin-shell .text-red-500,
-.admin-shell .text-red-600 {
+.admin-theme-amoled .text-red-500,
+.admin-theme-amoled .text-red-600,
+.admin-theme-gold .text-red-500,
+.admin-theme-gold .text-red-600 {
   color: #fb7185 !important;
 }
 
