@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useLocation } from 'react-router-dom'
 import { ArrowLeft, ShoppingCart, WhatsappLogo, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck, Lightning, Clock } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import { useProduct } from '../hooks/useProducts'
 import { useCartStore } from '../store/cartStore'
 import { useRecentStore } from '../store/recentStore'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { formatPrice, buildWhatsAppUrl, buildProductWhatsAppMessage, activeFlashSalePrice, effectivePrice } from '../lib/utils'
+import { supabase } from '../lib/supabase'
 import CountdownTimer from '../components/ui/CountdownTimer'
 import ProductCard from '../components/ui/ProductCard'
 
@@ -17,6 +19,35 @@ export default function ProductDetail() {
   const isMarketplaceView = !searchParams.get('store')
   
   const { data: product, isLoading } = useProduct(id!, isMarketplaceView)
+
+  // Fetch related products in the same category
+  const { data: relatedProducts } = useQuery({
+    queryKey: ['related-products', product?.category_id, product?.id, isMarketplaceView, product?.store_id],
+    queryFn: async () => {
+      if (!product) return []
+      let query = supabase
+        .from('products')
+        .select('*')
+        .neq('id', product.id)
+        .eq('is_published', true)
+
+      if (isMarketplaceView) {
+        // Main marketplace: same category, owned by platform OR approved merchant items
+        query = query
+          .eq('category_id', product.category_id)
+          .or('store_id.is.null,is_approved_for_marketplace.eq.true')
+      } else {
+        // Merchant shop: same category, restricted to this merchant's store_id
+        query = query
+          .eq('store_id', product.store_id)
+          .eq('category_id', product.category_id)
+      }
+
+      const { data } = await query.limit(4)
+      return data || []
+    },
+    enabled: !!product?.category_id,
+  })
   const addItem = useCartStore(s => s.addItem)
   const addRecent = useRecentStore(s => s.addRecent)
   const recentItems = useRecentStore(s => s.recent)
@@ -292,6 +323,19 @@ export default function ProductDetail() {
           </button>
         </div>
       </div>
+
+      {relatedProducts && relatedProducts.length > 0 && (
+        <div className="mt-16 sm:mt-24 pt-10 border-t border-cream-200 dark:border-dark-700/50">
+          <h2 className="text-xl sm:text-2xl font-display font-bold text-dark-800 dark:text-white mb-6">
+            More in this Category
+          </h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            {relatedProducts.map((p, index) => (
+              <ProductCard key={p.id} product={p} index={index} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {recentItems.filter(p => p.id !== product.id).length > 0 && (
         <div className="mt-16 sm:mt-24 pt-10 border-t border-cream-200 dark:border-dark-700/50">

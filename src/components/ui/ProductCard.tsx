@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { Link } from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 import { ShoppingCart, WhatsappLogo, Star, Sparkle, Lightning, Heart, Clock } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
@@ -16,6 +16,11 @@ interface Props {
 }
 
 function ProductCard({ product, index = 0, compact = false }: Props) {
+  const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const storeParam = searchParams.get('store')
+  const detailUrl = storeParam ? `/product/${product.id}?store=${storeParam}` : `/product/${product.id}`
+
   const addItem = useCartStore(s => s.addItem)
   const toggleWishlist = useWishlistStore(s => s.toggle)
   const isWishlisted = useWishlistStore(s => s.has(product.id))
@@ -39,7 +44,7 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
     e.preventDefault()
     const url = buildWhatsAppUrl(
       settings.whatsapp_number || '233000000000',
-      buildProductWhatsAppMessage(product.title, product.selling_price, `${window.location.origin}/product/${product.id}`)
+      buildProductWhatsAppMessage(product.title, product.selling_price, `${window.location.origin}${detailUrl}`)
     )
     window.open(url, '_blank')
   }
@@ -59,7 +64,7 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
       whileHover={{ scale: 1.02 }}
       className="h-full min-w-0"
     >
-      <Link to={`/product/${product.id}`} className={`card card-hover group flex flex-col h-full min-w-0 ${compact ? 'rounded-2xl' : ''}`}>
+      <Link to={detailUrl} className={`card card-hover group flex flex-col h-full min-w-0 ${compact ? 'rounded-2xl' : ''}`}>
         {/* Image */}
         <div className={`relative overflow-hidden bg-cream-100 dark:bg-dark-700 ${compact ? 'aspect-[4/5] sm:aspect-square' : 'aspect-square'}`}>
           <img
