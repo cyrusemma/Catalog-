@@ -18,6 +18,7 @@ export function useProducts(
         .from('products')
         .select('*')
         .eq('is_published', true)
+        .or('store_id.is.null,is_approved_for_marketplace.eq.true')
         .order('created_at', { ascending: false })
 
       if (filters?.categoryIds && filters.categoryIds.length > 0) {
@@ -32,7 +33,18 @@ export function useProducts(
 
       const { data, error } = await query
       if (error) throw error
-      return data as Product[]
+      
+      const products = (data as any[] || []).map(product => {
+        if (product.store_id && product.marketplace_price !== null && product.marketplace_price !== undefined) {
+          return {
+            ...product,
+            selling_price: product.marketplace_price
+          }
+        }
+        return product
+      })
+      
+      return products as Product[]
     },
   })
 }
@@ -53,6 +65,7 @@ export function useInfiniteProducts(
         .from('products')
         .select('*')
         .eq('is_published', true)
+        .or('store_id.is.null,is_approved_for_marketplace.eq.true')
         .order('created_at', { ascending: false })
         .range(pageParam, pageParam + pageSize - 1)
 
@@ -69,7 +82,17 @@ export function useInfiniteProducts(
       const { data, error } = await q
       if (error) throw error
       
-      const products = data as Product[]
+      const rawProducts = data as any[]
+      const products = rawProducts.map(product => {
+        if (product.store_id && product.marketplace_price !== null && product.marketplace_price !== undefined) {
+          return {
+            ...product,
+            selling_price: product.marketplace_price
+          }
+        }
+        return product
+      }) as Product[]
+      
       return {
         data: products,
         nextOffset: products.length === pageSize ? pageParam + pageSize : null,
@@ -82,9 +105,9 @@ export function useInfiniteProducts(
 }
 
 
-export function useProduct(id: string) {
+export function useProduct(id: string, isMarketplaceView = true) {
   return useQuery({
-    queryKey: ['product', id],
+    queryKey: ['product', id, isMarketplaceView],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
@@ -93,7 +116,15 @@ export function useProduct(id: string) {
         .eq('is_published', true)
         .single()
       if (error) throw error
-      return data as Product
+      
+      const product = data as any
+      if (isMarketplaceView && product.store_id && product.marketplace_price !== null && product.marketplace_price !== undefined) {
+        return {
+          ...product,
+          selling_price: product.marketplace_price
+        } as Product
+      }
+      return product as Product
     },
     enabled: !!id,
   })
@@ -109,11 +140,24 @@ export function useNewProducts(days = 7) {
         .from('products')
         .select('*')
         .eq('is_published', true)
+        .or('store_id.is.null,is_approved_for_marketplace.eq.true')
         .gte('created_at', cutoff.toISOString())
         .order('created_at', { ascending: false })
         .limit(8)
       if (error) throw error
-      return data as Product[]
+      
+      const rawProducts = data as any[]
+      const products = rawProducts.map(product => {
+        if (product.store_id && product.marketplace_price !== null && product.marketplace_price !== undefined) {
+          return {
+            ...product,
+            selling_price: product.marketplace_price
+          }
+        }
+        return product
+      }) as Product[]
+      
+      return products
     },
   })
 }

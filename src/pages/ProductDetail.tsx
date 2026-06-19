@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useLocation } from 'react-router-dom'
 import { ArrowLeft, ShoppingCart, WhatsappLogo, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck, Lightning, Clock } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProduct } from '../hooks/useProducts'
@@ -12,7 +12,11 @@ import ProductCard from '../components/ui/ProductCard'
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>()
-  const { data: product, isLoading } = useProduct(id!)
+  const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const isMarketplaceView = !searchParams.get('store')
+  
+  const { data: product, isLoading } = useProduct(id!, isMarketplaceView)
   const addItem = useCartStore(s => s.addItem)
   const addRecent = useRecentStore(s => s.addRecent)
   const recentItems = useRecentStore(s => s.recent)

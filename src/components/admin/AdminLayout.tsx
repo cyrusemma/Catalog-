@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, Store, ExternalLink, Menu, X, MessageSquareQuote, Palette } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, Store, ExternalLink, Menu, X, MessageSquareQuote, Palette, ClipboardCheck } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { path: '/admin/products', label: 'Products', icon: Package },
+  { path: '/admin/approvals', label: 'Approvals', icon: ClipboardCheck },
   { path: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { path: '/admin/reviews', label: 'Reviews', icon: MessageSquareQuote },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
