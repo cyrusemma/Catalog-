@@ -93,7 +93,7 @@ export default function Footer() {
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-t from-brand-400/10 via-brand-400/5 to-transparent pointer-events-none" />
 
-      <div className="relative max-w-5xl mx-auto px-4 pt-16 pb-28 lg:pb-16 flex flex-col items-center text-center">
+      <div className="relative max-w-5xl mx-auto px-4 pt-16 pb-24 sm:pb-16 flex flex-col items-center text-center">
         {/* Logo & Store Name */}
         <Link to="/" className="inline-flex flex-col items-center gap-3 group mb-6">
           <div className="w-12 h-12 rounded-2xl bg-brand-400/10 border border-brand-400/20 flex items-center justify-center text-brand-400 group-hover:bg-brand-400 group-hover:text-white group-hover:-rotate-6 group-hover:scale-110 transition-all duration-300 shadow-xl shadow-brand-400/5">
