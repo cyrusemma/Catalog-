@@ -32,11 +32,11 @@ function ToastItem({ toast, removeToast }: { toast: Toast; removeToast: (id: str
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: -20, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.8, ease: "easeOut" } }}
-      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-      className="pointer-events-auto flex items-center justify-between gap-3 w-full bg-white/90 dark:bg-dark-800/90 backdrop-blur-xl border border-cream-200 dark:border-white/10 p-3 sm:px-4 sm:py-3 rounded-2xl shadow-xl"
+      initial={{ opacity: 0, scale: 0.3, x: 40, y: -40, filter: 'blur(8px)' }}
+      animate={{ opacity: 1, scale: 1, x: 0, y: 0, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, scale: 0.8, x: 10, y: -10, filter: 'blur(8px)', transition: { duration: 0.8, ease: "easeOut" } }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+      className="pointer-events-auto flex items-center justify-between gap-3 w-full bg-white/70 dark:bg-dark-800/70 backdrop-blur-2xl border border-white/40 dark:border-white/10 p-3 sm:px-4 sm:py-3 rounded-2xl shadow-2xl"
     >
       <div className="flex items-center gap-3 min-w-0">
         <div className={`flex-shrink-0 ${colorMap[toast.type]}`}>
@@ -89,7 +89,7 @@ export default function ToastContainer() {
   const { toasts, removeToast } = useToastStore()
 
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 items-center pointer-events-none w-full max-w-sm px-4">
+    <div className="fixed top-16 right-4 sm:right-6 z-[100] flex flex-col gap-3 items-end pointer-events-none w-full max-w-sm">
       <AnimatePresence mode="popLayout">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} removeToast={removeToast} />
