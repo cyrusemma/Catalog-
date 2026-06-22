@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { MagnifyingGlass, X, SquaresFour, GridNine, Rows } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProducts } from '../hooks/useProducts'
+import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
 import SkeletonCard from '../components/ui/SkeletonCard'
-import { formatPrice } from '../lib/utils'
 // Note: Product type uses `images: string[]` (not `image_url`).
 
 const PRODUCT_CHUNK_SIZE = 20
@@ -18,6 +18,7 @@ const layoutButtons: { mode: LayoutMode; Icon: typeof SquaresFour; label: string
 ]
 
 export default function Gallery() {
+  const formatPrice = useCurrencyFormatter()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')

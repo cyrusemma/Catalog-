@@ -7,12 +7,14 @@ import { useProduct } from '../hooks/useProducts'
 import { useCartStore } from '../store/cartStore'
 import { useRecentStore } from '../store/recentStore'
 import { useStoreSettings } from '../hooks/useStoreSettings'
-import { formatPrice, buildWhatsAppUrl, buildProductWhatsAppMessage, activeFlashSalePrice, effectivePrice } from '../lib/utils'
+import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
+import { buildWhatsAppUrl, buildProductWhatsAppMessage, activeFlashSalePrice, effectivePrice } from '../lib/utils'
 import { supabase } from '../lib/supabase'
 import CountdownTimer from '../components/ui/CountdownTimer'
 import ProductCard from '../components/ui/ProductCard'
 
 export default function ProductDetail() {
+  const formatPrice = useCurrencyFormatter()
   const { id } = useParams<{ id: string }>()
   const location = useLocation()
   const searchParams = new URLSearchParams(location.search)

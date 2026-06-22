@@ -5,10 +5,12 @@ import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useCartStore } from '../store/cartStore'
 import { useStoreSettings } from '../hooks/useStoreSettings'
-import { formatPrice, buildWhatsAppUrl, buildCartWhatsAppMessage, effectivePrice } from '../lib/utils'
+import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
+import { buildWhatsAppUrl, buildCartWhatsAppMessage, effectivePrice } from '../lib/utils'
 import { supabase } from '../lib/supabase'
 
 export default function Cart() {
+  const formatPrice = useCurrencyFormatter()
   const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCartStore()
   const settings = useStoreSettings()
 

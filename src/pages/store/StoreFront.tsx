@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Store, ShoppingBag, Package, Star } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { formatPrice } from '../../lib/utils'
+import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
 
 interface StoreDetails {
   id: string
@@ -25,6 +25,7 @@ interface Product {
 }
 
 export default function StoreFront() {
+  const formatPrice = useCurrencyFormatter()
   const { storeSlug } = useParams<{ storeSlug: string }>()
   const [search, setSearch] = useState('')
 

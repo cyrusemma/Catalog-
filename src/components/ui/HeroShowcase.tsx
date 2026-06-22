@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useReducedMotion } from 'framer-motion'
-import { activeFlashSalePrice, formatPrice } from '../../lib/utils'
+import { activeFlashSalePrice } from '../../lib/utils'
+import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
 import type { Product } from '../../types'
 
 const PLACEHOLDER = 'https://placehold.co/600x750/1a1008/d4820a?text=No+Image'
@@ -12,6 +13,7 @@ const PLACEHOLDER = 'https://placehold.co/600x750/1a1008/d4820a?text=No+Image'
  * Pauses for reduced-motion users.
  */
 export default function HeroShowcase({ products }: { products: Product[] }) {
+  const formatPrice = useCurrencyFormatter()
   const reduceMotion = useReducedMotion()
   const [idx, setIdx] = useState(0)
   const items = products.slice(0, 6)

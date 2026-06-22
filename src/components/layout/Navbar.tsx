@@ -6,6 +6,7 @@ import { useCustomerSession } from '../../hooks/useCustomerSession'
 import { useSignInStore } from '../../store/signInStore'
 import ThemeToggle from '../ui/ThemeToggle'
 import NotificationButton from '../ui/NotificationButton'
+import CurrencySelector from '../ui/CurrencySelector'
 
 export default function Navbar() {
   const location = useLocation()
@@ -17,10 +18,10 @@ export default function Navbar() {
   // Two-letter initials for the avatar fallback when there's no avatar_url.
   const initials = profile
     ? (profile.display_name || profile.email || '?')
-        .split(/\s+/)
-        .map(part => part.charAt(0).toUpperCase())
-        .slice(0, 2)
-        .join('') || '?'
+      .split(/\s+/)
+      .map(part => part.charAt(0).toUpperCase())
+      .slice(0, 2)
+      .join('') || '?'
     : ''
 
   const navLink = (to: string, label: string) => {
@@ -28,11 +29,10 @@ export default function Navbar() {
     return (
       <Link
         to={to}
-        className={`text-sm font-medium transition-colors ${
-          active
+        className={`text-sm font-medium transition-colors ${active
             ? 'text-brand-400'
             : 'text-dark-800/70 dark:text-white/70 hover:text-dark-800 dark:hover:text-white'
-        }`}
+          }`}
       >
         {label}
       </Link>
@@ -64,6 +64,7 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-1.5">
+          <CurrencySelector />
           <ThemeToggle />
           <NotificationButton />
 

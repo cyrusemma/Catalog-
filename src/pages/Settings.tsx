@@ -23,6 +23,7 @@ import { COLOR_THEMES, useThemeStore } from '../store/themeStore'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useSignInStore } from '../store/signInStore'
+import CurrencySelector from '../components/ui/CurrencySelector'
 import {
   getActiveSubscription,
   pushIsSupported,
@@ -215,6 +216,28 @@ export default function Settings() {
               {m}
             </button>
           ))}
+        </div>
+      </motion.section>
+
+      {/* Regional preferences. */}
+      <motion.section
+        {...sectionMotion(0.02)}
+        className="rounded-3xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 mb-5"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🌍</span>
+              <h2 className="text-dark-800 dark:text-white font-semibold">Regional Settings</h2>
+            </div>
+            <p className="text-dark-800/55 dark:text-white/50 text-sm mt-1.5 mb-4">
+              Choose your preferred currency to display prices across the store. This setting is saved to your device.
+            </p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-800/50 dark:text-white/40 mb-2">Display Currency</p>
+            <div className="inline-block bg-cream-100 dark:bg-dark-700 rounded-xl px-2">
+              <CurrencySelector />
+            </div>
+          </div>
         </div>
       </motion.section>
 

@@ -5,7 +5,8 @@ import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
-import { activeFlashSalePrice, buildProductWhatsAppMessage, buildWhatsAppUrl, formatPrice, isNewProduct } from '../../lib/utils'
+import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
+import { activeFlashSalePrice, buildProductWhatsAppMessage, buildWhatsAppUrl, isNewProduct } from '../../lib/utils'
 import CountdownTimer from './CountdownTimer'
 import type { Product } from '../../types'
 
@@ -25,6 +26,8 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
   const toggleWishlist = useWishlistStore(s => s.toggle)
   const isWishlisted = useWishlistStore(s => s.has(product.id))
   const settings = useStoreSettings()
+  const formatPrice = useCurrencyFormatter()
+  
   const isNew = isNewProduct(product.created_at)
   const flashPrice = activeFlashSalePrice(product)
   const onFlashSale = flashPrice != null

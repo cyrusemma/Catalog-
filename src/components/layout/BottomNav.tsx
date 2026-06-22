@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { House, Storefront, Images, ShoppingCart, Heart } from '@phosphor-icons/react'
+import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
@@ -10,7 +11,7 @@ const items: NavItem[] = [
   { to: '/', label: 'Home', Icon: House },
   { to: '/shop', label: 'Shop', Icon: Storefront },
   { to: '/gallery', label: 'Gallery', Icon: Images },
-  { to: '/wishlist', label: 'Wishlist', Icon: Heart, badgeKind: 'wishlist' },
+  { to: '/wishlist', label: 'Saved', Icon: Heart, badgeKind: 'wishlist' },
   { to: '/cart', label: 'Cart', Icon: ShoppingCart, badgeKind: 'cart' },
 ]
 
@@ -20,35 +21,52 @@ export default function BottomNav() {
   const wishlistCount = useWishlistStore(s => s.count())
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-cream-50/90 dark:bg-dark-900/90 backdrop-blur-xl border-t border-brand-400/15 pb-safe">
-      <div className="grid grid-cols-5 max-w-2xl mx-auto px-1">
+    <nav className="sm:hidden fixed bottom-5 left-4 right-4 z-50 pointer-events-none">
+      <div className="max-w-[400px] mx-auto pointer-events-auto flex items-center justify-between bg-white/85 dark:bg-dark-900/85 backdrop-blur-2xl backdrop-saturate-150 border border-cream-200 dark:border-white/10 rounded-full p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         {items.map(({ to, label, Icon, badgeKind }) => {
-          const active = location.pathname === to
+          // Strict exact match for home so we don't accidentally highlight it on nested routes
+          const active = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
           const badgeValue = badgeKind === 'cart' ? totalItems : badgeKind === 'wishlist' ? wishlistCount : 0
+
           return (
             <Link
               key={label}
               to={to}
-              className="flex flex-col items-center justify-center gap-1 py-3 min-h-[44px] relative"
+              className={`relative flex items-center justify-center transition-all duration-300 ${
+                active ? 'px-4 py-2.5' : 'w-10 h-10'
+              }`}
             >
-              <div className="relative">
-                <Icon
-                  size={22}
-                  weight={active ? 'fill' : 'duotone'}
-                  className={active ? 'text-brand-400' : 'text-dark-800/60 dark:text-white/60'}
+              {active && (
+                <motion.div
+                  layoutId="bottom-nav-indicator"
+                  className="absolute inset-0 bg-brand-400/15 dark:bg-brand-400/20 rounded-full"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
-                {badgeValue > 0 && (
-                  <span className="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 bg-brand-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-scale-in">
+              )}
+              
+              <div className="relative z-10 flex items-center gap-1.5">
+                <Icon
+                  size={20}
+                  weight={active ? 'fill' : 'duotone'}
+                  className={active ? 'text-brand-500 dark:text-brand-400' : 'text-dark-800/40 dark:text-white/40 hover:text-dark-800 dark:hover:text-white transition-colors'}
+                />
+                
+                {badgeValue > 0 && !active && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-[3px] bg-brand-400 text-white text-[8px] font-bold rounded-full flex items-center justify-center shadow-sm">
                     {badgeValue > 9 ? '9+' : badgeValue}
                   </span>
                 )}
+
+                {active && (
+                  <motion.span 
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    className="text-[11px] font-bold text-brand-500 dark:text-brand-400 overflow-hidden whitespace-nowrap"
+                  >
+                    {label}
+                  </motion.span>
+                )}
               </div>
-              <span className={`text-[10px] font-medium ${active ? 'text-brand-400' : 'text-dark-800/60 dark:text-white/60'}`}>
-                {label}
-              </span>
-              {active && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-brand-400 transition-transform" />
-              )}
             </Link>
           )
         })}
