@@ -124,7 +124,9 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col min-h-dvh overflow-x-hidden">
       <AnnouncementBanner />
       <Navbar />
-      {children}
+      <div className="pt-20 flex flex-col flex-1">
+        {children}
+      </div>
       <Footer />
       <BottomNav />
       <SignInModal open={signInOpen} onClose={closeSignIn} reason={signInReason ?? undefined} />

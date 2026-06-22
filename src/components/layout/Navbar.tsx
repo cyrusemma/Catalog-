@@ -61,75 +61,84 @@ export default function Navbar() {
   }
 
   return (
-    <nav className={`sticky top-0 z-50 bg-cream-50/75 dark:bg-white/[0.06] backdrop-blur-2xl backdrop-saturate-150 border-b border-cream-200/50 dark:border-white/[0.08] safe-top shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_4px_30px_rgba(0,0,0,0.04)] transition-transform duration-300 ease-in-out ${hidden ? '-translate-y-full' : 'translate-y-0'}`}>
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5 group min-w-0 flex-1 sm:flex-none">
-          {settings.logo_url ? (
-            <img
-              src={settings.logo_url}
-              alt={settings.store_name}
-              className="w-9 h-9 flex-shrink-0 object-contain rounded-xl bg-white/5"
-            />
-          ) : (
-            <div className="w-9 h-9 flex-shrink-0 bg-gradient-to-br from-brand-400 to-brand-500 rounded-xl flex items-center justify-center shadow-amber-glow group-hover:shadow-amber-glow-lg transition-shadow">
-              <Storefront size={18} weight="duotone" className="text-white" />
-            </div>
-          )}
-          <span className="font-display font-bold text-lg text-dark-800 dark:text-white truncate">{settings.store_name}</span>
-        </Link>
-
-        <div className="hidden sm:flex items-center gap-7">
-          {navLink('/', 'Home')}
-          {navLink('/shop', 'Shop')}
-          {navLink('/gallery', 'Gallery')}
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <CurrencySelector />
-          <ThemeToggle />
-          <NotificationButton />
-
-          <Link
-            to="/settings"
-            aria-label="Settings"
-            className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white"
-          >
-            <Gear size={18} weight="duotone" />
-          </Link>
-
-          <Link to="/cart" className="relative w-9 h-9 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors">
-            <ShoppingCart size={20} weight="duotone" className="text-dark-800 dark:text-white" />
-            {totalItems > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-brand-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-amber-glow animate-scale-in">
-                {totalItems > 9 ? '9+' : totalItems}
-              </span>
+    <div className={`fixed top-0 left-0 right-0 z-50 pointer-events-none transition-transform duration-300 ease-in-out ${hidden ? '-translate-y-full' : 'translate-y-0'}`}>
+      <div className="max-w-5xl mx-auto px-4 pt-3 pointer-events-auto">
+        <nav className="
+          flex items-center justify-between px-4 h-14 rounded-2xl
+          bg-white/60 dark:bg-dark-900/60
+          backdrop-blur-2xl backdrop-saturate-150
+          border border-white/50 dark:border-white/10
+          shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_8px_32px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)]
+          dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_32px_rgba(0,0,0,0.4)]
+        ">
+          <Link to="/" className="flex items-center gap-2.5 group min-w-0 flex-1 sm:flex-none">
+            {settings.logo_url ? (
+              <img
+                src={settings.logo_url}
+                alt={settings.store_name}
+                className="w-8 h-8 flex-shrink-0 object-contain rounded-xl bg-white/5"
+              />
+            ) : (
+              <div className="w-8 h-8 flex-shrink-0 bg-gradient-to-br from-brand-400 to-brand-500 rounded-xl flex items-center justify-center shadow-amber-glow group-hover:shadow-amber-glow-lg transition-shadow">
+                <Storefront size={16} weight="duotone" className="text-white" />
+              </div>
             )}
+            <span className="font-display font-bold text-base text-dark-800 dark:text-white truncate">{settings.store_name}</span>
           </Link>
 
-          {isLoggedIn && profile ? (
+          <div className="hidden sm:flex items-center gap-6">
+            {navLink('/', 'Home')}
+            {navLink('/shop', 'Shop')}
+            {navLink('/gallery', 'Gallery')}
+          </div>
+
+          <div className="flex items-center gap-1">
+            <CurrencySelector />
+            <ThemeToggle />
+            <NotificationButton />
+
             <Link
-              to="/account"
-              aria-label="Your account"
-              className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-brand-400 to-brand-500 text-white text-[11px] font-bold ring-1 ring-brand-400/30 hover:ring-brand-400/60 transition-shadow"
+              to="/settings"
+              aria-label="Settings"
+              className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white"
             >
-              {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span>{initials}</span>
+              <Gear size={17} weight="duotone" />
+            </Link>
+
+            <Link to="/cart" className="relative w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors">
+              <ShoppingCart size={18} weight="duotone" className="text-dark-800 dark:text-white" />
+              {totalItems > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 bg-brand-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-amber-glow animate-scale-in">
+                  {totalItems > 9 ? '9+' : totalItems}
+                </span>
               )}
             </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={() => openSignIn()}
-              aria-label="Sign in"
-              className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white"
-            >
-              <UserCircle size={20} weight="duotone" />
-            </button>
-          )}
-        </div>
+
+            {isLoggedIn && profile ? (
+              <Link
+                to="/account"
+                aria-label="Your account"
+                className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-brand-400 to-brand-500 text-white text-[10px] font-bold ring-1 ring-brand-400/30 hover:ring-brand-400/60 transition-shadow"
+              >
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{initials}</span>
+                )}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openSignIn()}
+                aria-label="Sign in"
+                className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white"
+              >
+                <UserCircle size={18} weight="duotone" />
+              </button>
+            )}
+          </div>
+        </nav>
       </div>
-    </nav>
+    </div>
   )
 }
