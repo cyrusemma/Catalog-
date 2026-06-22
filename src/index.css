@@ -24,6 +24,38 @@
   .glass-amber {
     @apply bg-brand-400/10 backdrop-blur-md border border-brand-400/30;
   }
+  
+  /* 3D Liquid Glass Pill (iOS/visionOS style) */
+  .glass-pill {
+    background: linear-gradient(
+      -75deg,
+      rgba(212, 130, 10, 0.08),
+      rgba(212, 130, 10, 0.25),
+      rgba(212, 130, 10, 0.08)
+    );
+    box-shadow:
+      inset 0 2px 3px rgba(255, 255, 255, 0.8),
+      inset 0 -2px 3px rgba(212, 130, 10, 0.15),
+      0 4px 6px -2px rgba(212, 130, 10, 0.2),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 9999px;
+  }
+
+  .dark .glass-pill {
+    background: linear-gradient(
+      -75deg,
+      rgba(212, 130, 10, 0.15),
+      rgba(212, 130, 10, 0.35),
+      rgba(212, 130, 10, 0.15)
+    );
+    box-shadow:
+      inset 0 2px 3px rgba(255, 255, 255, 0.15),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.3),
+      0 4px 10px rgba(0, 0, 0, 0.4),
+      inset 0 0 0 1px rgba(212, 130, 10, 0.25);
+  }
 
   /* Buttons */
   .btn-primary {
