@@ -163,12 +163,15 @@ export default function Home() {
                 Shop the collection
                 <ArrowRight size={16} weight="bold" className="transition-transform duration-300 group-hover:translate-x-0.5" />
               </Link>
-              <Link
-                to="/shop"
-                className="inline-flex items-center gap-2 px-7 py-4 rounded-full border border-white/25 text-white font-medium text-sm sm:text-base hover:bg-white/10 transition-colors duration-200"
-              >
-                Browse categories
-              </Link>
+              <div className="glass-btn-wrap">
+                <Link
+                  to="/shop"
+                  className="glass-btn"
+                >
+                  <span>Browse categories</span>
+                </Link>
+                <div className="glass-btn-shadow"></div>
+              </div>
             </motion.div>
           </div>
 
