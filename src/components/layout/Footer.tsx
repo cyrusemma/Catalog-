@@ -10,6 +10,8 @@ import {
   Phone,
   CaretRight,
   Heart,
+  Star,
+  PaperPlaneRight,
 } from '@phosphor-icons/react'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
 import { supabase } from '../../lib/supabase'
@@ -20,17 +22,15 @@ function socialUrl(value: string, base: string): string {
   return base + v.replace(/^@/, '')
 }
 
-const RATINGS = [
-  { value: 'poor', emoji: '😔' },
-  { value: 'okay', emoji: '😐' },
-  { value: 'good', emoji: '🙂' },
-  { value: 'amazing', emoji: '😍' },
-]
+
 
 export default function Footer() {
   const settings = useStoreSettings()
   const [hasReviewed, setHasReviewed] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [rating, setRating] = useState(5)
+  const [name, setName] = useState('')
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
     if (localStorage.getItem('has_reviewed_site')) {
@@ -38,15 +38,17 @@ export default function Footer() {
     }
   }, [])
 
-  const handleRate = async (rating: string) => {
-    if (hasReviewed || isSubmitting) return
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (hasReviewed || isSubmitting || !message.trim()) return
     setIsSubmitting(true)
     
     try {
-      const { data: { session } } = await supabase.auth.getSession()
       await supabase.from('site_reviews').insert({
         rating,
-        user_id: session?.user?.id || null,
+        name: name.trim() || null,
+        message: message.trim(),
+        page_url: window.location.pathname
       })
       localStorage.setItem('has_reviewed_site', 'submitted')
       setHasReviewed(true)
@@ -125,19 +127,44 @@ export default function Footer() {
             </p>
 
             {!hasReviewed ? (
-              <div className="flex justify-center sm:justify-start gap-3 w-full">
-                {RATINGS.map((r) => (
+              <form onSubmit={handleSubmitReview} className="w-full flex flex-col gap-3">
+                <div className="flex gap-1 mb-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      className="text-2xl transition-transform hover:scale-110 focus:outline-none"
+                    >
+                      <Star size={24} weight={star <= rating ? 'fill' : 'regular'} className={star <= rating ? 'text-brand-400' : 'text-brand-400/30'} />
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  placeholder="Your Name (optional)"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full sm:max-w-xs bg-white/50 dark:bg-dark-800/50 border border-brand-400/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-400/50 focus:ring-2 focus:ring-brand-400/10 transition-all text-dark-800 dark:text-white placeholder-dark-800/40 dark:placeholder-white/30"
+                />
+                <div className="relative w-full sm:max-w-xs">
+                  <textarea
+                    placeholder="Tell us what you think..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    required
+                    rows={3}
+                    className="w-full bg-white/50 dark:bg-dark-800/50 border border-brand-400/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-400/50 focus:ring-2 focus:ring-brand-400/10 transition-all text-dark-800 dark:text-white placeholder-dark-800/40 dark:placeholder-white/30 resize-none"
+                  />
                   <button
-                    key={r.value}
-                    onClick={() => handleRate(r.value)}
-                    disabled={isSubmitting}
-                    className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-2xl bg-white/50 dark:bg-dark-800/50 border border-brand-400/20 text-2xl hover:scale-110 hover:border-brand-400 hover:bg-brand-400/10 transition-all disabled:opacity-50 shadow-sm"
-                    aria-label={`Rate ${r.value}`}
+                    type="submit"
+                    disabled={isSubmitting || !message.trim()}
+                    className="absolute bottom-2 right-2 p-2 bg-brand-400 text-white rounded-lg hover:bg-brand-500 disabled:opacity-50 disabled:hover:bg-brand-400 transition-colors shadow-sm"
                   >
-                    <span className="filter drop-shadow-sm">{r.emoji}</span>
+                    <PaperPlaneRight size={16} weight="fill" />
                   </button>
-                ))}
-              </div>
+                </div>
+              </form>
             ) : (
               <div className="flex items-center gap-2 text-brand-400 font-medium text-sm p-3 rounded-2xl bg-brand-400/10 border border-brand-400/20">
                 <Heart size={16} weight="fill" className="animate-pulse" />
