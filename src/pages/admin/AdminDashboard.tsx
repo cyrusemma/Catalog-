@@ -6,46 +6,89 @@ import { supabase } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils'
 
 export default function AdminDashboard() {
-  const { data: stats } = useQuery({
-    queryKey: ['admin-stats'],
+  const { data: context } = useQuery({
+    queryKey: ['admin-user-context'],
     queryFn: async () => {
-      const [products, orders, reviews, visits] = await Promise.all([
-        supabase.from('products').select('id, is_published, selling_price'),
-        supabase.from('orders').select('id, total, status'),
-        supabase.from('site_reviews').select('id, rating'),
-        // RLS already restricts this to admins; a wide select is fine at this volume.
-        supabase.from('visits').select('session_id'),
-      ])
-      const allProducts = products.data || []
-      const allOrders = orders.data || []
-      const allReviews = reviews.data || []
-      const allVisits = visits.data || []
-      const revenue = allOrders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0)
-      const uniqueVisitors = new Set(allVisits.map(v => v.session_id)).size
+      const { data: sessionData } = await supabase.auth.getSession()
+      const user = sessionData.session?.user
+      const isAdmin = user?.app_metadata?.role === 'admin'
+      let storeId: string | null = null
+
+      if (user && !isAdmin) {
+        const { data: store } = await supabase
+          .from('stores')
+          .select('id')
+          .eq('owner_id', user.id)
+          .maybeSingle()
+        if (store) storeId = store.id
+      }
+      return { isAdmin, storeId }
+    }
+  })
+
+  const { data: stats } = useQuery({
+    queryKey: ['admin-stats', context?.storeId, context?.isAdmin],
+    queryFn: async () => {
+      const storeId = context?.storeId
+      const isAdmin = context?.isAdmin
+
+      const promises: any[] = [
+        (() => {
+          let q = supabase.from('products').select('id, is_published, selling_price')
+          if (storeId) q = q.eq('store_id', storeId)
+          return q
+        })(),
+        (() => {
+          let q = supabase.from('orders').select('id, total, status')
+          if (storeId) q = q.eq('store_id', storeId)
+          return q
+        })(),
+      ]
+
+      if (isAdmin) {
+        promises.push(supabase.from('site_reviews').select('id, rating'))
+        promises.push(supabase.from('visits').select('session_id'))
+      }
+
+      const results = await Promise.all(promises)
+      const productsData = results[0].data || []
+      const ordersData = results[1].data || []
+      const reviewsData = isAdmin ? results[2].data || [] : []
+      const visitsData = isAdmin ? results[3].data || [] : []
+
+      const revenue = ordersData.filter((o: any) => o.status !== 'cancelled').reduce((s: number, o: any) => s + o.total, 0)
+      const uniqueVisitors = new Set(visitsData.map((v: any) => v.session_id)).size
+
       return {
-        total: allProducts.length,
-        published: allProducts.filter(p => p.is_published).length,
-        orders: allOrders.length,
-        reviews: allReviews.length,
+        total: productsData.length,
+        published: productsData.filter((p: any) => p.is_published).length,
+        orders: ordersData.length,
+        reviews: reviewsData.length,
         revenue,
-        visits: allVisits.length,
+        visits: visitsData.length,
         uniqueVisitors,
       }
     },
+    enabled: !!context,
   })
 
   const { data: recentProducts } = useQuery({
-    queryKey: ['admin-recent-products'],
+    queryKey: ['admin-recent-products', context?.storeId],
     queryFn: async () => {
-      const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false }).limit(5)
+      let q = supabase.from('products').select('*')
+      if (context?.storeId) {
+        q = q.eq('store_id', context.storeId)
+      }
+      const { data } = await q.order('created_at', { ascending: false }).limit(5)
       return data || []
     },
+    enabled: !!context,
   })
 
   const quickActions = [
     { label: 'Add Product', desc: 'Create a new product manually', icon: Package, color: 'bg-brand-400', to: '/admin/products/new' },
     { label: 'View Orders', desc: 'Manage customer orders', icon: ShoppingBag, color: 'bg-blue-500', to: '/admin/orders' },
-    { label: 'Read Reviews', desc: 'See ratings and site feedback', icon: MessageSquareQuote, color: 'bg-emerald-500', to: '/admin/reviews' },
+    ...(context?.isAdmin ? [{ label: 'Read Reviews', desc: 'See ratings and site feedback', icon: MessageSquareQuote, color: 'bg-emerald-500', to: '/admin/reviews' }] : []),
     { label: 'Store Settings', desc: 'Name, WhatsApp, colors', icon: Settings, color: 'bg-gray-400', to: '/admin/settings' },
   ]
 
@@ -53,14 +96,18 @@ export default function AdminDashboard() {
     { label: 'Total Products', value: stats?.total ?? '—', icon: Package, color: 'bg-brand-400' },
     { label: 'Published', value: stats?.published ?? '—', icon: Eye, color: 'bg-green-500' },
     { label: 'Orders', value: stats?.orders ?? '—', icon: ShoppingBag, color: 'bg-blue-500' },
-    { label: 'Reviews', value: stats?.reviews ?? '—', icon: MessageSquareQuote, color: 'bg-emerald-500' },
-    { label: 'Revenue', value: stats ? formatPrice(stats.revenue) : '—', icon: TrendingUp, color: 'bg-purple-500' },
-    {
-      label: 'Visits',
-      value: stats ? `${stats.visits.toLocaleString()} · ${stats.uniqueVisitors.toLocaleString()} unique` : '—',
-      icon: Users,
-      color: 'bg-amber-500',
-    },
+    ...(context?.isAdmin ? [
+      { label: 'Reviews', value: stats?.reviews ?? '—', icon: MessageSquareQuote, color: 'bg-emerald-500' },
+      { label: 'Revenue', value: stats ? formatPrice(stats.revenue) : '—', icon: TrendingUp, color: 'bg-purple-500' },
+      {
+        label: 'Visits',
+        value: stats ? `${stats.visits.toLocaleString()} · ${stats.uniqueVisitors.toLocaleString()} unique` : '—',
+        icon: Users,
+        color: 'bg-amber-500',
+      },
+    ] : [
+      { label: 'Revenue', value: stats ? formatPrice(stats.revenue) : '—', icon: TrendingUp, color: 'bg-purple-500' }
+    ]),
   ]
 
   return (

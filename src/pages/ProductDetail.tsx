@@ -17,8 +17,22 @@ export default function ProductDetail() {
   const location = useLocation()
   const searchParams = new URLSearchParams(location.search)
   const isMarketplaceView = !searchParams.get('store')
-  
   const { data: product, isLoading } = useProduct(id!, isMarketplaceView)
+  const storeSlug = searchParams.get('store')
+
+  const { data: merchantStore } = useQuery({
+    queryKey: ['store', storeSlug],
+    queryFn: async () => {
+      if (!storeSlug) return null
+      const { data } = await supabase
+        .from('stores')
+        .select('whatsapp_number')
+        .eq('slug', storeSlug)
+        .maybeSingle()
+      return data
+    },
+    enabled: !!storeSlug,
+  })
 
   // Fetch related products in the same category
   const { data: relatedProducts } = useQuery({
@@ -71,8 +85,12 @@ export default function ProductDetail() {
 
   const handleWhatsApp = () => {
     if (!product) return
+    const targetWhatsApp = (!isMarketplaceView && merchantStore?.whatsapp_number)
+      ? merchantStore.whatsapp_number
+      : (settings.whatsapp_number || '233000000000')
+
     const url = buildWhatsAppUrl(
-      settings.whatsapp_number || '233000000000',
+      targetWhatsApp,
       buildProductWhatsAppMessage(product.title, effectivePrice(product), window.location.href)
     )
     window.open(url, '_blank')

@@ -1,13 +1,33 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Trash, Plus, Minus, WhatsappLogo, ShoppingBag } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import { useCartStore } from '../store/cartStore'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { formatPrice, buildWhatsAppUrl, buildCartWhatsAppMessage, effectivePrice } from '../lib/utils'
+import { supabase } from '../lib/supabase'
 
 export default function Cart() {
   const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCartStore()
   const settings = useStoreSettings()
+
+  const storeIds = useMemo(() => Array.from(new Set(items.map(i => i.product.store_id).filter(Boolean))), [items])
+  const merchantStoreId = storeIds.length === 1 ? storeIds[0] : null
+
+  const { data: merchantStore } = useQuery({
+    queryKey: ['cart-merchant-store', merchantStoreId],
+    queryFn: async () => {
+      if (!merchantStoreId) return null
+      const { data } = await supabase
+        .from('stores')
+        .select('whatsapp_number, currency, whatsapp_template, name')
+        .eq('id', merchantStoreId)
+        .maybeSingle()
+      return data
+    },
+    enabled: !!merchantStoreId,
+  })
 
   const subtotal = totalPrice()
   // Per-product delivery: take the highest fee across all cart items (one delivery trip)
@@ -18,14 +38,18 @@ export default function Cart() {
   const grandTotal = subtotal + deliveryFee
 
   const handleWhatsAppOrder = () => {
+    const targetCurrency = merchantStore?.currency || settings.currency || 'GHS'
+    const targetTemplate = merchantStore?.whatsapp_template || settings.whatsapp_template
+    const targetNumber = merchantStore?.whatsapp_number || settings.whatsapp_number || '233000000000'
+
     const message = buildCartWhatsAppMessage(
       items.map(i => ({ title: i.product.title, qty: i.quantity, price: effectivePrice(i.product) })),
       subtotal,
       deliveryFee,
-      settings.currency || 'GHS',
-      settings.whatsapp_template
+      targetCurrency,
+      targetTemplate
     )
-    const url = buildWhatsAppUrl(settings.whatsapp_number || '233000000000', message)
+    const url = buildWhatsAppUrl(targetNumber, message)
     window.open(url, '_blank')
   }
 

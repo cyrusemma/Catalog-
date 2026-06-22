@@ -52,12 +52,44 @@ export default function AdminSettings() {
   const logoInputRef = useRef<HTMLInputElement>(null)
   const qc = useQueryClient()
 
-  const { data: settings } = useQuery({
-    queryKey: ['store-settings'],
+  const { data: context } = useQuery({
+    queryKey: ['admin-user-context'],
     queryFn: async () => {
-      const { data } = await supabase.from('store_settings').select('*').maybeSingle()
-      return data
+      const { data: sessionData } = await supabase.auth.getSession()
+      const user = sessionData.session?.user
+      const isAdmin = user?.app_metadata?.role === 'admin'
+      let storeId: string | null = null
+
+      if (user && !isAdmin) {
+        const { data: store } = await supabase
+          .from('stores')
+          .select('id')
+          .eq('owner_id', user.id)
+          .maybeSingle()
+        if (store) storeId = store.id
+      }
+      return { isAdmin, storeId }
+    }
+  })
+
+  const { data: settings } = useQuery({
+    queryKey: ['store-settings', context?.storeId, context?.isAdmin],
+    queryFn: async () => {
+      if (context?.isAdmin) {
+        const { data } = await supabase.from('store_settings').select('*').maybeSingle()
+        return data
+      } else if (context?.storeId) {
+        const { data } = await supabase.from('stores').select('*').eq('id', context.storeId).single()
+        if (data) {
+          return {
+            ...data,
+            store_name: data.name,
+          }
+        }
+      }
+      return null
     },
+    enabled: !!context,
   })
 
   useEffect(() => {
@@ -87,10 +119,7 @@ export default function AdminSettings() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const payload = {
-        store_name: form.store_name,
-        tagline: form.tagline,
-        whatsapp_number: form.whatsapp_number,
+      const payload: any = {
         currency: form.currency,
         hero_images: form.hero_images,
         hero_rotation_seconds: Math.max(2, parseInt(form.hero_rotation_seconds, 10) || 6),
@@ -103,17 +132,35 @@ export default function AdminSettings() {
         logo_url: form.logo_url || null,
         whatsapp_template: form.whatsapp_template || null,
         show_visitor_count: form.show_visitor_count,
+        whatsapp_number: form.whatsapp_number,
       }
-      if (settings) {
-        const { error } = await supabase.from('store_settings').update(payload).eq('id', settings.id)
-        if (error) throw error
-      } else {
-        const { error } = await supabase.from('store_settings').insert(payload)
+
+      if (context?.isAdmin) {
+        const adminPayload = {
+          ...payload,
+          store_name: form.store_name,
+          tagline: form.tagline,
+        }
+        if (settings) {
+          const { error } = await supabase.from('store_settings').update(adminPayload).eq('id', settings.id)
+          if (error) throw error
+        } else {
+          const { error } = await supabase.from('store_settings').insert(adminPayload)
+          if (error) throw error
+        }
+      } else if (context?.storeId) {
+        const merchantPayload = {
+          ...payload,
+          name: form.store_name,
+          tagline: form.tagline,
+        }
+        const { error } = await supabase.from('stores').update(merchantPayload).eq('id', context.storeId)
         if (error) throw error
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['store-settings'] })
+      qc.invalidateQueries({ queryKey: ['store'] })
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     },

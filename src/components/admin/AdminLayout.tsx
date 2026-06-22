@@ -34,6 +34,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [adminTheme, setAdminTheme] = useState<AdminTheme>(getInitialAdminTheme)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [storeName, setStoreName] = useState('Admin')
+  const [storeSlug, setStoreSlug] = useState('')
 
   useEffect(() => {
     localStorage.setItem(ADMIN_THEME_KEY, adminTheme)
@@ -50,6 +53,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [drawerOpen])
 
+  useEffect(() => {
+    let mounted = true
+    const fetchStoreContext = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user || !mounted) return
+
+      const admin = session.user.app_metadata?.role === 'admin'
+      setIsAdmin(admin)
+
+      if (admin) {
+        setStoreName('Platform Admin')
+        return
+      }
+
+      // Fetch user's store
+      const { data: store } = await supabase
+        .from('stores')
+        .select('name, slug')
+        .eq('owner_id', session.user.id)
+        .maybeSingle()
+
+      if (mounted && store) {
+        setStoreName(store.name)
+        setStoreSlug(store.slug)
+      }
+    }
+    fetchStoreContext()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     navigate('/admin/login')
@@ -58,8 +93,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isActive = (path: string, exact?: boolean) =>
     exact ? location.pathname === path : location.pathname.startsWith(path)
 
+  const filteredNavItems = navItems.filter(item => {
+    if (item.path === '/admin/approvals') {
+      return isAdmin
+    }
+    return true
+  })
+
   const currentLabel =
-    navItems.find(item => isActive(item.path, item.exact))?.label ?? 'Admin'
+    filteredNavItems.find(item => isActive(item.path, item.exact))?.label ?? storeName
 
   const SidebarBody = (
     <>
@@ -68,7 +110,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="w-8 h-8 bg-brand-400 rounded-xl flex items-center justify-center">
             <Store size={16} className="text-white" />
           </div>
-          <span className="font-bold text-gray-900">Admin</span>
+          <span className="font-bold text-gray-900 truncate max-w-[120px]">{storeName}</span>
         </div>
         <button
           type="button"
@@ -81,7 +123,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       <nav className="flex-1 p-3 space-y-1">
-        {navItems.map(item => (
+        {filteredNavItems.map(item => (
           <Link
             key={item.path}
             to={item.path}
@@ -121,12 +163,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
         <a
-          href="/"
+          href={storeSlug ? `/s/${storeSlug}` : "/"}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
         >
-          <ExternalLink size={17} /> View Store
+          <ExternalLink size={17} /> {storeSlug ? 'View Storefront' : 'View Marketplace'}
         </a>
         <button
           type="button"

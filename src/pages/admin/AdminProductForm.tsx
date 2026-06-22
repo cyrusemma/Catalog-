@@ -71,6 +71,26 @@ export default function AdminProductForm() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [form, setForm] = useState<FormData>(emptyForm)
+
+  const { data: context } = useQuery({
+    queryKey: ['admin-user-context'],
+    queryFn: async () => {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const user = sessionData.session?.user
+      const isAdmin = user?.app_metadata?.role === 'admin'
+      let storeId: string | null = null
+
+      if (user && !isAdmin) {
+        const { data: store } = await supabase
+          .from('stores')
+          .select('id')
+          .eq('owner_id', user.id)
+          .maybeSingle()
+        if (store) storeId = store.id
+      }
+      return { isAdmin, storeId }
+    }
+  })
   const [newFeature, setNewFeature] = useState('')
   const [newSize, setNewSize] = useState('')
   const [newImageUrl, setNewImageUrl] = useState('')
@@ -346,9 +366,14 @@ export default function AdminProductForm() {
           : null,
       }
 
+      const dbPayload = {
+        ...payload,
+        ...(context?.storeId ? { store_id: context.storeId } : {})
+      }
+
       const { error } = isEdit
-        ? await supabase.from('products').update(payload).eq('id', id!)
-        : await supabase.from('products').insert(payload)
+        ? await supabase.from('products').update(dbPayload).eq('id', id!)
+        : await supabase.from('products').insert(dbPayload)
 
       if (error) throw error
 

@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { isAdminSession } from './lib/admin'
 import { supabase } from './lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 
@@ -38,19 +37,56 @@ const qc = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 *
 
 function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
+  const [hasStore, setHasStore] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let mounted = true
     let unsubscribe: (() => void) | undefined
 
-    supabase.auth.getSession().then(({ data }) => {
+    const checkAccess = async (currentSession: Session | null) => {
       if (!mounted) return
-      setSession(data.session)
-      setLoading(false)
+      setSession(currentSession)
+      
+      if (!currentSession?.user) {
+        setHasStore(false)
+        setLoading(false)
+        return
+      }
+
+      // Check if platform admin
+      const isAdmin = currentSession.user.app_metadata?.role === 'admin'
+      if (isAdmin) {
+        setHasStore(true)
+        setLoading(false)
+        return
+      }
+
+      // Query if this user owns a store
+      try {
+        const { data, error } = await supabase
+          .from('stores')
+          .select('id')
+          .eq('owner_id', currentSession.user.id)
+          .maybeSingle()
+        
+        if (mounted) {
+          setHasStore(!!data && !error)
+        }
+      } catch {
+        if (mounted) setHasStore(false)
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      checkAccess(data.session)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
+      checkAccess(s)
+    })
     unsubscribe = () => subscription.unsubscribe()
 
     return () => {
@@ -65,7 +101,8 @@ function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!session) return <Navigate to="/admin/login" replace />
 
-  if (!isAdminSession(session)) {
+  const isAdmin = session.user.app_metadata?.role === 'admin'
+  if (!isAdmin && !hasStore) {
     return <Navigate to="/admin/login" replace state={{ error: 'unauthorized' }} />
   }
 

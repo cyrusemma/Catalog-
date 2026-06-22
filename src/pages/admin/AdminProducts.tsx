@@ -12,12 +12,37 @@ export default function AdminProducts() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const qc = useQueryClient()
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ['admin-products'],
+  const { data: context } = useQuery({
+    queryKey: ['admin-user-context'],
     queryFn: async () => {
-      const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false })
+      const { data: sessionData } = await supabase.auth.getSession()
+      const user = sessionData.session?.user
+      const isAdmin = user?.app_metadata?.role === 'admin'
+      let storeId: string | null = null
+
+      if (user && !isAdmin) {
+        const { data: store } = await supabase
+          .from('stores')
+          .select('id')
+          .eq('owner_id', user.id)
+          .maybeSingle()
+        if (store) storeId = store.id
+      }
+      return { isAdmin, storeId }
+    }
+  })
+
+  const { data: products, isLoading } = useQuery({
+    queryKey: ['admin-products', context?.storeId],
+    queryFn: async () => {
+      let query = supabase.from('products').select('*')
+      if (context?.storeId) {
+        query = query.eq('store_id', context.storeId)
+      }
+      const { data } = await query.order('created_at', { ascending: false })
       return data || []
     },
+    enabled: !!context,
   })
 
   const togglePublish = useMutation({
