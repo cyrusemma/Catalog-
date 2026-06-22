@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
 import { ShoppingCart, Storefront, UserCircle, Gear } from '@phosphor-icons/react'
 import { useCartStore } from '../../store/cartStore'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
@@ -14,6 +15,26 @@ export default function Navbar() {
   const settings = useStoreSettings()
   const { isLoggedIn, profile } = useCustomerSession()
   const openSignIn = useSignInStore(s => s.openModal)
+
+  // Show navbar when scrolling DOWN (user exploring), hide when scrolling UP.
+  // Always visible when at/near the top of the page.
+  const [hidden, setHidden] = useState(false)
+  const lastY = useRef(0)
+  useEffect(() => {
+    const onScroll = () => {
+      const currentY = window.scrollY
+      if (currentY < 60) {
+        setHidden(false)                          // Always show near top
+      } else if (currentY > lastY.current + 4) {
+        setHidden(false)                          // Scrolling DOWN → show
+      } else if (currentY < lastY.current - 4) {
+        setHidden(true)                           // Scrolling UP → hide
+      }
+      lastY.current = currentY
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   // Two-letter initials for the avatar fallback when there's no avatar_url.
   const initials = profile
@@ -40,7 +61,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-cream-50/75 dark:bg-white/[0.06] backdrop-blur-2xl backdrop-saturate-150 border-b border-cream-200/50 dark:border-white/[0.08] safe-top shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_4px_30px_rgba(0,0,0,0.04)]">
+    <nav className={`sticky top-0 z-50 bg-cream-50/75 dark:bg-white/[0.06] backdrop-blur-2xl backdrop-saturate-150 border-b border-cream-200/50 dark:border-white/[0.08] safe-top shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_4px_30px_rgba(0,0,0,0.04)] transition-transform duration-300 ease-in-out ${hidden ? '-translate-y-full' : 'translate-y-0'}`}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5 group min-w-0 flex-1 sm:flex-none">
           {settings.logo_url ? (
