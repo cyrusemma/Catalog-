@@ -40,7 +40,7 @@ export default function BottomNav() {
                 <motion.div
                   layoutId="bottom-nav-indicator"
                   className="absolute inset-0 bg-brand-400/15 dark:bg-brand-400/20 rounded-full"
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  transition={{ type: "spring", stiffness: 250, damping: 22, mass: 1.2 }}
                 />
               )}
               
