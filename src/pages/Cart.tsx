@@ -60,7 +60,7 @@ export default function Cart() {
   }
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto px-4 py-10 pb-28 lg:pb-10">
+    <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-10 pb-28 lg:pb-10">
       <div className="flex items-center justify-between mb-8">
         <div>
           <Link to="/shop" className="inline-flex items-center gap-2 text-dark-800/60 dark:text-white/50 hover:text-brand-400 text-sm mb-2 transition-colors">

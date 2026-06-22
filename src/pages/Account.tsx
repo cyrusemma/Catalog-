@@ -64,7 +64,7 @@ export default function Account() {
 
   if (loading || !profile) {
     return (
-      <main className="flex-1 max-w-3xl mx-auto px-4 py-12 pb-28 lg:pb-12">
+      <main className="w-full flex-1 max-w-3xl mx-auto px-4 py-12 pb-28 lg:pb-12">
         <div className="animate-pulse space-y-4">
           <div className="h-8 w-40 bg-cream-100 dark:bg-dark-700 rounded" />
           <div className="h-32 bg-cream-100 dark:bg-dark-700 rounded-3xl" />
@@ -81,7 +81,7 @@ export default function Account() {
     .join('') || '?'
 
   return (
-    <main className="flex-1 max-w-3xl mx-auto px-4 py-10 pb-28 lg:pb-10">
+    <main className="w-full flex-1 max-w-3xl mx-auto px-4 py-10 pb-28 lg:pb-10">
       <div className="flex items-center gap-2 mb-2">
         <Sparkle size={14} weight="fill" className="text-brand-400" />
         <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Your account</span>

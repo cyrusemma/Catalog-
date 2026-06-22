@@ -91,7 +91,7 @@ export default function ProductDetail() {
 
   if (isLoading) {
     return (
-      <main className="flex-1 max-w-7xl mx-auto px-4 py-10 animate-pulse">
+      <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-10 animate-pulse">
         <div className="h-6 w-28 bg-cream-100 dark:bg-dark-700 rounded mb-8" />
         <div className="grid md:grid-cols-2 gap-10">
           <div className="aspect-square bg-cream-100 dark:bg-dark-700 rounded-3xl" />
@@ -127,7 +127,7 @@ export default function ProductDetail() {
     : (product.original_price && product.original_price > product.selling_price ? product.original_price : null)
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto px-4 py-10 pb-28 lg:pb-10">
+    <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-10 pb-28 lg:pb-10">
       <Link to="/shop" className="inline-flex items-center gap-2 text-dark-800/60 dark:text-white/50 hover:text-brand-400 text-sm mb-8 transition-colors">
         <ArrowLeft size={16} /> Back to Shop
       </Link>

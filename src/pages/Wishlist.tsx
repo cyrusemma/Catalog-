@@ -9,7 +9,7 @@ export default function Wishlist() {
   const clear = useWishlistStore(s => s.clear)
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto px-4 py-6 sm:py-10 pb-28 lg:pb-10">
+    <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-6 sm:py-10 pb-28 lg:pb-10">
       {/* Header */}
       <div className="flex items-end justify-between mb-6 sm:mb-8">
         <div>

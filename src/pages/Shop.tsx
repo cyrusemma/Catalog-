@@ -287,7 +287,7 @@ export default function Shop() {
   const isFeatured = (index: number) => layout === 'magazine' && index % 5 === 0
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto px-4 py-5 sm:py-10 pb-28 lg:pb-10">
+    <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-5 sm:py-10 pb-28 lg:pb-10">
       {/* Header */}
       <div className="mb-5 sm:mb-8">
         <h1 className="text-2xl sm:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white mb-1 sm:mb-2">

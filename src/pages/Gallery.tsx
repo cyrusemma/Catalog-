@@ -68,7 +68,7 @@ export default function Gallery() {
   }[layout]
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto px-4 py-5 sm:py-10 pb-28 lg:pb-10">
+    <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-5 sm:py-10 pb-28 lg:pb-10">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-end justify-between mb-6 gap-4 flex-wrap">
