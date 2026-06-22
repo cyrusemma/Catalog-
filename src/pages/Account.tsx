@@ -262,12 +262,28 @@ export default function Account() {
   )
 }
 
+// ─── Multi-Step Store Creation Wizard ─────────────────────────────────────────
+
+const CURRENCIES = ['GHS', 'USD', 'GBP', 'EUR', 'NGN', 'KES', 'ZAR']
+
 function StoreCreationWizard({ onCancel, onSuccess }: { onCancel: () => void; onSuccess: () => void }) {
   const { user } = useCustomerSession()
-  const [name, setName] = useState('')
-  const [slug, setSlug] = useState('')
+  const [step, setStep] = useState(1)
+  const [done, setDone] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Form fields
+  const [name, setName] = useState('')
+  const [slug, setSlug] = useState('')
+  const [tagline, setTagline] = useState('')
+  const [whatsapp, setWhatsapp] = useState('')
+  const [currency, setCurrency] = useState('GHS')
+
+  // Slug availability
+  const [slugChecking, setSlugChecking] = useState(false)
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null)
+  const [slugTimer, setSlugTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
 
   const handleNameChange = (val: string) => {
     setName(val)
@@ -276,103 +292,351 @@ function StoreCreationWizard({ onCancel, onSuccess }: { onCancel: () => void; on
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '')
     setSlug(generated)
+    checkSlug(generated)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name.trim() || !slug.trim()) return
-    setError('')
-    setLoading(true)
+  const handleSlugChange = (val: string) => {
+    const clean = val.toLowerCase().replace(/[^a-z0-9-]/g, '')
+    setSlug(clean)
+    checkSlug(clean)
+  }
 
-    try {
-      const { data: existing } = await supabase
+  const checkSlug = (value: string) => {
+    setSlugAvailable(null)
+    if (slugTimer) clearTimeout(slugTimer)
+    if (!value || value.length < 3) return
+    setSlugChecking(true)
+    const t = setTimeout(async () => {
+      const { data } = await supabase
         .from('stores')
         .select('id')
-        .eq('slug', slug)
+        .eq('slug', value)
         .maybeSingle()
+      setSlugAvailable(!data)
+      setSlugChecking(false)
+    }, 500)
+    setSlugTimer(t)
+  }
 
-      if (existing) {
-        throw new Error('This store URL is already taken. Please choose another.')
-      }
+  const canProceedStep1 = name.trim().length >= 2 && slug.length >= 3 && slugAvailable === true
+  const canProceedStep2 = whatsapp.trim().replace(/\D/g, '').length >= 7
 
-      const { error: insertError } = await supabase
-        .from('stores')
-        .insert({
-          name: name.trim(),
-          slug: slug.trim(),
-          owner_id: user?.id,
-        })
-
+  const handleSubmit = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      const { error: insertError } = await supabase.from('stores').insert({
+        name: name.trim(),
+        slug: slug.trim(),
+        tagline: tagline.trim() || null,
+        whatsapp_number: whatsapp.trim().replace(/\D/g, ''),
+        currency,
+        owner_id: user?.id,
+      })
       if (insertError) throw insertError
-
-      onSuccess()
+      setDone(true)
+      setTimeout(onSuccess, 4000)
     } catch (err: any) {
-      setError(err.message || 'Failed to create store')
-    } finally {
+      setError(err.message || 'Failed to create store. Please try again.')
       setLoading(false)
     }
   }
 
+  // ── Success state ────────────────────────────────────────────────────────────
+  if (done) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="text-center py-6 space-y-4"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.1 }}
+          className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-lg"
+        >
+          <CheckCircle size={32} weight="fill" className="text-white" />
+        </motion.div>
+        <div>
+          <h3 className="text-dark-800 dark:text-white font-bold text-lg">🎉 Your store is live!</h3>
+          <p className="text-dark-800/55 dark:text-white/50 text-sm mt-1">
+            <span className="font-semibold text-brand-400">{name}</span> is ready to go.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+          <Link
+            to="/admin"
+            className="bg-brand-400 hover:bg-brand-500 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors shadow-sm"
+          >
+            Go to Admin Dashboard →
+          </Link>
+          <a
+            href={`/s/${slug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="border border-cream-200 dark:border-white/10 text-dark-800 dark:text-white/80 hover:border-brand-400/40 font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-1.5"
+          >
+            View Storefront <ArrowSquareOut size={13} />
+          </a>
+        </div>
+      </motion.div>
+    )
+  }
+
+  const steps = ['Identity', 'Contact', 'Review']
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <h3 className="font-semibold text-dark-800 dark:text-white text-base">Setup Your Store</h3>
-        <p className="text-xs text-dark-800/50 dark:text-white/40 mt-1">Configure your new storefront details.</p>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-bold text-dark-800 dark:text-white text-base">Create Your Storefront</h3>
+          <p className="text-xs text-dark-800/45 dark:text-white/35 mt-0.5">Step {step} of 3 — {steps[step - 1]}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-xs text-dark-800/40 dark:text-white/30 hover:text-dark-800/70 dark:hover:text-white/60 transition-colors"
+        >
+          Cancel
+        </button>
       </div>
 
+      {/* Step progress bar */}
+      <div className="flex items-center gap-1.5">
+        {steps.map((_s, i) => (
+          <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
+            i + 1 <= step ? 'bg-brand-400' : 'bg-cream-200 dark:bg-dark-600'
+          }`} />
+        ))}
+      </div>
+
+      {/* Error banner */}
       {error && (
-        <div className="p-3 bg-red-50 text-red-600 rounded-xl text-xs font-medium border border-red-200">
+        <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-medium border border-red-200 dark:border-red-800/30">
           {error}
         </div>
       )}
 
-      <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-dark-800/65 dark:text-white/50 mb-1.5">
-          Store Name
-        </label>
-        <input
-          type="text"
-          required
-          placeholder="e.g. Aura Styles"
-          value={name}
-          onChange={e => handleNameChange(e.target.value)}
-          className="w-full bg-cream-100 dark:bg-dark-700 border border-cream-200 dark:border-white/10 focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 rounded-xl px-3 py-2 text-sm outline-none"
-        />
-      </div>
-
-      <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-dark-800/65 dark:text-white/50 mb-1.5">
-          Store URL Slug
-        </label>
-        <div className="flex items-center gap-1.5 bg-cream-100 dark:bg-dark-700 border border-cream-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm">
-          <span className="text-gray-400 text-xs">/s/</span>
-          <input
-            type="text"
-            required
-            placeholder="aura-styles"
-            value={slug}
-            onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-            className="w-full bg-transparent border-none outline-none p-0 text-sm"
-          />
-        </div>
-      </div>
-
-      <div className="flex gap-2 justify-end pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-3 py-2 rounded-xl text-xs font-semibold border border-cream-200 dark:border-white/10 text-gray-500 hover:bg-gray-50"
+      {/* ── Step 1: Identity ─────────────────────────────────────────────────── */}
+      {step === 1 && (
+        <motion.div
+          key="step1"
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.2 }}
+          className="space-y-4"
         >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-brand-400 hover:bg-brand-500 text-white font-semibold px-4 py-2 rounded-xl text-xs transition-colors shadow-sm disabled:opacity-50"
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-dark-800/60 dark:text-white/45 mb-1.5">
+              Store Name <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Aura Styles"
+              value={name}
+              onChange={e => handleNameChange(e.target.value)}
+              className="w-full bg-cream-100 dark:bg-dark-700 border border-cream-200 dark:border-white/10 focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 rounded-xl px-3 py-2.5 text-sm outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-dark-800/60 dark:text-white/45 mb-1.5">
+              Store URL <span className="text-red-400">*</span>
+            </label>
+            <div className={`flex items-center bg-cream-100 dark:bg-dark-700 border rounded-xl px-3 py-2.5 text-sm transition-all ${
+              slug.length >= 3
+                ? slugAvailable === true ? 'border-green-400/60' : slugAvailable === false ? 'border-red-400/60' : 'border-cream-200 dark:border-white/10'
+                : 'border-cream-200 dark:border-white/10'
+            }`}>
+              <span className="text-dark-800/35 dark:text-white/30 text-xs mr-1 flex-shrink-0">{window.location.host}/s/</span>
+              <input
+                type="text"
+                required
+                placeholder="aura-styles"
+                value={slug}
+                onChange={e => handleSlugChange(e.target.value)}
+                className="flex-1 bg-transparent border-none outline-none p-0 text-sm min-w-0"
+              />
+              <span className="ml-2 flex-shrink-0 w-4 text-center">
+                {slugChecking && (
+                  <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-brand-400 border-t-transparent animate-spin" />
+                )}
+                {!slugChecking && slug.length >= 3 && slugAvailable === true && (
+                  <span className="text-green-500 text-xs font-bold">✓</span>
+                )}
+                {!slugChecking && slug.length >= 3 && slugAvailable === false && (
+                  <span className="text-red-400 text-xs font-bold">✗</span>
+                )}
+              </span>
+            </div>
+            {slug.length >= 3 && !slugChecking && slugAvailable === false && (
+              <p className="text-red-400 text-xs mt-1">This URL is already taken. Try another.</p>
+            )}
+            {slug.length >= 3 && !slugChecking && slugAvailable === true && (
+              <p className="text-green-500 text-xs mt-1">Available ✓</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-dark-800/60 dark:text-white/45 mb-1.5">
+              Tagline <span className="text-dark-800/30 dark:text-white/25 font-normal normal-case">(optional)</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Your go-to for streetwear"
+              value={tagline}
+              onChange={e => setTagline(e.target.value)}
+              maxLength={80}
+              className="w-full bg-cream-100 dark:bg-dark-700 border border-cream-200 dark:border-white/10 focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 rounded-xl px-3 py-2.5 text-sm outline-none transition-all"
+            />
+          </div>
+
+          <div className="flex justify-end pt-1">
+            <button
+              type="button"
+              disabled={!canProceedStep1}
+              onClick={() => setStep(2)}
+              className="bg-brand-400 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-5 py-2 rounded-xl text-sm transition-colors"
+            >
+              Next: Contact →
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── Step 2: Contact ──────────────────────────────────────────────────── */}
+      {step === 2 && (
+        <motion.div
+          key="step2"
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.2 }}
+          className="space-y-4"
         >
-          {loading ? 'Creating...' : 'Launch Store'}
-        </button>
-      </div>
-    </form>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-dark-800/60 dark:text-white/45 mb-1.5">
+              WhatsApp Number <span className="text-red-400">*</span>
+            </label>
+            <p className="text-xs text-dark-800/45 dark:text-white/35 mb-2">
+              Customers will message you here to place orders. Include country code — e.g. <span className="font-mono">233574090147</span>.
+            </p>
+            <input
+              type="tel"
+              required
+              placeholder="233574090147"
+              value={whatsapp}
+              onChange={e => setWhatsapp(e.target.value)}
+              className="w-full bg-cream-100 dark:bg-dark-700 border border-cream-200 dark:border-white/10 focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 rounded-xl px-3 py-2.5 text-sm outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-dark-800/60 dark:text-white/45 mb-1.5">
+              Currency
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {CURRENCIES.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCurrency(c)}
+                  className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+                    currency === c
+                      ? 'bg-brand-400 text-white border-brand-400 shadow-sm'
+                      : 'bg-cream-100 dark:bg-dark-700 text-dark-800/60 dark:text-white/50 border-cream-200 dark:border-white/10 hover:border-brand-400/40'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-between pt-1">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="text-sm text-dark-800/50 dark:text-white/40 hover:text-dark-800/80 dark:hover:text-white/70 font-semibold transition-colors"
+            >
+              ← Back
+            </button>
+            <button
+              type="button"
+              disabled={!canProceedStep2}
+              onClick={() => setStep(3)}
+              className="bg-brand-400 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-5 py-2 rounded-xl text-sm transition-colors"
+            >
+              Review →
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── Step 3: Review ───────────────────────────────────────────────────── */}
+      {step === 3 && (
+        <motion.div
+          key="step3"
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.2 }}
+          className="space-y-4"
+        >
+          <div className="bg-cream-50 dark:bg-dark-700/50 border border-cream-200 dark:border-white/8 rounded-2xl p-4 space-y-2.5">
+            <p className="text-xs font-bold uppercase tracking-wider text-dark-800/45 dark:text-white/30 mb-3">Your store details</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+              <span className="text-dark-800/50 dark:text-white/40 text-xs">Store Name</span>
+              <span className="font-semibold text-dark-800 dark:text-white text-xs">{name}</span>
+
+              <span className="text-dark-800/50 dark:text-white/40 text-xs">URL</span>
+              <span className="font-mono text-brand-400 text-xs truncate">/s/{slug}</span>
+
+              {tagline && <>
+                <span className="text-dark-800/50 dark:text-white/40 text-xs">Tagline</span>
+                <span className="text-dark-800 dark:text-white text-xs italic truncate">"{tagline}"</span>
+              </>}
+
+              <span className="text-dark-800/50 dark:text-white/40 text-xs">WhatsApp</span>
+              <span className="text-dark-800 dark:text-white text-xs">+{whatsapp.replace(/\D/g, '')}</span>
+
+              <span className="text-dark-800/50 dark:text-white/40 text-xs">Currency</span>
+              <span className="font-bold text-dark-800 dark:text-white text-xs">{currency}</span>
+            </div>
+          </div>
+
+          <p className="text-xs text-dark-800/40 dark:text-white/30">
+            You can update all of these from your Admin Dashboard → Settings at any time.
+          </p>
+
+          <div className="flex justify-between pt-1">
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className="text-sm text-dark-800/50 dark:text-white/40 hover:text-dark-800/80 dark:hover:text-white/70 font-semibold transition-colors"
+            >
+              ← Back
+            </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={handleSubmit}
+              className="bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold px-6 py-2 rounded-xl text-sm transition-colors shadow-sm flex items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  Launching...
+                </>
+              ) : (
+                '🚀 Launch Store'
+              )}
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </div>
   )
 }
