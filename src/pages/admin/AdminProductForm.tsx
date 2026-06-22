@@ -416,7 +416,7 @@ export default function AdminProductForm() {
                   <label className="block text-gray-700 text-xs font-semibold mb-1.5 uppercase tracking-wide">
                     Product Title *
                   </label>
-                  <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="Enter product title" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
+                  <textarea value={form.title} onChange={e => set('title', e.target.value)} placeholder="Enter product title" rows={2} className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white resize-y" />
                 </div>
 
                 <div>

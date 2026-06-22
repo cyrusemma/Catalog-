@@ -375,3 +375,13 @@ html.theme-turquoise-dark .card { background-color: #062f2a !important; border-c
 .admin-shell .bg-black\/60 {
   background-color: var(--admin-overlay) !important;
 }
+
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

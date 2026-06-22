@@ -316,9 +316,11 @@ export default function ProductDetail() {
           <h2 className="text-xl sm:text-2xl font-display font-bold text-dark-800 dark:text-white mb-6">
             More in this Category
           </h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+          <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-3 sm:gap-4 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             {relatedProducts.map((p, index) => (
-              <ProductCard key={p.id} product={p} index={index} />
+              <div key={p.id} className="w-[160px] sm:w-[200px] flex-shrink-0 snap-start">
+                <ProductCard product={p} index={index} compact={true} />
+              </div>
             ))}
           </div>
         </div>
@@ -329,12 +331,14 @@ export default function ProductDetail() {
           <h2 className="text-xl sm:text-2xl font-display font-bold text-dark-800 dark:text-white mb-6">
             Recently Viewed
           </h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+          <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-3 sm:gap-4 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             {recentItems
               .filter(p => p.id !== product.id)
-              .slice(0, 4)
+              .slice(0, 8)
               .map((p, index) => (
-                <ProductCard key={p.id} product={p} index={index} />
+                <div key={p.id} className="w-[160px] sm:w-[200px] flex-shrink-0 snap-start">
+                  <ProductCard product={p} index={index} compact={true} />
+                </div>
               ))}
           </div>
         </div>
