@@ -11,6 +11,19 @@ import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import type { Product } from '../types'
 
+const RippleButton = ({ to, children }: { to: string, children: React.ReactNode }) => {
+  return (
+    <Link to={to} className="relative border border-brand-800/50 hover:border-brand-600 duration-500 group cursor-pointer text-white overflow-hidden h-14 w-full sm:w-56 rounded-full bg-brand-800 p-2 flex justify-center items-center font-extrabold shadow-lg shadow-brand-900/50 shrink-0">
+      <div className="absolute z-10 w-48 h-48 rounded-full group-hover:scale-150 transition-all duration-500 ease-in-out bg-brand-900 delay-150 group-hover:delay-75"></div>
+      <div className="absolute z-10 w-40 h-40 rounded-full group-hover:scale-150 transition-all duration-500 ease-in-out bg-brand-800 delay-150 group-hover:delay-100"></div>
+      <div className="absolute z-10 w-32 h-32 rounded-full group-hover:scale-150 transition-all duration-500 ease-in-out bg-brand-700 delay-150 group-hover:delay-150"></div>
+      <div className="absolute z-10 w-24 h-24 rounded-full group-hover:scale-150 transition-all duration-500 ease-in-out bg-brand-600 delay-150 group-hover:delay-200"></div>
+      <div className="absolute z-10 w-16 h-16 rounded-full group-hover:scale-150 transition-all duration-500 ease-in-out bg-brand-500 delay-150 group-hover:delay-300"></div>
+      <div className="z-10 flex items-center justify-center gap-2 w-full">{children}</div>
+    </Link>
+  )
+}
+
 // Single shared reveal — used for the staggered hero load.
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
@@ -156,22 +169,13 @@ export default function Home() {
             </motion.p>
 
             <motion.div variants={fadeUp} className="flex items-center gap-3 flex-wrap">
-              <Link
-                to="/shop"
-                className="group inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-white text-dark-900 font-semibold text-sm sm:text-base transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0"
-              >
+              <RippleButton to="/shop">
                 Shop the collection
                 <ArrowRight size={16} weight="bold" className="transition-transform duration-300 group-hover:translate-x-0.5" />
-              </Link>
-              <div className="glass-btn-wrap">
-                <Link
-                  to="/shop"
-                  className="glass-btn"
-                >
-                  <span>Browse categories</span>
-                </Link>
-                <div className="glass-btn-shadow"></div>
-              </div>
+              </RippleButton>
+              <RippleButton to="/shop">
+                Browse categories
+              </RippleButton>
             </motion.div>
           </div>
 
