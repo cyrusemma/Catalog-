@@ -1,5 +1,12 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+
+// Scrolls to the top of the page on every route change.
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [pathname])
+  return null
+}
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { supabase } from './lib/supabase'
 import type { Session } from '@supabase/supabase-js'
@@ -131,6 +138,8 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
 function AnimatedRoutes() {
   const location = useLocation()
   return (
+    <>
+    <ScrollToTop />
     <Routes location={location}>
       {/* Storefront */}
       <Route path="/" element={<StorefrontLayout><Home /></StorefrontLayout>} />
@@ -159,6 +168,7 @@ function AnimatedRoutes() {
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   )
 }
 
