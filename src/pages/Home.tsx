@@ -9,7 +9,6 @@ import ProductCard from '../components/ui/ProductCard'
 import HeroShowcase from '../components/ui/HeroShowcase'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
-import { supabase } from '../lib/supabase'
 import type { Product } from '../types'
 
 // Single shared reveal — used for the staggered hero load.

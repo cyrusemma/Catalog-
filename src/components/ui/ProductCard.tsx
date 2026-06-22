@@ -1,12 +1,11 @@
 import { memo } from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { ShoppingCart, WhatsappLogo, Star, Sparkle, Lightning, Heart, Clock } from '@phosphor-icons/react'
+import { ShoppingCart, Star, Sparkle, Lightning, Heart, Clock } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
-import { useStoreSettings } from '../../hooks/useStoreSettings'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
-import { activeFlashSalePrice, buildProductWhatsAppMessage, buildWhatsAppUrl, isNewProduct } from '../../lib/utils'
+import { activeFlashSalePrice, isNewProduct } from '../../lib/utils'
 import CountdownTimer from './CountdownTimer'
 import type { Product } from '../../types'
 
@@ -25,7 +24,6 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
   const addItem = useCartStore(s => s.addItem)
   const toggleWishlist = useWishlistStore(s => s.toggle)
   const isWishlisted = useWishlistStore(s => s.has(product.id))
-  const settings = useStoreSettings()
   const formatPrice = useCurrencyFormatter()
   
   const isNew = isNewProduct(product.created_at)
@@ -41,15 +39,6 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
     toggleWishlist(product)
-  }
-
-  const handleWhatsApp = (e: React.MouseEvent) => {
-    e.preventDefault()
-    const url = buildWhatsAppUrl(
-      settings.whatsapp_number || '233000000000',
-      buildProductWhatsAppMessage(product.title, product.selling_price, `${window.location.origin}${detailUrl}`)
-    )
-    window.open(url, '_blank')
   }
 
   const handleAddToCart = (e: React.MouseEvent) => {

@@ -10,10 +10,6 @@ import {
   EnvelopeSimple,
   Sparkle,
   SlidersHorizontal,
-  WhatsappLogo,
-  InstagramLogo,
-  TiktokLogo,
-  FacebookLogo,
   CaretRight,
 } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
@@ -21,7 +17,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { COLOR_THEMES, useThemeStore } from '../store/themeStore'
 import { useCustomerSession } from '../hooks/useCustomerSession'
-import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useSignInStore } from '../store/signInStore'
 import CurrencySelector from '../components/ui/CurrencySelector'
 import {
@@ -37,20 +32,12 @@ const sectionMotion = (delay: number) => ({
   transition: { duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] as const },
 })
 
-/** Turn a stored social value (handle or full URL) into a clickable link. */
-function socialUrl(value: string, base: string): string {
-  const v = value.trim()
-  if (/^https?:\/\//i.test(v)) return v
-  return base + v.replace(/^@/, '')
-}
-
 export default function Settings() {
   const color = useThemeStore(s => s.color)
   const setColor = useThemeStore(s => s.setColor)
   const mode = useThemeStore(s => s.mode)
   const setMode = useThemeStore(s => s.setMode)
   const { isLoggedIn, user, profile } = useCustomerSession()
-  const settings = useStoreSettings()
   const openSignIn = useSignInStore(s => s.openModal)
   const navigate = useNavigate()
   const qc = useQueryClient()

@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useLocation } from 'react-router-dom'
-import { ArrowLeft, ShoppingCart, WhatsappLogo, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck, Lightning, Clock } from '@phosphor-icons/react'
+import { ArrowLeft, ShoppingCart, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck, Lightning, Clock } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useProduct } from '../hooks/useProducts'
 import { useCartStore } from '../store/cartStore'
 import { useRecentStore } from '../store/recentStore'
-import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
-import { buildWhatsAppUrl, buildProductWhatsAppMessage, activeFlashSalePrice, effectivePrice } from '../lib/utils'
+import { effectivePrice, activeFlashSalePrice } from '../lib/utils'
 import { supabase } from '../lib/supabase'
 import CountdownTimer from '../components/ui/CountdownTimer'
 import ProductCard from '../components/ui/ProductCard'
@@ -20,21 +19,7 @@ export default function ProductDetail() {
   const searchParams = new URLSearchParams(location.search)
   const isMarketplaceView = !searchParams.get('store')
   const { data: product, isLoading } = useProduct(id!, isMarketplaceView)
-  const storeSlug = searchParams.get('store')
 
-  const { data: merchantStore } = useQuery({
-    queryKey: ['store', storeSlug],
-    queryFn: async () => {
-      if (!storeSlug) return null
-      const { data } = await supabase
-        .from('stores')
-        .select('whatsapp_number')
-        .eq('slug', storeSlug)
-        .maybeSingle()
-      return data
-    },
-    enabled: !!storeSlug,
-  })
 
   // Fetch related products in the same category
   const { data: relatedProducts } = useQuery({
@@ -67,7 +52,6 @@ export default function ProductDetail() {
   const addItem = useCartStore(s => s.addItem)
   const addRecent = useRecentStore(s => s.addRecent)
   const recentItems = useRecentStore(s => s.recent)
-  const settings = useStoreSettings()
   const [activeImg, setActiveImg] = useState(0)
   const [added, setAdded] = useState(false)
 
@@ -83,19 +67,6 @@ export default function ProductDetail() {
     addItem(product)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
-  }
-
-  const handleWhatsApp = () => {
-    if (!product) return
-    const targetWhatsApp = (!isMarketplaceView && merchantStore?.whatsapp_number)
-      ? merchantStore.whatsapp_number
-      : (settings.whatsapp_number || '233000000000')
-
-    const url = buildWhatsAppUrl(
-      targetWhatsApp,
-      buildProductWhatsAppMessage(product.title, effectivePrice(product), window.location.href)
-    )
-    window.open(url, '_blank')
   }
 
   const handleShare = async () => {
