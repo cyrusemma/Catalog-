@@ -70,11 +70,12 @@ export function initialColor(): ColorTheme {
 }
 
 export function initialMode(): Mode {
-  if (typeof window === 'undefined') return 'dark'
+  if (typeof window === 'undefined') return 'light'
   migrateLegacy()
   const stored = localStorage.getItem(MODE_KEY)
   if (isMode(stored)) return stored
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+  // Default to light mode — user can switch to dark via the toggle
+  return 'light'
 }
 
 interface ThemeState {
