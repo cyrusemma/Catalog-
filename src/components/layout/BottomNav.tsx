@@ -39,8 +39,8 @@ export default function BottomNav() {
               {active && (
                 <motion.div
                   layoutId="bottom-nav-indicator"
-                  className="absolute inset-0 bg-brand-400/15 dark:bg-brand-400/20 rounded-full"
-                  transition={{ type: "spring", stiffness: 250, damping: 22, mass: 1.2 }}
+                  className="absolute inset-0 bg-brand-400/20 dark:bg-brand-400/30 backdrop-blur-md border border-brand-400/30 rounded-full shadow-[inset_0_0_8px_rgba(255,255,255,0.4),0_4px_12px_rgba(212,130,10,0.3)]"
+                  transition={{ type: "spring", stiffness: 180, damping: 15, mass: 1.5 }}
                 />
               )}
               
