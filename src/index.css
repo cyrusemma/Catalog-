@@ -1,38 +1,55 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import './glass-btn.css';
 
 @layer base {
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  html, body { transition: background-color 0.3s ease, color 0.3s ease; }
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  html,
+  body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
   body {
     @apply bg-cream-50 text-dark-800 font-sans antialiased;
     min-height: 100dvh;
   }
+
   .dark body {
     @apply bg-dark-900 text-white;
   }
-  #root { min-height: 100dvh; display: flex; flex-direction: column; }
+
+  #root {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
 }
 
 @layer components {
+
   /* Glassmorphism */
   .glass {
     @apply bg-white/60 dark:bg-white/5 backdrop-blur-md border border-cream-200 dark:border-white/10;
   }
+
   .glass-amber {
     @apply bg-brand-400/10 backdrop-blur-md border border-brand-400/30;
   }
-  
+
   /* 3D Liquid Glass Pill (iOS/visionOS style) */
   .glass-pill {
-    background: linear-gradient(
-      -75deg,
-      rgba(212, 130, 10, 0.08),
-      rgba(212, 130, 10, 0.25),
-      rgba(212, 130, 10, 0.08)
-    );
+    background: linear-gradient(-75deg,
+        rgba(212, 130, 10, 0.08),
+        rgba(212, 130, 10, 0.25),
+        rgba(212, 130, 10, 0.08));
     box-shadow:
       inset 0 2px 3px rgba(255, 255, 255, 0.8),
       inset 0 -2px 3px rgba(212, 130, 10, 0.15),
@@ -44,12 +61,10 @@
   }
 
   .dark .glass-pill {
-    background: linear-gradient(
-      -75deg,
-      rgba(212, 130, 10, 0.15),
-      rgba(212, 130, 10, 0.35),
-      rgba(212, 130, 10, 0.15)
-    );
+    background: linear-gradient(-75deg,
+        rgba(212, 130, 10, 0.15),
+        rgba(212, 130, 10, 0.35),
+        rgba(212, 130, 10, 0.15));
     box-shadow:
       inset 0 2px 3px rgba(255, 255, 255, 0.15),
       inset 0 -2px 3px rgba(0, 0, 0, 0.3),
@@ -61,9 +76,11 @@
   .btn-primary {
     @apply bg-brand-400 hover:bg-brand-500 text-white font-semibold px-6 py-3 rounded-2xl transition-all duration-200 active:scale-95 shadow-amber-glow;
   }
+
   .btn-whatsapp {
     @apply bg-whatsapp hover:bg-whatsapp-hover text-white font-semibold px-6 py-3 rounded-2xl transition-all duration-200 active:scale-95 flex items-center gap-2;
   }
+
   .btn-ghost {
     @apply border border-dark-800/20 dark:border-white/20 hover:border-brand-400/50 hover:bg-brand-400/5 text-dark-800 dark:text-white font-medium px-6 py-3 rounded-2xl transition-all duration-200;
   }
@@ -72,6 +89,7 @@
   .card {
     @apply bg-white dark:bg-dark-800 rounded-3xl overflow-hidden border border-cream-200 dark:border-brand-400/15 transition-all duration-300;
   }
+
   .card-hover {
     @apply hover:shadow-cream-glow dark:hover:shadow-amber-glow hover:border-brand-400/30 dark:hover:border-brand-400/30;
   }
@@ -89,9 +107,11 @@
   .badge-new {
     @apply bg-brand-400 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1;
   }
+
   .badge-discount {
     @apply bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full;
   }
+
   .badge-featured {
     @apply bg-white/70 dark:bg-white/10 backdrop-blur-md text-dark-800 dark:text-white text-xs font-medium px-2 py-0.5 rounded-full border border-cream-200 dark:border-white/20 flex items-center gap-1;
   }
@@ -108,25 +128,56 @@
   .scrollbar-hide {
     -ms-overflow-style: none;
   }
-  .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 
 }
 
 /* Loader dot animation delays (avoid inline styles) */
-.shop-loader-dots > span:nth-child(1) { animation-delay: 0ms; }
-.shop-loader-dots > span:nth-child(2) { animation-delay: 180ms; }
-.shop-loader-dots > span:nth-child(3) { animation-delay: 360ms; }
+.shop-loader-dots>span:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.shop-loader-dots>span:nth-child(2) {
+  animation-delay: 180ms;
+}
+
+.shop-loader-dots>span:nth-child(3) {
+  animation-delay: 360ms;
+}
 
 /* Default scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { @apply bg-brand-400/30 rounded-full; }
-::-webkit-scrollbar-thumb:hover { @apply bg-brand-400/50; }
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-brand-400/30 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-brand-400/50;
+}
 
 /* PWA safe area */
-.safe-top { padding-top: env(safe-area-inset-top); }
-.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
-.pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
 
 /* ─────────────────────────────────────────────────────────────────────────
    Per-theme hero/accent tokens. Components read these so the hero, glows,
@@ -134,111 +185,211 @@
    ───────────────────────────────────────────────────────────────────────── */
 :root {
   --hero-bg-from: #1a1008;
-  --hero-bg-via:  #0f0a05;
-  --hero-bg-to:   #000;
-  --hero-glow-a:  rgba(212, 130, 10, 0.25);
-  --hero-glow-b:  rgba(212, 130, 10, 0.1);
-  --hero-accent:  #e8a020;
-  --hero-shape:   rgba(212, 130, 10, 0.18);
+  --hero-bg-via: #0f0a05;
+  --hero-bg-to: #000;
+  --hero-glow-a: rgba(212, 130, 10, 0.25);
+  --hero-glow-b: rgba(212, 130, 10, 0.1);
+  --hero-accent: #e8a020;
+  --hero-shape: rgba(212, 130, 10, 0.18);
 }
+
 html.theme-light {
   --hero-bg-from: #fff8e8;
-  --hero-bg-via:  #fbeccc;
-  --hero-bg-to:   #f4dfa6;
-  --hero-glow-a:  rgba(212, 130, 10, 0.22);
-  --hero-glow-b:  rgba(232, 160, 32, 0.12);
-  --hero-accent:  #b56b08;
-  --hero-shape:   rgba(212, 130, 10, 0.18);
+  --hero-bg-via: #fbeccc;
+  --hero-bg-to: #f4dfa6;
+  --hero-glow-a: rgba(212, 130, 10, 0.22);
+  --hero-glow-b: rgba(232, 160, 32, 0.12);
+  --hero-accent: #b56b08;
+  --hero-shape: rgba(212, 130, 10, 0.18);
 }
+
 html.theme-dark {
   --hero-bg-from: #1a1008;
-  --hero-bg-via:  #0f0a05;
-  --hero-bg-to:   #050302;
-  --hero-glow-a:  rgba(212, 130, 10, 0.32);
-  --hero-glow-b:  rgba(232, 160, 32, 0.12);
-  --hero-accent:  #e8a020;
-  --hero-shape:   rgba(212, 130, 10, 0.2);
+  --hero-bg-via: #0f0a05;
+  --hero-bg-to: #050302;
+  --hero-glow-a: rgba(212, 130, 10, 0.32);
+  --hero-glow-b: rgba(232, 160, 32, 0.12);
+  --hero-accent: #e8a020;
+  --hero-shape: rgba(212, 130, 10, 0.2);
 }
+
 html.theme-rose-light {
   --hero-bg-from: #fde4ea;
-  --hero-bg-via:  #f7c3d0;
-  --hero-bg-to:   #f4a8bc;
-  --hero-glow-a:  rgba(196, 86, 128, 0.25);
-  --hero-glow-b:  rgba(244, 168, 188, 0.15);
-  --hero-accent:  #b54a73;
-  --hero-shape:   rgba(196, 86, 128, 0.16);
+  --hero-bg-via: #f7c3d0;
+  --hero-bg-to: #f4a8bc;
+  --hero-glow-a: rgba(196, 86, 128, 0.25);
+  --hero-glow-b: rgba(244, 168, 188, 0.15);
+  --hero-accent: #b54a73;
+  --hero-shape: rgba(196, 86, 128, 0.16);
 }
+
 html.theme-rose-dark {
   --hero-bg-from: #3a1a25;
-  --hero-bg-via:  #260f18;
-  --hero-bg-to:   #14060c;
-  --hero-glow-a:  rgba(232, 116, 156, 0.32);
-  --hero-glow-b:  rgba(196, 86, 128, 0.14);
-  --hero-accent:  #f08fb0;
-  --hero-shape:   rgba(232, 116, 156, 0.2);
+  --hero-bg-via: #260f18;
+  --hero-bg-to: #14060c;
+  --hero-glow-a: rgba(232, 116, 156, 0.32);
+  --hero-glow-b: rgba(196, 86, 128, 0.14);
+  --hero-accent: #f08fb0;
+  --hero-shape: rgba(232, 116, 156, 0.2);
 }
+
 html.theme-turquoise-light {
   --hero-bg-from: #e8fdfa;
-  --hero-bg-via:  #c0f2ec;
-  --hero-bg-to:   #93e6db;
-  --hero-glow-a:  rgba(13, 148, 136, 0.22);
-  --hero-glow-b:  rgba(45, 212, 191, 0.14);
-  --hero-accent:  #0c8577;
-  --hero-shape:   rgba(13, 148, 136, 0.16);
+  --hero-bg-via: #c0f2ec;
+  --hero-bg-to: #93e6db;
+  --hero-glow-a: rgba(13, 148, 136, 0.22);
+  --hero-glow-b: rgba(45, 212, 191, 0.14);
+  --hero-accent: #0c8577;
+  --hero-shape: rgba(13, 148, 136, 0.16);
 }
+
 html.theme-turquoise-dark {
   --hero-bg-from: #0a3f38;
-  --hero-bg-via:  #062f2a;
-  --hero-bg-to:   #03201c;
-  --hero-glow-a:  rgba(45, 212, 191, 0.32);
-  --hero-glow-b:  rgba(20, 184, 166, 0.14);
-  --hero-accent:  #5eead4;
-  --hero-shape:   rgba(45, 212, 191, 0.2);
+  --hero-bg-via: #062f2a;
+  --hero-bg-to: #03201c;
+  --hero-glow-a: rgba(45, 212, 191, 0.32);
+  --hero-glow-b: rgba(20, 184, 166, 0.14);
+  --hero-accent: #5eead4;
+  --hero-shape: rgba(45, 212, 191, 0.2);
 }
 
 /* Rose-light — softens the cream palette into a dusty pink. Brand amber
    accents stay so the overall identity holds. */
-html.theme-rose-light body { background-color: #fdf2f5 !important; }
-html.theme-rose-light .bg-cream-50 { background-color: #fdf2f5 !important; }
-html.theme-rose-light .bg-cream-100 { background-color: #fde4ea !important; }
-html.theme-rose-light .bg-cream-200 { background-color: #f7c3d0 !important; }
-html.theme-rose-light .border-cream-200 { border-color: #f3b8c8 !important; }
-html.theme-rose-light .text-cream-400 { color: #c97a92 !important; }
+html.theme-rose-light body {
+  background-color: #fdf2f5 !important;
+}
+
+html.theme-rose-light .bg-cream-50 {
+  background-color: #fdf2f5 !important;
+}
+
+html.theme-rose-light .bg-cream-100 {
+  background-color: #fde4ea !important;
+}
+
+html.theme-rose-light .bg-cream-200 {
+  background-color: #f7c3d0 !important;
+}
+
+html.theme-rose-light .border-cream-200 {
+  border-color: #f3b8c8 !important;
+}
+
+html.theme-rose-light .text-cream-400 {
+  color: #c97a92 !important;
+}
+
 html.theme-rose-light .bg-cream-50\/75,
-html.theme-rose-light .bg-cream-50\/90 { background-color: rgba(253, 242, 245, 0.85) !important; }
+html.theme-rose-light .bg-cream-50\/90 {
+  background-color: rgba(253, 242, 245, 0.85) !important;
+}
 
 /* Rose-dark — deep wine background with rose-gold accents. */
-html.theme-rose-dark body { background-color: #1c0a12 !important; }
-html.theme-rose-dark .dark\:bg-dark-900 { background-color: #14060c !important; }
-html.theme-rose-dark .dark\:bg-dark-800 { background-color: #260f18 !important; }
-html.theme-rose-dark .dark\:bg-dark-700 { background-color: #3a1a25 !important; }
-html.theme-rose-dark .from-dark-800 { --tw-gradient-from: #260f18 !important; }
-html.theme-rose-dark .via-dark-900 { --tw-gradient-via: #14060c !important; }
-html.theme-rose-dark .to-dark-900 { --tw-gradient-to: #14060c !important; }
-html.theme-rose-dark .dark\:border-brand-400\/15 { border-color: rgba(232, 116, 156, 0.16) !important; }
-html.theme-rose-dark .card { background-color: #260f18 !important; border-color: rgba(232, 116, 156, 0.14) !important; }
+html.theme-rose-dark body {
+  background-color: #1c0a12 !important;
+}
+
+html.theme-rose-dark .dark\:bg-dark-900 {
+  background-color: #14060c !important;
+}
+
+html.theme-rose-dark .dark\:bg-dark-800 {
+  background-color: #260f18 !important;
+}
+
+html.theme-rose-dark .dark\:bg-dark-700 {
+  background-color: #3a1a25 !important;
+}
+
+html.theme-rose-dark .from-dark-800 {
+  --tw-gradient-from: #260f18 !important;
+}
+
+html.theme-rose-dark .via-dark-900 {
+  --tw-gradient-via: #14060c !important;
+}
+
+html.theme-rose-dark .to-dark-900 {
+  --tw-gradient-to: #14060c !important;
+}
+
+html.theme-rose-dark .dark\:border-brand-400\/15 {
+  border-color: rgba(232, 116, 156, 0.16) !important;
+}
+
+html.theme-rose-dark .card {
+  background-color: #260f18 !important;
+  border-color: rgba(232, 116, 156, 0.14) !important;
+}
 
 /* Turquoise-light — cools the cream palette into a soft aqua. Brand amber
    accents stay for contrast so the identity holds. */
-html.theme-turquoise-light body { background-color: #effdfb !important; }
-html.theme-turquoise-light .bg-cream-50 { background-color: #effdfb !important; }
-html.theme-turquoise-light .bg-cream-100 { background-color: #d6f7f1 !important; }
-html.theme-turquoise-light .bg-cream-200 { background-color: #b3ede4 !important; }
-html.theme-turquoise-light .border-cream-200 { border-color: #a5e7dd !important; }
-html.theme-turquoise-light .text-cream-400 { color: #4ba89c !important; }
+html.theme-turquoise-light body {
+  background-color: #effdfb !important;
+}
+
+html.theme-turquoise-light .bg-cream-50 {
+  background-color: #effdfb !important;
+}
+
+html.theme-turquoise-light .bg-cream-100 {
+  background-color: #d6f7f1 !important;
+}
+
+html.theme-turquoise-light .bg-cream-200 {
+  background-color: #b3ede4 !important;
+}
+
+html.theme-turquoise-light .border-cream-200 {
+  border-color: #a5e7dd !important;
+}
+
+html.theme-turquoise-light .text-cream-400 {
+  color: #4ba89c !important;
+}
+
 html.theme-turquoise-light .bg-cream-50\/75,
-html.theme-turquoise-light .bg-cream-50\/90 { background-color: rgba(239, 253, 251, 0.85) !important; }
+html.theme-turquoise-light .bg-cream-50\/90 {
+  background-color: rgba(239, 253, 251, 0.85) !important;
+}
 
 /* Turquoise-dark — deep teal background with bright aqua accents. */
-html.theme-turquoise-dark body { background-color: #03201c !important; }
-html.theme-turquoise-dark .dark\:bg-dark-900 { background-color: #03201c !important; }
-html.theme-turquoise-dark .dark\:bg-dark-800 { background-color: #062f2a !important; }
-html.theme-turquoise-dark .dark\:bg-dark-700 { background-color: #0a3f38 !important; }
-html.theme-turquoise-dark .from-dark-800 { --tw-gradient-from: #062f2a !important; }
-html.theme-turquoise-dark .via-dark-900 { --tw-gradient-via: #03201c !important; }
-html.theme-turquoise-dark .to-dark-900 { --tw-gradient-to: #03201c !important; }
-html.theme-turquoise-dark .dark\:border-brand-400\/15 { border-color: rgba(45, 212, 191, 0.16) !important; }
-html.theme-turquoise-dark .card { background-color: #062f2a !important; border-color: rgba(45, 212, 191, 0.14) !important; }
+html.theme-turquoise-dark body {
+  background-color: #03201c !important;
+}
+
+html.theme-turquoise-dark .dark\:bg-dark-900 {
+  background-color: #03201c !important;
+}
+
+html.theme-turquoise-dark .dark\:bg-dark-800 {
+  background-color: #062f2a !important;
+}
+
+html.theme-turquoise-dark .dark\:bg-dark-700 {
+  background-color: #0a3f38 !important;
+}
+
+html.theme-turquoise-dark .from-dark-800 {
+  --tw-gradient-from: #062f2a !important;
+}
+
+html.theme-turquoise-dark .via-dark-900 {
+  --tw-gradient-via: #03201c !important;
+}
+
+html.theme-turquoise-dark .to-dark-900 {
+  --tw-gradient-to: #03201c !important;
+}
+
+html.theme-turquoise-dark .dark\:border-brand-400\/15 {
+  border-color: rgba(45, 212, 191, 0.16) !important;
+}
+
+html.theme-turquoise-dark .card {
+  background-color: #062f2a !important;
+  border-color: rgba(45, 212, 191, 0.14) !important;
+}
 
 /* Admin themes */
 .admin-shell {
@@ -413,6 +564,7 @@ html.theme-turquoise-dark .card { background-color: #062f2a !important; border-c
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
