@@ -71,6 +71,24 @@ create policy "Admin update product images" on storage.objects
 create policy "Admin delete product images" on storage.objects
   for delete using (bucket_id = 'product-images' and public.is_admin());
 
+-- Site Reviews policies
+drop policy if exists "Public insert site_reviews" on site_reviews;
+drop policy if exists "Public read site_reviews" on site_reviews;
+drop policy if exists "Admin manage site_reviews" on site_reviews;
+
+create policy "Public insert site_reviews" on site_reviews
+  for insert
+  with check (true);
+
+create policy "Public read site_reviews" on site_reviews
+  for select
+  using (true);
+
+create policy "Admin manage site_reviews" on site_reviews
+  for all
+  using (public.is_admin())
+  with check (public.is_admin());
+
 -- Grant admin role to your user (replace email):
 -- update auth.users
 -- set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb

@@ -162,41 +162,28 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
 
             {/* Desktop: inline buttons */}
             {product.stock_status !== 'out_of_stock' && (
-              <div className="hidden sm:flex items-center gap-1.5 ml-2">
+              <div className="hidden sm:flex items-center ml-2">
                 <button
                   onClick={handleAddToCart}
-                  className={`bg-cream-100 dark:bg-dark-700 hover:bg-brand-400 hover:text-white rounded-xl flex items-center justify-center transition-colors text-dark-800 dark:text-white ${compact ? 'w-8 h-8' : 'w-9 h-9'}`}
+                  className={`bg-brand-400 hover:bg-brand-500 rounded-xl flex items-center justify-center transition-colors text-white ${compact ? 'w-8 h-8' : 'w-9 h-9'}`}
                   aria-label="Add to cart"
                 >
                   <ShoppingCart size={compact ? 13 : 14} weight="duotone" />
-                </button>
-                <button
-                  onClick={handleWhatsApp}
-                  className={`bg-whatsapp hover:bg-whatsapp-hover rounded-xl flex items-center justify-center transition-colors text-white ${compact ? 'w-8 h-8' : 'w-9 h-9'}`}
-                  aria-label="Order via WhatsApp"
-                >
-                  <WhatsappLogo size={compact ? 13 : 14} weight="fill" />
                 </button>
               </div>
             )}
           </div>
 
-          {/* Mobile: stacked full-width buttons */}
+          {/* Mobile: full-width add to cart */}
           {product.stock_status !== 'out_of_stock' && (
-            <div className={`flex sm:hidden ${compact ? 'flex-col gap-1 mt-1' : 'flex-row gap-1.5'}`}>
+            <div className={`flex sm:hidden mt-2`}>
               <button
                 onClick={handleAddToCart}
-                className={`flex-1 bg-cream-100 dark:bg-dark-700 active:bg-brand-400 active:text-white rounded-lg flex items-center justify-center transition-colors text-dark-800 dark:text-white ${compact ? 'h-6 sm:h-7' : 'h-8'}`}
+                className={`w-full bg-brand-400 hover:bg-brand-500 active:bg-brand-600 rounded-lg flex items-center justify-center gap-2 transition-colors text-white font-semibold text-xs ${compact ? 'h-7' : 'h-8'}`}
                 aria-label="Add to cart"
               >
                 <ShoppingCart size={compact ? 12 : 14} weight="duotone" />
-              </button>
-              <button
-                onClick={handleWhatsApp}
-                className={`flex-1 bg-whatsapp active:bg-whatsapp-hover rounded-lg flex items-center justify-center transition-colors text-white ${compact ? 'h-6 sm:h-7' : 'h-8'}`}
-                aria-label="Order via WhatsApp"
-              >
-                <WhatsappLogo size={compact ? 12 : 14} weight="fill" />
+                <span>Add</span>
               </button>
             </div>
           )}

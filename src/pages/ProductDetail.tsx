@@ -317,18 +317,14 @@ export default function ProductDetail() {
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold transition-all ${
+                className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold transition-all ${
                   added
                     ? 'bg-green-500 text-white'
                     : 'bg-dark-800 dark:bg-dark-700 hover:bg-dark-700 dark:hover:bg-dark-600 text-white border border-dark-700 dark:border-white/10'
                 }`}
               >
                 <ShoppingCart size={18} weight="duotone" />
-                {added ? 'Added!' : 'Add to Cart'}
-              </button>
-              <button type="button" onClick={handleWhatsApp} className="flex-1 btn-whatsapp justify-center py-3.5">
-                <WhatsappLogo size={18} weight="fill" />
-                Order via WhatsApp
+                {added ? 'Added to Cart!' : 'Add to Cart'}
               </button>
             </div>
           )}

@@ -111,33 +111,6 @@ export default function Settings() {
     .slice(0, 2)
     .join('') || '?'
 
-  const contactLinks = [
-    settings.whatsapp_number && {
-      label: 'WhatsApp',
-      value: settings.whatsapp_number,
-      href: `https://wa.me/${settings.whatsapp_number.replace(/\D/g, '')}`,
-      Icon: WhatsappLogo,
-    },
-    settings.social_instagram && {
-      label: 'Instagram',
-      value: settings.social_instagram,
-      href: socialUrl(settings.social_instagram, 'https://instagram.com/'),
-      Icon: InstagramLogo,
-    },
-    settings.social_tiktok && {
-      label: 'TikTok',
-      value: settings.social_tiktok,
-      href: socialUrl(settings.social_tiktok, 'https://tiktok.com/@'),
-      Icon: TiktokLogo,
-    },
-    settings.social_facebook && {
-      label: 'Facebook',
-      value: settings.social_facebook,
-      href: socialUrl(settings.social_facebook, 'https://facebook.com/'),
-      Icon: FacebookLogo,
-    },
-  ].filter(Boolean) as { label: string; value: string; href: string; Icon: typeof WhatsappLogo }[]
-
   return (
     <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-10 pb-28 lg:pb-10">
       <div className="flex items-center gap-2 mb-2">
@@ -359,38 +332,6 @@ export default function Settings() {
         )}
       </motion.section>
 
-      {/* Contact & store info. */}
-      <motion.section
-        {...sectionMotion(0.15)}
-        className="rounded-3xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6"
-      >
-        <h2 className="text-dark-800 dark:text-white font-semibold">{settings.store_name}</h2>
-        <p className="text-dark-800/55 dark:text-white/50 text-sm mt-1 mb-4">{settings.tagline}</p>
-        {contactLinks.length > 0 ? (
-          <div className="space-y-2">
-            {contactLinks.map(({ label, value, href, Icon }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-2xl bg-cream-100 dark:bg-white/5 hover:bg-cream-200 dark:hover:bg-white/10 px-3 py-2.5 transition-colors"
-              >
-                <span className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-brand-400 to-brand-500 flex items-center justify-center">
-                  <Icon size={16} weight="fill" className="text-white" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium text-dark-800 dark:text-white">{label}</span>
-                  <span className="block text-[11px] text-dark-800/50 dark:text-white/40 truncate">{value}</span>
-                </span>
-                <CaretRight size={14} weight="bold" className="text-dark-800/30 dark:text-white/30 flex-shrink-0" />
-              </a>
-            ))}
-          </div>
-        ) : (
-          <p className="text-dark-800/45 dark:text-white/35 text-sm">No contact channels configured yet.</p>
-        )}
-      </motion.section>
     </main>
   )
 }
