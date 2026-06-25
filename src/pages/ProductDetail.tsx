@@ -265,7 +265,10 @@ export default function ProductDetail() {
           )}
 
           {product.description && (
-            <p className="text-dark-800/70 dark:text-white/60 text-sm leading-relaxed mb-6">{product.description}</p>
+            <div 
+              className="text-dark-800/70 dark:text-white/60 text-sm leading-relaxed mb-6 [&>p]:mb-3 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-3 [&>ol]:list-decimal [&>ol]:pl-5 [&>ol]:mb-3 [&_a]:text-brand-400 hover:[&_a]:text-brand-500 [&_a]:underline"
+              dangerouslySetInnerHTML={{ __html: product.description }}
+            />
           )}
 
           {product.key_features && product.key_features.length > 0 && (

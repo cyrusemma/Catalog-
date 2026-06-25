@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Star, Eye, EyeOff, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Search, Star, Eye, EyeOff, Pencil, Trash2, Copy, Zap, X, Check } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
@@ -10,6 +10,9 @@ import { formatPrice } from '../../lib/utils'
 export default function AdminProducts() {
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [quickEditId, setQuickEditId] = useState<string | null>(null)
+  const [quickEditPrice, setQuickEditPrice] = useState<string>('')
+  const [quickEditStock, setQuickEditStock] = useState<string>('')
   const qc = useQueryClient()
 
   const { data: context } = useQuery({
@@ -64,6 +67,16 @@ export default function AdminProducts() {
       await supabase.from('products').delete().eq('id', id)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-products'] }),
+  })
+
+  const quickEditProduct = useMutation({
+    mutationFn: async ({ id, selling_price, stock }: { id: string; selling_price: number; stock: number }) => {
+      await supabase.from('products').update({ selling_price, stock }).eq('id', id)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-products'] })
+      setQuickEditId(null)
+    },
   })
 
   // Bulk Operations
@@ -193,7 +206,46 @@ export default function AdminProducts() {
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-gray-900 text-sm font-medium truncate">{product.title}</p>
-                        <p className="text-gray-400 text-xs">{formatPrice(product.selling_price)} · {product.category}</p>
+                        {quickEditId === product.id ? (
+                          <div className="flex items-center gap-2 mt-1">
+                            <input
+                              type="number"
+                              value={quickEditPrice}
+                              onChange={e => setQuickEditPrice(e.target.value)}
+                              placeholder="Price"
+                              className="w-24 border border-gray-200 focus:border-brand-400 rounded px-2 py-1 text-xs text-gray-900 outline-none bg-white"
+                            />
+                            <input
+                              type="number"
+                              value={quickEditStock}
+                              onChange={e => setQuickEditStock(e.target.value)}
+                              placeholder="Stock"
+                              className="w-20 border border-gray-200 focus:border-brand-400 rounded px-2 py-1 text-xs text-gray-900 outline-none bg-white"
+                            />
+                            <button
+                              onClick={() => {
+                                const price = parseFloat(quickEditPrice)
+                                const stock = parseInt(quickEditStock, 10)
+                                if (!isNaN(price) && !isNaN(stock)) {
+                                  quickEditProduct.mutate({ id: product.id, selling_price: price, stock })
+                                }
+                              }}
+                              className="w-6 h-6 bg-green-50 text-green-600 hover:bg-green-100 rounded flex items-center justify-center transition-colors"
+                              title="Save"
+                            >
+                              <Check size={12} />
+                            </button>
+                            <button
+                              onClick={() => setQuickEditId(null)}
+                              className="w-6 h-6 bg-red-50 text-red-600 hover:bg-red-100 rounded flex items-center justify-center transition-colors"
+                              title="Cancel"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <p className="text-gray-400 text-xs">{formatPrice(product.selling_price)} · {product.category} · Stock: {product.stock}</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         {/* Feature toggle */}
@@ -212,10 +264,35 @@ export default function AdminProducts() {
                         >
                           {product.is_published ? <Eye size={14} /> : <EyeOff size={14} />}
                         </button>
+                        {/* Quick Edit */}
+                        <button
+                          onClick={() => {
+                            if (quickEditId === product.id) {
+                              setQuickEditId(null)
+                            } else {
+                              setQuickEditId(product.id)
+                              setQuickEditPrice(product.selling_price?.toString() || '0')
+                              setQuickEditStock(product.stock?.toString() || '0')
+                            }
+                          }}
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${quickEditId === product.id ? 'bg-brand-400 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-500'}`}
+                          title="Quick Edit"
+                        >
+                          <Zap size={14} />
+                        </button>
+                        {/* Duplicate */}
+                        <Link
+                          to={`/admin/products/new?duplicate=${product.id}`}
+                          className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors text-gray-500"
+                          title="Duplicate Product"
+                        >
+                          <Copy size={14} />
+                        </Link>
                         {/* Edit */}
                         <Link
                           to={`/admin/products/${product.id}/edit`}
                           className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors text-gray-500"
+                          title="Edit Details"
                         >
                           <Pencil size={14} />
                         </Link>
@@ -225,6 +302,7 @@ export default function AdminProducts() {
                             if (confirm('Delete this product?')) deleteProduct.mutate(product.id)
                           }}
                           className="w-8 h-8 bg-gray-100 hover:bg-red-50 hover:text-red-500 rounded-lg flex items-center justify-center transition-colors text-gray-400"
+                          title="Delete Product"
                         >
                           <Trash2 size={14} />
                         </button>

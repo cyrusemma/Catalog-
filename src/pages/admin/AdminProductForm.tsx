@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Loader2, Plus, X, ImagePlus, Upload } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
@@ -12,7 +12,9 @@ import {
   validateImageFile,
   validateProductForm,
 } from '../../lib/productValidation'
-import ImageCropper from '../../components/admin/ImageCropper'
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
+
 
 interface FormData {
   title: string; brand: string; description: string
@@ -67,10 +69,25 @@ async function resolveUniqueSlug(title: string, excludeId?: string): Promise<str
 
 export default function AdminProductForm() {
   const { id } = useParams()
-  const isEdit = id && id !== 'new'
+  const [searchParams] = useSearchParams()
+  const duplicateId = searchParams.get('duplicate')
+  const isEdit = id && id !== 'new' && !duplicateId
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [form, setForm] = useState<FormData>(emptyForm)
+
+  // Unsaved changes warning
+  useEffect(() => {
+    const isDirty = JSON.stringify(form) !== JSON.stringify(emptyForm)
+    if (!isDirty) return
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [form])
 
   const { data: context } = useQuery({
     queryKey: ['admin-user-context'],
@@ -183,13 +200,14 @@ export default function AdminProductForm() {
   }
 
   const { data: existingProduct } = useQuery({
-    queryKey: ['admin-product', id],
+    queryKey: ['admin-product', isEdit ? id : duplicateId],
     queryFn: async () => {
-      const { data, error } = await supabase.from('products').select('*').eq('id', id).single()
+      const targetId = isEdit ? id : duplicateId
+      const { data, error } = await supabase.from('products').select('*').eq('id', targetId).single()
       if (error) throw error
       return data
     },
-    enabled: !!isEdit,
+    enabled: !!(isEdit || duplicateId),
   })
 
   useEffect(() => {
@@ -199,7 +217,7 @@ export default function AdminProductForm() {
         ? findCategory(categoryTree, selectedCat.parent_id)
         : selectedCat
       setForm({
-        title: existingProduct.title || '',
+        title: duplicateId ? `${existingProduct.title} (Copy)` : (existingProduct.title || ''),
         brand: existingProduct.brand || '',
         description: existingProduct.description || '',
         parent_category_id: parentCat?.id || '',
@@ -212,20 +230,20 @@ export default function AdminProductForm() {
         images: existingProduct.images || [],
         key_features: existingProduct.key_features || [],
         sizes: existingProduct.sizes || [],
-        is_featured: existingProduct.is_featured || false,
-        is_published: existingProduct.is_published || false,
+        is_featured: duplicateId ? false : (existingProduct.is_featured || false),
+        is_published: duplicateId ? false : (existingProduct.is_published || false),
         is_preorder: existingProduct.is_preorder || false,
         free_delivery: !existingProduct.delivery_fee || Number(existingProduct.delivery_fee) === 0,
         delivery_fee: existingProduct.delivery_fee && Number(existingProduct.delivery_fee) > 0
           ? Number(existingProduct.delivery_fee).toString()
           : '',
-        flash_sale_price: existingProduct.flash_sale_price != null
+        flash_sale_price: duplicateId ? '' : (existingProduct.flash_sale_price != null
           ? Number(existingProduct.flash_sale_price).toString()
-          : '',
-        flash_sale_ends_at: isoToLocalInput(existingProduct.flash_sale_ends_at),
+          : ''),
+        flash_sale_ends_at: duplicateId ? '' : isoToLocalInput(existingProduct.flash_sale_ends_at),
       })
     }
-  }, [existingProduct, categoryTree])
+  }, [existingProduct, categoryTree, duplicateId])
 
   const set = (key: keyof FormData, val: FormData[keyof FormData]) =>
     setForm(f => ({ ...f, [key]: val }))
@@ -584,7 +602,14 @@ export default function AdminProductForm() {
 
                 <div>
                   <label className="block text-gray-600 text-xs font-medium mb-1.5">Description</label>
-                  <textarea value={form.description} onChange={e => set('description', e.target.value)} placeholder="Product description..." rows={4} className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white resize-none" />
+                  <div className="bg-white rounded-xl overflow-hidden border border-gray-200 focus-within:border-brand-400">
+                    <ReactQuill
+                      theme="snow"
+                      value={form.description}
+                      onChange={val => set('description', val)}
+                      className="border-none"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
