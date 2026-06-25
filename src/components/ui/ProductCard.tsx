@@ -67,14 +67,14 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
             decoding="async"
           />
           {/* Badges */}
-          <div className={`absolute top-2 left-2 flex flex-col gap-1 ${compact ? 'scale-90 origin-top-left sm:scale-100' : ''}`}>
+          <div className={`absolute top-2 left-2 right-10 flex flex-wrap gap-1 ${compact ? 'scale-90 origin-top-left sm:scale-100' : ''}`}>
             {onFlashSale && (
-              <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
+              <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm animate-pulse">
                 <Lightning size={10} weight="fill" /> FLASH
               </span>
             )}
             {product.is_preorder && (
-              <span className="bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="bg-blue-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
                 <Clock size={10} weight="fill" /> PREORDER
               </span>
             )}
@@ -88,7 +88,7 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
             )}
             {product.is_featured && (
               <span className="badge-featured">
-                <Lightning size={10} weight="fill" className="text-brand-400" /> Featured
+                <Lightning size={10} weight="fill" className="text-brand-400" /> FEATURED
               </span>
             )}
           </div>
