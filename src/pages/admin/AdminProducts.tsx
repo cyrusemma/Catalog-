@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Star, Eye, EyeOff, Pencil, Trash2, Copy, Zap, X, Check } from 'lucide-react'
+import { Plus, Search, Star, Eye, EyeOff, Pencil, Trash2, Copy, Zap, X, Check, ArrowDownUp } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
@@ -9,6 +9,7 @@ import { formatPrice } from '../../lib/utils'
 
 export default function AdminProducts() {
   const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState('newest')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [quickEditId, setQuickEditId] = useState<string | null>(null)
   const [quickEditPrice, setQuickEditPrice] = useState<string>('')
@@ -112,7 +113,13 @@ export default function AdminProducts() {
 
   const filtered = products?.filter(p =>
     p.title?.toLowerCase().includes(search.toLowerCase())
-  )
+  ).sort((a, b) => {
+    if (sortBy === 'price_asc') return a.selling_price - b.selling_price
+    if (sortBy === 'price_desc') return b.selling_price - a.selling_price
+    if (sortBy === 'stock_asc') return a.stock - b.stock
+    if (sortBy === 'stock_desc') return b.stock - a.stock
+    return 0 // default is newest, already sorted by DB
+  })
 
   const allFilteredSelected = filtered && filtered.length > 0 && filtered.every(p => selectedIds.includes(p.id))
   const someFilteredSelected = filtered && filtered.length > 0 && filtered.some(p => selectedIds.includes(p.id)) && !allFilteredSelected
@@ -143,16 +150,32 @@ export default function AdminProducts() {
           </Link>
         </div>
 
-        {/* Search */}
-        <div className="relative mb-6">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full border border-gray-200 focus:border-brand-400 rounded-xl pl-9 pr-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none bg-white text-sm"
-          />
+        {/* Search and Sort */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full border border-gray-200 focus:border-brand-400 rounded-xl pl-9 pr-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none bg-white text-sm"
+            />
+          </div>
+          <div className="relative w-full sm:w-auto">
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              className="w-full sm:w-48 appearance-none border border-gray-200 focus:border-brand-400 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-900 outline-none bg-white cursor-pointer"
+            >
+              <option value="newest">Newest First</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="stock_asc">Stock: Low to High</option>
+              <option value="stock_desc">Stock: High to Low</option>
+            </select>
+            <ArrowDownUp size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
         </div>
 
         {/* List */}

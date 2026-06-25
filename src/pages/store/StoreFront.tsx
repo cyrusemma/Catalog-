@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Store, ShoppingBag, Package, Star } from 'lucide-react'
+import { Store, ShoppingBag, Package, Star, Instagram, Facebook, Video, ChevronDown } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
 
@@ -10,6 +10,11 @@ interface StoreDetails {
   name: string
   slug: string
   logo_url: string | null
+  hero_images: string[]
+  tagline: string | null
+  social_instagram: string | null
+  social_tiktok: string | null
+  social_facebook: string | null
   settings: Record<string, any>
 }
 
@@ -28,6 +33,8 @@ export default function StoreFront() {
   const formatPrice = useCurrencyFormatter()
   const { storeSlug } = useParams<{ storeSlug: string }>()
   const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('All')
+  const [sortBy, setSortBy] = useState<string>('newest')
 
   // 1. Fetch store info
   const { data: store, isLoading: isStoreLoading, isError: isStoreError } = useQuery<StoreDetails>({
@@ -90,49 +97,166 @@ export default function StoreFront() {
     )
   }
 
-  const filtered = products?.filter(p =>
-    p.title?.toLowerCase().includes(search.toLowerCase())
-  )
+  const categories = ['All', ...Array.from(new Set(products?.map(p => p.category).filter(Boolean)))]
+
+  const featuredProducts = products?.filter(p => p.is_featured) || []
+
+  const filtered = products?.filter(p => {
+    const matchesSearch = p.title?.toLowerCase().includes(search.toLowerCase())
+    const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory
+    return matchesSearch && matchesCategory
+  }).sort((a, b) => {
+    if (sortBy === 'price_asc') return a.selling_price - b.selling_price
+    if (sortBy === 'price_desc') return b.selling_price - a.selling_price
+    return 0 // default to newest (already sorted from DB)
+  })
 
   return (
     <div className="flex-1 bg-cream-50 dark:bg-dark-900 min-h-screen">
-      {/* Store Header */}
-      <header className="bg-white dark:bg-dark-800 border-b border-cream-200 dark:border-white/10 py-8 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-6">
+      {/* Store Header / Cover */}
+      {store.hero_images?.[0] && (
+        <div className="w-full h-48 md:h-64 lg:h-80 relative bg-gray-100 dark:bg-dark-800">
+          <img src={store.hero_images[0]} alt="Store Cover" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        </div>
+      )}
+
+      <header className={`bg-white dark:bg-dark-800 border-b border-cream-200 dark:border-white/10 px-4 pb-8 ${store.hero_images?.[0] ? 'pt-0' : 'py-8'}`}>
+        <div className={`max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-6 ${store.hero_images?.[0] ? '-mt-12 relative z-10' : ''}`}>
           {store.logo_url ? (
             <img
               src={store.logo_url}
               alt={store.name}
-              className="w-20 h-20 rounded-2xl object-cover shadow-md border border-gray-100 flex-shrink-0"
+              className="w-24 h-24 rounded-2xl object-cover shadow-lg border-4 border-white dark:border-dark-800 flex-shrink-0"
             />
           ) : (
-            <div className="w-20 h-20 bg-brand-400/10 rounded-2xl flex items-center justify-center border border-brand-400/20 flex-shrink-0">
-              <Store size={36} className="text-brand-400" />
+            <div className="w-24 h-24 bg-white dark:bg-dark-800 rounded-2xl flex items-center justify-center border-4 border-white dark:border-dark-800 shadow-lg flex-shrink-0">
+              <div className="w-full h-full bg-brand-400/10 rounded-xl flex items-center justify-center">
+                <Store size={40} className="text-brand-400" />
+              </div>
             </div>
           )}
 
-          <div className="text-center md:text-left flex-1">
+          <div className="text-center md:text-left flex-1 mt-2 md:mt-0 pt-2 md:pt-12">
             <h1 className="text-3xl font-display font-semibold text-gray-900 dark:text-white">
               {store.name}
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-center md:justify-start gap-1">
-              <ShoppingBag size={14} /> Storefront link: {window.location.host}/s/{store.slug}
+            {store.tagline && (
+              <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm max-w-2xl">
+                {store.tagline}
+              </p>
+            )}
+            <p className="text-sm text-gray-400 mt-2 flex items-center justify-center md:justify-start gap-1">
+              <ShoppingBag size={14} /> {window.location.host}/s/{store.slug}
             </p>
+          </div>
+
+          {/* Social Links */}
+          <div className="flex items-center gap-3 mt-4 md:mt-12">
+            {store.social_instagram && (
+              <a href={store.social_instagram} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-gray-50 dark:bg-dark-900 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-brand-400 transition-colors">
+                <Instagram size={18} />
+              </a>
+            )}
+            {store.social_facebook && (
+              <a href={store.social_facebook} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-gray-50 dark:bg-dark-900 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-brand-400 transition-colors">
+                <Facebook size={18} />
+              </a>
+            )}
+            {store.social_tiktok && (
+              <a href={store.social_tiktok} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-gray-50 dark:bg-dark-900 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-brand-400 transition-colors">
+                <Video size={18} />
+              </a>
+            )}
           </div>
         </div>
       </header>
 
       {/* Main Catalog View */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Search */}
-        <div className="mb-8">
-          <input
-            type="text"
-            placeholder={`Search within ${store.name}...`}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 focus:border-brand-400/60 focus:ring-2 focus:ring-brand-400/20 rounded-2xl px-5 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 outline-none transition-all shadow-sm text-sm"
-          />
+        {/* Featured Products */}
+        {!isProductsLoading && featuredProducts.length > 0 && search === '' && selectedCategory === 'All' && (
+          <div className="mb-12">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+              <Star className="text-brand-400" size={20} fill="currentColor" /> Featured Selection
+            </h2>
+            <div className="flex overflow-x-auto pb-6 -mx-4 px-4 snap-x snap-mandatory hide-scrollbar gap-4">
+              {featuredProducts.map(product => (
+                <Link
+                  key={product.id}
+                  to={`/product/${product.id}?store=${store.slug}`}
+                  className="snap-start shrink-0 w-64 group bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 rounded-3xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
+                >
+                  <div className="aspect-square w-full overflow-hidden bg-gray-50 relative">
+                    <img
+                      src={product.images?.[0] || 'https://placehold.co/300x300/f3f4f6/9ca3af?text=?'}
+                      alt={product.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wider font-semibold text-brand-400 mb-1 block">
+                        {product.category}
+                      </span>
+                      <h3 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-2 leading-tight group-hover:text-brand-400 transition-colors">
+                        {product.title}
+                      </h3>
+                    </div>
+                    <div className="mt-4">
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                        {formatPrice(product.selling_price)}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Search, Categories, and Sort */}
+        <div className="mb-8 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <input
+              type="text"
+              placeholder={`Search within ${store.name}...`}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="flex-1 bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 focus:border-brand-400/60 focus:ring-2 focus:ring-brand-400/20 rounded-2xl px-5 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 outline-none transition-all shadow-sm text-sm"
+            />
+            
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+                className="w-full sm:w-auto appearance-none bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 rounded-2xl pl-5 pr-12 py-3.5 text-sm text-gray-900 dark:text-white outline-none focus:border-brand-400/60 focus:ring-2 focus:ring-brand-400/20 shadow-sm cursor-pointer"
+              >
+                <option value="newest">Newest Arrivals</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+              </select>
+              <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Categories */}
+          {categories.length > 1 && (
+            <div className="flex overflow-x-auto pb-2 -mx-4 px-4 hide-scrollbar gap-2">
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    selectedCategory === cat
+                      ? 'bg-brand-400 text-white shadow-sm'
+                      : 'bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-300 border border-cream-200 dark:border-white/10 hover:border-brand-400/30'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Products Grid */}
