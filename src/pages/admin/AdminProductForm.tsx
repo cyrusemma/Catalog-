@@ -409,6 +409,77 @@ export default function AdminProductForm() {
         <div className="grid lg:grid-cols-5 gap-5 lg:gap-6">
           <div className="lg:col-span-3 space-y-5">
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Images</h2>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {form.images.map((img, i) => (
+                  <div key={i} className="relative group">
+                    <img src={img} alt="" className="w-full aspect-square object-cover rounded-xl" />
+                    <button
+                      onClick={() => set('images', form.images.filter((_, j) => j !== i))}
+                      aria-label={`Remove image ${i + 1}`}
+                      title={`Remove image ${i + 1}`}
+                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                ))}
+                {form.images.length === 0 && (
+                  <div className="col-span-2 aspect-video bg-gray-50 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-200">
+                    <div className="text-center">
+                      <ImagePlus size={24} className="text-gray-300 mx-auto mb-1" />
+                      <p className="text-gray-400 text-xs">No images yet</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                multiple
+                aria-label="Upload product images"
+                title="Upload product images"
+                onChange={e => handleFileUpload(e.target.files)}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm flex items-center justify-center gap-2 mb-2"
+              >
+                {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                {uploading ? 'Uploading...' : 'Upload Images'}
+              </button>
+              {uploadError && <p className="text-red-500 text-xs mb-2">{uploadError}</p>}
+              <div className="flex gap-2">
+                <input
+                  value={newImageUrl}
+                  onChange={e => setNewImageUrl(e.target.value)}
+                  onPaste={e => {
+                    const pasted = e.clipboardData.getData('text').trim()
+                    if (pasted && isValidImageUrl(pasted)) {
+                      e.preventDefault()
+                      addImageUrl(pasted)
+                    }
+                  }}
+                  placeholder="Or paste image URL..."
+                  onKeyDown={e => { if (e.key === 'Enter') addImageUrl(newImageUrl) }}
+                  className="flex-1 border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-xs text-gray-900 placeholder-gray-400 bg-gray-50 focus:bg-white outline-none"
+                />
+                <button
+                  onClick={() => addImageUrl(newImageUrl)}
+                  aria-label="Add image from URL"
+                  title="Add image from URL"
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-xl transition-colors"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Product Details</h2>
 
               <div className="space-y-4">
@@ -623,77 +694,6 @@ export default function AdminProductForm() {
           </div>
 
           <div className="lg:col-span-2 space-y-5">
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Images</h2>
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                {form.images.map((img, i) => (
-                  <div key={i} className="relative group">
-                    <img src={img} alt="" className="w-full aspect-square object-cover rounded-xl" />
-                    <button
-                      onClick={() => set('images', form.images.filter((_, j) => j !== i))}
-                      aria-label={`Remove image ${i + 1}`}
-                      title={`Remove image ${i + 1}`}
-                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X size={10} />
-                    </button>
-                  </div>
-                ))}
-                {form.images.length === 0 && (
-                  <div className="col-span-2 aspect-video bg-gray-50 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-200">
-                    <div className="text-center">
-                      <ImagePlus size={24} className="text-gray-300 mx-auto mb-1" />
-                      <p className="text-gray-400 text-xs">No images yet</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                multiple
-                aria-label="Upload product images"
-                title="Upload product images"
-                onChange={e => handleFileUpload(e.target.files)}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="w-full bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm flex items-center justify-center gap-2 mb-2"
-              >
-                {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                {uploading ? 'Uploading...' : 'Upload Images'}
-              </button>
-              {uploadError && <p className="text-red-500 text-xs mb-2">{uploadError}</p>}
-              <div className="flex gap-2">
-                <input
-                  value={newImageUrl}
-                  onChange={e => setNewImageUrl(e.target.value)}
-                  onPaste={e => {
-                    const pasted = e.clipboardData.getData('text').trim()
-                    if (pasted && isValidImageUrl(pasted)) {
-                      e.preventDefault()
-                      addImageUrl(pasted)
-                    }
-                  }}
-                  placeholder="Or paste image URL..."
-                  onKeyDown={e => { if (e.key === 'Enter') addImageUrl(newImageUrl) }}
-                  className="flex-1 border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-xs text-gray-900 placeholder-gray-400 bg-gray-50 focus:bg-white outline-none"
-                />
-                <button
-                  onClick={() => addImageUrl(newImageUrl)}
-                  aria-label="Add image from URL"
-                  title="Add image from URL"
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-xl transition-colors"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
-            </div>
-
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Stock Status</h2>
               <div className="grid grid-cols-3 gap-2 mb-3">
