@@ -5,7 +5,7 @@ import { useToastStore } from '../../store/toastStore'
 
 export default function NewArrivalsListener() {
   const { session } = useCustomerSession()
-  const showToast = useToastStore(s => s.showToast)
+  const addToast = useToastStore(s => s.addToast)
 
   useEffect(() => {
     // Only listen for new arrivals if the user is logged in
@@ -24,7 +24,7 @@ export default function NewArrivalsListener() {
           const newProduct = payload.new
           // Only show notification if the product is published
           if (newProduct.is_published) {
-            showToast({
+            addToast({
               title: '✨ New Arrival!',
               message: `Just added: ${newProduct.title}`,
               type: 'info',
@@ -38,7 +38,7 @@ export default function NewArrivalsListener() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [session, showToast])
+  }, [session, addToast])
 
   return null
 }
