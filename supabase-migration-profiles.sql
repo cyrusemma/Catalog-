@@ -9,6 +9,7 @@ create table if not exists profiles (
   display_name text,
   avatar_url text,
   notify_new_arrivals boolean not null default false,
+  cart jsonb not null default '[]'::jsonb,
   created_at timestamptz default now()
 );
 

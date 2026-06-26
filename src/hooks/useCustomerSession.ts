@@ -9,6 +9,7 @@ export interface CustomerProfile {
   display_name: string | null
   avatar_url: string | null
   notify_new_arrivals: boolean
+  cart: any[]
   created_at: string
 }
 
@@ -53,7 +54,7 @@ export function useCustomerSession() {
       if (!user) return null
       const { data } = await supabase
         .from('profiles')
-        .select('id, email, display_name, avatar_url, notify_new_arrivals, created_at')
+        .select('id, email, display_name, avatar_url, notify_new_arrivals, cart, created_at')
         .eq('id', user.id)
         .maybeSingle()
       return (data as CustomerProfile) ?? null

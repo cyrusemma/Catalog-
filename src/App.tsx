@@ -22,6 +22,7 @@ import ToastContainer from './components/ui/ToastContainer'
 import BackToTop from './components/ui/BackToTop'
 import PWAInstallPrompt from './components/ui/PWAInstallPrompt'
 import NewArrivalsListener from './components/ui/NewArrivalsListener'
+import CartSync from './components/ui/CartSync'
 import { useSignInStore } from './store/signInStore'
 
 const Home = lazy(() => import('./pages/Home'))
@@ -208,6 +209,7 @@ export default function App() {
     <QueryClientProvider client={qc}>
       <BrowserRouter>
         <NewArrivalsListener />
+        <CartSync />
         <Suspense
           fallback={<ShopLoader />}
         >
