@@ -1,12 +1,13 @@
 import { create } from 'zustand'
 
-export type ColorTheme = 'golden' | 'rose' | 'turquoise'
+export type ColorTheme = 'golden' | 'rose' | 'turquoise' | 'aurora'
 export type Mode = 'light' | 'dark'
 
 export const COLOR_THEMES: { value: ColorTheme; label: string; swatch: string; subtitle: string }[] = [
   { value: 'golden', label: 'Golden Brown', swatch: 'linear-gradient(135deg, #f4d48e, #b86d08)', subtitle: 'Warm amber' },
   { value: 'rose', label: 'Rose', swatch: 'linear-gradient(135deg, #f7c3d0, #b54a73)', subtitle: 'Dusty rose' },
   { value: 'turquoise', label: 'Turquoise', swatch: 'linear-gradient(135deg, #9fe8df, #0c8577)', subtitle: 'Cool aqua' },
+  { value: 'aurora', label: 'Pastel Pasture', swatch: 'linear-gradient(180deg, #8bcdec, #f0cbe1, #a9e29a)', subtitle: 'Snapchat vibes' },
 ]
 
 const COLOR_KEY = 'catalog-color'
@@ -22,6 +23,8 @@ const ALL_THEME_CLASSES = [
   'theme-rose-dark',
   'theme-turquoise-light',
   'theme-turquoise-dark',
+  'theme-aurora-light',
+  'theme-aurora-dark',
 ]
 
 function classFor(color: ColorTheme, mode: Mode): string {
@@ -36,7 +39,7 @@ export function applyTheme(color: ColorTheme, mode: Mode) {
   for (const c of ALL_THEME_CLASSES) root.classList.toggle(c, c === target)
 }
 
-const isColor = (v: unknown): v is ColorTheme => v === 'golden' || v === 'rose' || v === 'turquoise'
+const isColor = (v: unknown): v is ColorTheme => v === 'golden' || v === 'rose' || v === 'turquoise' || v === 'aurora'
 const isMode = (v: unknown): v is Mode => v === 'light' || v === 'dark'
 
 // One-time migration from the old single-key theme ("rose-dark", "amoled", …).

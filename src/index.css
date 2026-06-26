@@ -568,3 +568,165 @@ html.theme-turquoise-dark .card {
     display: none;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Pastel Pasture Theme (Light Blue -> Pink/White -> Light Green)
+   ───────────────────────────────────────────────────────────────────────── */
+html.theme-aurora-light {
+  --hero-bg-from: #8bcdec;
+  --hero-bg-via: #f0cbe1;
+  --hero-bg-to: #a9e29a;
+  --hero-glow-a: rgba(255, 255, 255, 0.5);
+  --hero-glow-b: rgba(255, 255, 255, 0.3);
+  --hero-accent: #ff9800;
+  --hero-shape: rgba(255, 255, 255, 0.4);
+}
+
+html.theme-aurora-dark {
+  --hero-bg-from: #4f8db1;
+  --hero-bg-via: #a57e95;
+  --hero-bg-to: #619a52;
+  --hero-glow-a: rgba(255, 255, 255, 0.2);
+  --hero-glow-b: rgba(255, 255, 255, 0.1);
+  --hero-accent: #ff9800;
+  --hero-shape: rgba(255, 255, 255, 0.2);
+}
+
+/* Base Body Backgrounds */
+html.theme-aurora-light body {
+  background: linear-gradient(180deg, #8bcdec 0%, #f0cbe1 30%, #ffffff 60%, #a9e29a 100%) !important;
+  background-attachment: fixed !important;
+  color: #111827 !important; /* Dark text for pastel background */
+}
+html.theme-aurora-dark body {
+  background: linear-gradient(180deg, #325a70 0%, #614656 30%, #202020 60%, #294721 100%) !important;
+  background-attachment: fixed !important;
+  color: white !important;
+}
+
+/* Reset standard solid backgrounds to transparent/glass so gradient shows */
+html.theme-aurora-light .bg-cream-50,
+html.theme-aurora-light .bg-cream-100,
+html.theme-aurora-dark .dark\:bg-dark-900,
+html.theme-aurora-dark .dark\:bg-dark-800 {
+  background-color: transparent !important;
+}
+
+/* Text Overrides for contrast */
+html.theme-aurora-light .text-cream-400 {
+  color: #6b7280 !important;
+}
+
+/* Glass Cards */
+html.theme-aurora-light .card {
+  background: rgba(255, 255, 255, 0.25) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05) !important;
+}
+html.theme-aurora-dark .card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+}
+html.theme-aurora-light .card-hover:hover {
+  background: rgba(255, 255, 255, 0.35) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+html.theme-aurora-dark .card-hover:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Inputs & Range Sliders */
+html.theme-aurora-light .input {
+  background: rgba(255, 255, 255, 0.3) !important;
+  backdrop-filter: blur(8px);
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  color: #111827 !important;
+}
+html.theme-aurora-dark .input {
+  background: rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(8px);
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+html.theme-aurora-light .input::placeholder {
+  color: rgba(0, 0, 0, 0.4) !important;
+}
+html.theme-aurora-dark .input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+html.theme-aurora-light .input:focus,
+html.theme-aurora-dark .input:focus {
+  border-color: #ff9800 !important;
+  box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2) !important;
+}
+
+/* Style range inputs (sliders) */
+html.theme-aurora-light input[type="range"],
+html.theme-aurora-dark input[type="range"] {
+  accent-color: #ff9800 !important;
+}
+
+/* Primary Button (Orange) */
+html.theme-aurora-light .btn-primary,
+html.theme-aurora-dark .btn-primary {
+  background: #ff9800 !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3) !important;
+}
+html.theme-aurora-light .btn-primary:hover,
+html.theme-aurora-dark .btn-primary:hover {
+  background: #f57c00 !important;
+  box-shadow: 0 4px 20px rgba(245, 124, 0, 0.5) !important;
+}
+
+/* Ghost Button */
+html.theme-aurora-light .btn-ghost {
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: #111827 !important;
+}
+html.theme-aurora-dark .btn-ghost {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: white !important;
+}
+html.theme-aurora-light .btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+html.theme-aurora-dark .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Badges */
+html.theme-aurora-light .badge-featured {
+  background: rgba(255, 255, 255, 0.5) !important;
+  color: #111827 !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+}
+html.theme-aurora-dark .badge-featured {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Navbar / BottomNav Glass overrides */
+html.theme-aurora-light .bg-white\/80,
+html.theme-aurora-light .bg-white\/90 {
+  background: rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+html.theme-aurora-dark .dark\:bg-dark-900\/80,
+html.theme-aurora-dark .dark\:bg-dark-900\/90 {
+  background: rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
