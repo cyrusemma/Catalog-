@@ -92,6 +92,22 @@ export default function AdminLogin() {
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or</span>
+            </div>
+          </div>
+
+          <a
+            href="/admin/login-otp"
+            className="w-full block text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl transition-colors"
+          >
+            Sign in with phone
+          </a>
         </form>
       </div>
     </div>

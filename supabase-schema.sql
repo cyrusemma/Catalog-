@@ -61,10 +61,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select coalesce(
-    auth.jwt() -> 'app_metadata' ->> 'role',
-    auth.jwt() -> 'user_metadata' ->> 'role'
-  ) = 'admin';
+  select (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin';
 $$;
 
 -- Row Level Security

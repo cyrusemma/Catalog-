@@ -1,7 +1,7 @@
 -- Run this in Supabase SQL Editor if you already applied an older supabase-schema.sql
 -- Safe to run multiple times (drops old policies before recreating)
 
--- Admin role helper (JWT app_metadata.role or user_metadata.role = 'admin')
+-- Admin role helper (JWT app_metadata.role = 'admin' only, not user_metadata)
 create or replace function public.is_admin()
 returns boolean
 language sql
@@ -9,10 +9,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select coalesce(
-    auth.jwt() -> 'app_metadata' ->> 'role',
-    auth.jwt() -> 'user_metadata' ->> 'role'
-  ) = 'admin';
+  select (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin';
 $$;
 
 -- Unique slugs

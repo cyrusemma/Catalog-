@@ -2,7 +2,7 @@ import type { Session, User } from '@supabase/supabase-js'
 
 export function isAdminUser(user: User | null | undefined): boolean {
   if (!user) return false
-  const role = user.app_metadata?.role ?? user.user_metadata?.role
+  const role = user.app_metadata?.role
   return role === 'admin'
 }
 

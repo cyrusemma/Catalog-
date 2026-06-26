@@ -14,6 +14,7 @@ const Shop = lazy(() => import('./pages/Shop'))
 const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const Cart = lazy(() => import('./pages/Cart'))
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
+const AdminLoginOTP = lazy(() => import('./pages/admin/AdminLoginOTP'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
 const AdminProductForm = lazy(() => import('./pages/admin/AdminProductForm'))
@@ -81,6 +82,7 @@ export default function App() {
 
             {/* Admin */}
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/login-otp" element={<AdminLoginOTP />} />
             <Route path="/admin" element={<ProtectedRoute session={session}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/products" element={<ProtectedRoute session={session}><AdminProducts /></ProtectedRoute>} />
             <Route path="/admin/products/new" element={<ProtectedRoute session={session}><AdminProductForm /></ProtectedRoute>} />
