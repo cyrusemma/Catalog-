@@ -8,8 +8,12 @@ import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
 import { buildWhatsAppUrl, buildCartWhatsAppMessage, effectivePrice } from '../lib/utils'
 import { supabase } from '../lib/supabase'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useProducts } from '../hooks/useProducts'
+import ProductCard from '../components/ui/ProductCard'
 
 export default function Cart() {
+  useDocumentTitle('Your Cart')
   const formatPrice = useCurrencyFormatter()
   const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCartStore()
   const settings = useStoreSettings()
@@ -57,7 +61,7 @@ export default function Cart() {
 
   if (items.length === 0) {
     return (
-      <main className="flex-1 flex items-center justify-center px-4 pb-28 lg:pb-10">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 pt-10 pb-28 lg:pb-10 w-full">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -81,6 +85,8 @@ export default function Cart() {
             <ArrowLeft size={16} /> Start Shopping
           </Link>
         </motion.div>
+        
+        <RecommendedProducts />
       </main>
     )
   }
@@ -201,5 +207,26 @@ export default function Cart() {
         </div>
       </div>
     </main>
+  )
+}
+
+function RecommendedProducts() {
+  const { data: featuredProducts, isLoading } = useProducts({ featured: true })
+
+  if (isLoading || !featuredProducts || featuredProducts.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="w-full max-w-7xl mx-auto mt-12 border-t border-cream-200 dark:border-white/10 pt-12">
+      <h3 className="text-2xl font-display font-bold text-dark-800 dark:text-white mb-6 text-center">
+        You Might Also Like
+      </h3>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {featuredProducts.slice(0, 4).map(product => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ShoppingBag, ChevronDown } from 'lucide-react'
+import { ShoppingBag, ChevronDown, Download } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils'
@@ -18,6 +18,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AdminOrders() {
   const [filter, setFilter] = useState<string>('all')
+  const [dateFilter, setDateFilter] = useState<number>(30)
   const qc = useQueryClient()
 
   const { data: orders, isLoading } = useQuery({
@@ -35,7 +36,41 @@ export default function AdminOrders() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-orders'] }),
   })
 
-  const filtered = filter === 'all' ? orders : orders?.filter(o => o.status === filter)
+  const filtered = orders?.filter(o => {
+    if (filter !== 'all' && o.status !== filter) return false
+    
+    if (dateFilter !== 0) {
+      const dateLimit = new Date()
+      dateLimit.setDate(dateLimit.getDate() - dateFilter)
+      if (new Date(o.created_at) < dateLimit) return false
+    }
+    
+    return true
+  })
+
+  const exportToCSV = () => {
+    if (!filtered?.length) return
+    const headers = ['Order ID', 'Date', 'Status', 'Customer Name', 'Phone', 'Address', 'Total']
+    const rows = filtered.map(o => [
+      o.id,
+      new Date(o.created_at).toLocaleString(),
+      o.status,
+      `"${o.customer_name?.replace(/"/g, '""') || ''}"`,
+      `"${o.customer_phone?.replace(/"/g, '""') || ''}"`,
+      `"${o.customer_address?.replace(/"/g, '""') || ''}"`,
+      o.total
+    ])
+    
+    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `orders_export_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   return (
     <AdminLayout>
@@ -46,18 +81,41 @@ export default function AdminOrders() {
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-6">
-          {['all', ...STATUSES].map(s => (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all capitalize ${
-                filter === s ? 'bg-brand-400 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-400/40'
-              }`}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
+            {['all', ...STATUSES].map(s => (
+              <button
+                key={s}
+                onClick={() => setFilter(s)}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all capitalize ${
+                  filter === s ? 'bg-brand-400 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-400/40'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(Number(e.target.value))}
+              className="bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl px-3 py-1.5 outline-none focus:border-brand-400"
             >
-              {s}
+              <option value={7}>Last 7 Days</option>
+              <option value={30}>Last 30 Days</option>
+              <option value={90}>Last 90 Days</option>
+              <option value={0}>All Time</option>
+            </select>
+            
+            <button
+              onClick={exportToCSV}
+              disabled={!filtered?.length}
+              className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download size={14} /> Export CSV
             </button>
-          ))}
+          </div>
         </div>
 
         {isLoading ? (

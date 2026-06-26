@@ -23,6 +23,7 @@ import {
   childCategories,
   expandCategoryIds,
 } from '../hooks/useProducts'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 import type { Product } from '../types'
 
@@ -47,6 +48,7 @@ const defaultFilters = {
 }
 
 export default function Shop() {
+  useDocumentTitle('Shop')
   const [search, setSearch] = useState('')
   const navigate = useNavigate()
   const location = useLocation()

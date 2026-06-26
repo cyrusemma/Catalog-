@@ -78,6 +78,13 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
             decoding="async"
           />
 
+          {/* Discount Tag */}
+          {!onFlashSale && product.discount_percent && product.discount_percent > 0 && (
+            <span className="absolute top-2 left-2 bg-red-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm">
+              -{product.discount_percent}%
+            </span>
+          )}
+
           {/* Wishlist heart */}
           <motion.button
             type="button"
@@ -119,11 +126,6 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
               {isNew && !onFlashSale && (
                 <span className="bg-brand-50 text-brand-600 dark:bg-brand-950/30 dark:text-brand-400 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-brand-200 dark:border-brand-800/30">
                   <Sparkle size={10} weight="fill" /> NEW
-                </span>
-              )}
-              {!onFlashSale && product.discount_percent && product.discount_percent > 0 && (
-                <span className="bg-green-50 text-green-600 dark:bg-green-950/30 dark:text-green-400 text-[9px] font-bold px-1.5 py-0.5 rounded border border-green-200 dark:border-green-800/30">
-                  -{product.discount_percent}%
                 </span>
               )}
               {product.is_featured && (

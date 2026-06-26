@@ -21,6 +21,7 @@ import SignInModal from './components/ui/SignInModal'
 import ToastContainer from './components/ui/ToastContainer'
 import BackToTop from './components/ui/BackToTop'
 import PWAInstallPrompt from './components/ui/PWAInstallPrompt'
+import NewArrivalsListener from './components/ui/NewArrivalsListener'
 import { useSignInStore } from './store/signInStore'
 
 const Home = lazy(() => import('./pages/Home'))
@@ -206,6 +207,7 @@ export default function App() {
   return (
     <QueryClientProvider client={qc}>
       <BrowserRouter>
+        <NewArrivalsListener />
         <Suspense
           fallback={<ShopLoader />}
         >

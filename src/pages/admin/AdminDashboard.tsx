@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Package, Eye, ShoppingBag, TrendingUp, Plus, ArrowRight, Settings, MessageSquareQuote, Users } from 'lucide-react'
+import { Package, Eye, ShoppingBag, TrendingUp, Plus, ArrowRight, Settings, MessageSquareQuote, Users, BarChart3, Star } from 'lucide-react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils'
@@ -39,7 +40,7 @@ export default function AdminDashboard() {
           return q
         })(),
         (() => {
-          let q = supabase.from('orders').select('id, total, status')
+          let q = supabase.from('orders').select('id, total, status, created_at, items')
           if (storeId) q = q.eq('store_id', storeId)
           return q
         })(),
@@ -59,6 +60,40 @@ export default function AdminDashboard() {
       const revenue = ordersData.filter((o: any) => o.status !== 'cancelled').reduce((s: number, o: any) => s + o.total, 0)
       const uniqueVisitors = new Set(visitsData.map((v: any) => v.session_id)).size
 
+      // Revenue over time (last 30 days, grouped by day)
+      const revenueByDateMap = new Map<string, number>()
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      
+      const topProductsMap = new Map<string, { title: string, count: number, revenue: number }>()
+
+      ordersData.forEach((o: any) => {
+        if (o.status !== 'cancelled') {
+          const date = new Date(o.created_at)
+          if (date >= thirtyDaysAgo) {
+            const dateString = date.toISOString().split('T')[0]
+            revenueByDateMap.set(dateString, (revenueByDateMap.get(dateString) || 0) + o.total)
+          }
+
+          if (o.items && Array.isArray(o.items)) {
+            o.items.forEach((item: any) => {
+              const current = topProductsMap.get(item.product_id) || { title: item.title || 'Unknown Product', count: 0, revenue: 0 }
+              current.count += item.quantity || 1
+              current.revenue += (item.price || 0) * (item.quantity || 1)
+              topProductsMap.set(item.product_id, current)
+            })
+          }
+        }
+      })
+
+      const revenueData = Array.from(revenueByDateMap.entries())
+        .map(([date, revenue]) => ({ date, revenue }))
+        .sort((a, b) => a.date.localeCompare(b.date))
+        
+      const topProducts = Array.from(topProductsMap.values())
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5)
+
       return {
         total: productsData.length,
         published: productsData.filter((p: any) => p.is_published).length,
@@ -67,6 +102,8 @@ export default function AdminDashboard() {
         revenue,
         visits: visitsData.length,
         uniqueVisitors,
+        revenueData,
+        topProducts
       }
     },
     enabled: !!context,
@@ -171,6 +208,73 @@ export default function AdminDashboard() {
                 <ArrowRight size={14} className="text-gray-300 group-hover:text-brand-400 transition-colors flex-shrink-0 hidden sm:block" />
               </Link>
             ))}
+          </div>
+        </section>
+
+        {/* Charts & Analytics */}
+        <section className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 flex flex-col min-h-[300px]">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 size={18} className="text-gray-400" />
+              <h2 className="font-semibold text-gray-900 text-sm sm:text-base">Revenue (Last 30 Days)</h2>
+            </div>
+            <div className="flex-1 w-full h-full min-h-[200px]">
+              {stats?.revenueData && stats.revenueData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={stats.revenueData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                    <XAxis 
+                      dataKey="date" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#9ca3af', fontSize: 12 }} 
+                      dy={10}
+                      tickFormatter={(val) => {
+                        const d = new Date(val)
+                        return `${d.getMonth()+1}/${d.getDate()}`
+                      }}
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#9ca3af', fontSize: 12 }} 
+                      dx={-10}
+                      tickFormatter={(val) => `GH₵${val}`}
+                    />
+                    <RechartsTooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value: number) => [`GH₵${value.toLocaleString()}`, 'Revenue']}
+                      labelFormatter={(label) => `Date: ${label}`}
+                    />
+                    <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#3b82f6' }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-400 text-sm">No revenue data for the last 30 days.</div>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100">
+            <div className="flex items-center gap-2 mb-4">
+              <Star size={18} className="text-yellow-500" />
+              <h2 className="font-semibold text-gray-900 text-sm sm:text-base">Top Selling Products</h2>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {stats?.topProducts && stats.topProducts.length > 0 ? (
+                stats.topProducts.map((p: any, idx: number) => (
+                  <div key={idx} className="py-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">{p.title}</p>
+                      <p className="text-xs text-gray-400">{p.count} sold</p>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900">{formatPrice(p.revenue)}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400 text-sm py-4">No sales data available yet.</p>
+              )}
+            </div>
           </div>
         </section>
 

@@ -209,68 +209,70 @@ export default function AdminProducts() {
                 {filtered?.map(product => {
                   const isChecked = selectedIds.includes(product.id)
                   return (
-                    <div key={product.id} className="flex items-center gap-3 p-4 hover:bg-gray-50/50 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedIds(prev => [...prev, product.id])
-                          } else {
-                            setSelectedIds(prev => prev.filter(id => id !== product.id))
-                          }
-                        }}
-                        className="w-4 h-4 rounded accent-brand-400 text-brand-400 focus:ring-brand-400/20 border-gray-300 cursor-pointer"
-                      />
-                      <img
-                        src={product.images?.[0] || 'https://placehold.co/48x48/f3f4f6/9ca3af?text=?'}
-                        alt=""
-                        className="w-12 h-12 rounded-xl object-cover flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-gray-900 text-sm font-medium truncate">{product.title}</p>
-                        {quickEditId === product.id ? (
-                          <div className="flex items-center gap-2 mt-1">
-                            <input
-                              type="number"
-                              value={quickEditPrice}
-                              onChange={e => setQuickEditPrice(e.target.value)}
-                              placeholder="Price"
-                              className="w-24 border border-gray-200 focus:border-brand-400 rounded px-2 py-1 text-xs text-gray-900 outline-none bg-white"
-                            />
-                            <input
-                              type="number"
-                              value={quickEditStock}
-                              onChange={e => setQuickEditStock(e.target.value)}
-                              placeholder="Stock"
-                              className="w-20 border border-gray-200 focus:border-brand-400 rounded px-2 py-1 text-xs text-gray-900 outline-none bg-white"
-                            />
-                            <button
-                              onClick={() => {
-                                const price = parseFloat(quickEditPrice)
-                                const stock = parseInt(quickEditStock, 10)
-                                if (!isNaN(price) && !isNaN(stock)) {
-                                  quickEditProduct.mutate({ id: product.id, selling_price: price, stock })
-                                }
-                              }}
-                              className="w-6 h-6 bg-green-50 text-green-600 hover:bg-green-100 rounded flex items-center justify-center transition-colors"
-                              title="Save"
-                            >
-                              <Check size={12} />
-                            </button>
-                            <button
-                              onClick={() => setQuickEditId(null)}
-                              className="w-6 h-6 bg-red-50 text-red-600 hover:bg-red-100 rounded flex items-center justify-center transition-colors"
-                              title="Cancel"
-                            >
-                              <X size={12} />
-                            </button>
-                          </div>
-                        ) : (
-                          <p className="text-gray-400 text-xs">{formatPrice(product.selling_price)} · {product.category} · Stock: {product.stock}</p>
-                        )}
+                    <div key={product.id} className="flex flex-wrap sm:flex-nowrap items-center gap-3 p-4 hover:bg-gray-50/50 transition-colors">
+                      <div className="flex items-center gap-3 flex-1 min-w-[200px]">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedIds(prev => [...prev, product.id])
+                            } else {
+                              setSelectedIds(prev => prev.filter(id => id !== product.id))
+                            }
+                          }}
+                          className="w-4 h-4 rounded accent-brand-400 text-brand-400 focus:ring-brand-400/20 border-gray-300 cursor-pointer flex-shrink-0"
+                        />
+                        <img
+                          src={product.images?.[0] || 'https://placehold.co/48x48/f3f4f6/9ca3af?text=?'}
+                          alt=""
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl object-cover flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-gray-900 text-sm font-medium truncate">{product.title}</p>
+                          {quickEditId === product.id ? (
+                            <div className="flex items-center gap-2 mt-1">
+                              <input
+                                type="number"
+                                value={quickEditPrice}
+                                onChange={e => setQuickEditPrice(e.target.value)}
+                                placeholder="Price"
+                                className="w-20 sm:w-24 border border-gray-200 focus:border-brand-400 rounded px-2 py-1 text-xs text-gray-900 outline-none bg-white"
+                              />
+                              <input
+                                type="number"
+                                value={quickEditStock}
+                                onChange={e => setQuickEditStock(e.target.value)}
+                                placeholder="Stock"
+                                className="w-16 sm:w-20 border border-gray-200 focus:border-brand-400 rounded px-2 py-1 text-xs text-gray-900 outline-none bg-white"
+                              />
+                              <button
+                                onClick={() => {
+                                  const price = parseFloat(quickEditPrice)
+                                  const stock = parseInt(quickEditStock, 10)
+                                  if (!isNaN(price) && !isNaN(stock)) {
+                                    quickEditProduct.mutate({ id: product.id, selling_price: price, stock })
+                                  }
+                                }}
+                                className="w-6 h-6 bg-green-50 text-green-600 hover:bg-green-100 rounded flex items-center justify-center transition-colors flex-shrink-0"
+                                title="Save"
+                              >
+                                <Check size={12} />
+                              </button>
+                              <button
+                                onClick={() => setQuickEditId(null)}
+                                className="w-6 h-6 bg-red-50 text-red-600 hover:bg-red-100 rounded flex items-center justify-center transition-colors flex-shrink-0"
+                                title="Cancel"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ) : (
+                            <p className="text-gray-400 text-xs truncate">{formatPrice(product.selling_price)} · {product.category} · Stock: {product.stock}</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="flex items-center gap-1.5 flex-shrink-0 w-full sm:w-auto mt-2 sm:mt-0 justify-end sm:justify-start">
                         {/* Feature toggle */}
                         <button
                           onClick={() => toggleFeatured.mutate({ id: product.id, val: !product.is_featured })}

@@ -3,8 +3,11 @@ import { Heart, ArrowRight, Trash } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ProductCard from '../components/ui/ProductCard'
 import { useWishlistStore } from '../store/wishlistStore'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useProducts } from '../hooks/useProducts'
 
 export default function Wishlist() {
+  useDocumentTitle('Your Wishlist')
   const items = useWishlistStore(s => s.items)
   const clear = useWishlistStore(s => s.clear)
 
@@ -63,10 +66,11 @@ export default function Wishlist() {
           </p>
           <Link
             to="/shop"
-            className="btn-primary inline-flex items-center gap-2 text-sm"
+            className="btn-primary inline-flex items-center gap-2 text-sm mb-6"
           >
             Browse products <ArrowRight size={16} weight="bold" />
           </Link>
+          <RecommendedProducts />
         </motion.div>
       ) : (
         <motion.div
@@ -90,5 +94,26 @@ export default function Wishlist() {
         </motion.div>
       )}
     </main>
+  )
+}
+
+function RecommendedProducts() {
+  const { data: featuredProducts, isLoading } = useProducts({ featured: true })
+
+  if (isLoading || !featuredProducts || featuredProducts.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="w-full mt-6 border-t border-cream-200 dark:border-white/10 pt-12 text-left">
+      <h3 className="text-2xl font-display font-bold text-dark-800 dark:text-white mb-6 text-center">
+        You Might Also Like
+      </h3>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
+        {featuredProducts.slice(0, 4).map(product => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    </div>
   )
 }

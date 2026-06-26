@@ -21,6 +21,7 @@
     "react-easy-crop": "^6.0.2",
     "react-quill": "^2.0.0",
     "react-router-dom": "^6.23.0",
+    "recharts": "^3.9.0",
     "styled-components": "^6.4.2",
     "zustand": "^4.5.2"
   },

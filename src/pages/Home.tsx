@@ -10,6 +10,7 @@ import HeroShowcase from '../components/ui/HeroShowcase'
 import SlideGlassButton from '../components/ui/SlideGlassButton'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import type { Product } from '../types'
 
 // Single shared reveal — used for the staggered hero load.
@@ -27,6 +28,7 @@ function splitHeadline(tagline: string) {
 }
 
 export default function Home() {
+  useDocumentTitle('Home')
   const { data: featured, isError: featuredIsError, error: featuredError } = useProducts({ featured: true })
   const { data: newProducts, isError: newProductsIsError, error: newProductsError } = useNewProducts(7)
   const { isError: allProductsIsError, error: allProductsError } = useProducts()

@@ -13,6 +13,7 @@ import CountdownTimer from '../components/ui/CountdownTimer'
 import ProductCard from '../components/ui/ProductCard'
 import { useSignInStore } from '../store/signInStore'
 import { useCustomerSession } from '../hooks/useCustomerSession'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export default function ProductDetail() {
   const formatPrice = useCurrencyFormatter()
@@ -21,6 +22,7 @@ export default function ProductDetail() {
   const searchParams = new URLSearchParams(location.search)
   const isMarketplaceView = !searchParams.get('store')
   const { data: product, isLoading } = useProduct(id!, isMarketplaceView)
+  useDocumentTitle(product?.title || 'Product')
 
 
   // Fetch related products in the same category

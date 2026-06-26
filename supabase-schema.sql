@@ -220,6 +220,7 @@ create policy "Admin delete product images" on storage.objects
 -- instantly (no page refresh needed).
 alter publication supabase_realtime add table public.store_settings;
 alter publication supabase_realtime add table public.categories;
+alter publication supabase_realtime add table public.products;
 
 -- replica identity full sends the entire row on update, not just changed columns —
 -- makes change events more useful downstream.
