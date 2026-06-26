@@ -30,6 +30,7 @@ export default function Footer() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [rating, setRating] = useState(5)
   const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export default function Footer() {
       await supabase.from('site_reviews').insert({
         rating,
         name: name.trim() || null,
+        email: email.trim() || null,
         message: message.trim(),
         page_url: window.location.pathname
       })
@@ -145,6 +147,13 @@ export default function Footer() {
                   placeholder="Your Name (optional)"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  className="w-full sm:max-w-xs bg-white/50 dark:bg-dark-800/50 border border-brand-400/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-400/50 focus:ring-2 focus:ring-brand-400/10 transition-all text-dark-800 dark:text-white placeholder-dark-800/40 dark:placeholder-white/30"
+                />
+                <input
+                  type="email"
+                  placeholder="Your Email (optional)"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full sm:max-w-xs bg-white/50 dark:bg-dark-800/50 border border-brand-400/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-400/50 focus:ring-2 focus:ring-brand-400/10 transition-all text-dark-800 dark:text-white placeholder-dark-800/40 dark:placeholder-white/30"
                 />
                 <div className="relative w-full sm:max-w-xs">

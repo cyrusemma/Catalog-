@@ -128,6 +128,7 @@ create unique index if not exists store_settings_singleton_idx on store_settings
 create table if not exists site_reviews (
   id uuid primary key default gen_random_uuid(),
   name text,
+  email text,
   rating int not null check (rating between 1 and 5),
   message text not null,
   page_url text,

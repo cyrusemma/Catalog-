@@ -77,6 +77,7 @@ export interface StoreSettings {
 export interface SiteReview {
   id: string
   name?: string
+  email?: string
   rating: number
   message: string
   page_url?: string

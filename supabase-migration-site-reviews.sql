@@ -5,6 +5,7 @@
 create table if not exists site_reviews (
   id uuid primary key default gen_random_uuid(),
   name text,
+  email text,
   rating integer not null check (rating >= 1 and rating <= 5),
   message text not null,
   page_url text,

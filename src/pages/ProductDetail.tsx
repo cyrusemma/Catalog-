@@ -11,6 +11,8 @@ import { effectivePrice, activeFlashSalePrice } from '../lib/utils'
 import { supabase } from '../lib/supabase'
 import CountdownTimer from '../components/ui/CountdownTimer'
 import ProductCard from '../components/ui/ProductCard'
+import { useSignInStore } from '../store/signInStore'
+import { useCustomerSession } from '../hooks/useCustomerSession'
 
 export default function ProductDetail() {
   const formatPrice = useCurrencyFormatter()
@@ -62,11 +64,18 @@ export default function ProductDetail() {
     }
   }, [product, addRecent])
 
+  const { session } = useCustomerSession()
+  const openSignInModal = useSignInStore(s => s.openModal)
+
   const handleAddToCart = () => {
     if (!product) return
     addItem(product)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
+    
+    if (!session) {
+      openSignInModal('Create an account for a faster checkout experience!')
+    }
   }
 
   const handleShare = async () => {

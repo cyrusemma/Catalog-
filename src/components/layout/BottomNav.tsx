@@ -21,7 +21,7 @@ export default function BottomNav() {
   const wishlistCount = useWishlistStore(s => s.count())
 
   return (
-    <nav className="sm:hidden fixed bottom-5 left-4 right-4 z-50 pointer-events-none">
+    <nav className="sm:hidden fixed bottom-2 pb-[env(safe-area-inset-bottom)] left-4 right-4 z-50 pointer-events-none">
       <div className="max-w-[400px] mx-auto pointer-events-auto flex items-center justify-between bg-white/85 dark:bg-dark-900/85 backdrop-blur-2xl backdrop-saturate-150 border border-cream-200 dark:border-white/10 rounded-full p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         {items.map(({ to, label, Icon, badgeKind }) => {
           // Strict exact match for home so we don't accidentally highlight it on nested routes

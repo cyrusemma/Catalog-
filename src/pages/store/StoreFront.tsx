@@ -173,6 +173,7 @@ export default function StoreFront() {
       </header>
 
       {/* Main Catalog View */}
+      <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Featured Products */}
         {!isProductsLoading && featuredProducts.length > 0 && search === '' && selectedCategory === 'All' && (
           <div className="mb-12">
@@ -286,19 +287,21 @@ export default function StoreFront() {
                     alt={product.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  {product.is_featured && (
-                    <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-brand-400 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm flex items-center gap-0.5">
-                      <Star size={10} fill="currentColor" /> Featured
-                    </span>
-                  )}
                 </div>
 
                 {/* Info */}
                 <div className="p-4 flex-1 flex flex-col justify-between">
                   <div>
-                    <span className="text-[10px] uppercase tracking-wider font-semibold text-brand-400 mb-1 block">
-                      {product.category}
-                    </span>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-[10px] uppercase tracking-wider font-semibold text-brand-400 block">
+                        {product.category}
+                      </span>
+                      {product.is_featured && (
+                        <span className="bg-yellow-50 text-yellow-600 dark:bg-yellow-950/30 dark:text-yellow-400 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-yellow-200 dark:border-yellow-800/30">
+                          <Star size={10} fill="currentColor" /> Featured
+                        </span>
+                      )}
+                    </div>
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-2 leading-tight group-hover:text-brand-400 transition-colors">
                       {product.title}
                     </h3>

@@ -112,6 +112,7 @@ create table if not exists public.site_reviews (
   id uuid primary key default gen_random_uuid(),
   rating text not null check (rating in ('poor', 'okay', 'good', 'amazing')),
   comment text,
+  email text,
   user_id uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now()
 );

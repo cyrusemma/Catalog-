@@ -15,7 +15,7 @@ import {
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 
-
+import ImageCropper from '../../components/admin/ImageCropper'
 interface FormData {
   title: string; brand: string; description: string
   parent_category_id: string; category_id: string

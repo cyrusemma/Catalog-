@@ -58,6 +58,10 @@ export default {
           '0%, 100%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' },
         },
+        marquee: {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
         'scale-in': {
           '0%': { transform: 'scale(0.75)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
@@ -87,6 +91,8 @@ export default {
       animation: {
         shimmer: 'shimmer 3s linear infinite',
         'gradient-x': 'gradient-x 3s ease infinite',
+        'ping-slow': 'ping 3s cubic-bezier(0, 0, 0.2, 1) infinite',
+        marquee: 'marquee 25s linear infinite',
         'scale-in': 'scale-in 160ms ease-out',
         'loader-mark-in': 'loader-mark-in 500ms ease-out both',
         'shop-sway': 'shop-sway 3.2s ease-in-out infinite',

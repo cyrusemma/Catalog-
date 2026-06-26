@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Star, MessageSquareQuote, Mail, PhoneCall, Instagram, ExternalLink } from 'lucide-react'
+import { Star, MessageSquareQuote, Mail, ExternalLink } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
 import type { SiteReview } from '../../types'
@@ -98,18 +98,16 @@ export default function AdminReviews() {
                   </div>
 
                   <div className="flex flex-wrap gap-2 text-xs lg:justify-end">
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
-                      <Mail size={12} />
-                      cyrusadetu@gmail.com
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
-                      <PhoneCall size={12} />
-                      0599399983
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600">
-                      <Instagram size={12} />
-                      @cyrus._.emma
-                    </span>
+                    {review.email ? (
+                      <a href={`mailto:${review.email}`} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-brand-50 text-brand-600 hover:bg-brand-100 transition-colors">
+                        <Mail size={12} />
+                        {review.email}
+                      </a>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-400">
+                        No email provided
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}

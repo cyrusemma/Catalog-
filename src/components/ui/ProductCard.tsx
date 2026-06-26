@@ -7,6 +7,8 @@ import { useWishlistStore } from '../../store/wishlistStore'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
 import { activeFlashSalePrice, isNewProduct } from '../../lib/utils'
 import CountdownTimer from './CountdownTimer'
+import { useSignInStore } from '../../store/signInStore'
+import { useCustomerSession } from '../../hooks/useCustomerSession'
 import type { Product } from '../../types'
 
 interface Props {
@@ -25,6 +27,8 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
   const toggleWishlist = useWishlistStore(s => s.toggle)
   const isWishlisted = useWishlistStore(s => s.has(product.id))
   const formatPrice = useCurrencyFormatter()
+  const { session } = useCustomerSession()
+  const openSignInModal = useSignInStore(s => s.openModal)
   
   const isNew = isNewProduct(product.created_at)
   const flashPrice = activeFlashSalePrice(product)
@@ -38,12 +42,19 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
+    if (!session) {
+      openSignInModal('Sign in to save favorites.')
+      return
+    }
     toggleWishlist(product)
   }
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     addItem(product)
+    if (!session) {
+      openSignInModal('Create an account for a faster checkout experience!')
+    }
   }
 
   const image = product.images?.[0] || 'https://placehold.co/400x400/1a1008/d4820a?text=No+Image'
@@ -66,32 +77,7 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
             loading="lazy"
             decoding="async"
           />
-          {/* Badges */}
-          <div className={`absolute top-2 left-2 right-10 flex flex-wrap gap-1 ${compact ? 'scale-90 origin-top-left sm:scale-100' : ''}`}>
-            {onFlashSale && (
-              <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm animate-pulse">
-                <Lightning size={10} weight="fill" /> FLASH
-              </span>
-            )}
-            {product.is_preorder && (
-              <span className="bg-blue-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
-                <Clock size={10} weight="fill" /> PREORDER
-              </span>
-            )}
-            {isNew && !onFlashSale && (
-              <span className="badge-new">
-                <Sparkle size={10} weight="fill" /> NEW
-              </span>
-            )}
-            {!onFlashSale && product.discount_percent && product.discount_percent > 0 && (
-              <span className="badge-discount">-{product.discount_percent}%</span>
-            )}
-            {product.is_featured && (
-              <span className="badge-featured">
-                <Lightning size={10} weight="fill" className="text-brand-400" /> FEATURED
-              </span>
-            )}
-          </div>
+
           {/* Wishlist heart */}
           <motion.button
             type="button"
@@ -115,9 +101,38 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
 
         {/* Info */}
         <div className={`flex flex-col flex-grow ${compact ? 'p-2 sm:p-3' : 'p-2.5 sm:p-3.5'}`}>
-          <p className={`text-cream-400 dark:text-white/50 uppercase tracking-wider mb-0.5 sm:mb-1 font-medium truncate ${compact ? 'text-[8px] sm:text-[10px]' : 'text-[9px] sm:text-[10px]'}`}>
-            {product.category}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-1 mb-1 sm:mb-2">
+            <p className={`text-cream-400 dark:text-white/50 uppercase tracking-wider font-medium truncate ${compact ? 'text-[8px] sm:text-[10px]' : 'text-[9px] sm:text-[10px]'}`}>
+              {product.category}
+            </p>
+            <div className={`flex flex-wrap gap-1 ${compact ? 'scale-90 origin-right' : ''}`}>
+              {onFlashSale && (
+                <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm animate-pulse">
+                  <Lightning size={10} weight="fill" /> FLASH
+                </span>
+              )}
+              {product.is_preorder && (
+                <span className="bg-blue-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
+                  <Clock size={10} weight="fill" /> PREORDER
+                </span>
+              )}
+              {isNew && !onFlashSale && (
+                <span className="bg-brand-50 text-brand-600 dark:bg-brand-950/30 dark:text-brand-400 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-brand-200 dark:border-brand-800/30">
+                  <Sparkle size={10} weight="fill" /> NEW
+                </span>
+              )}
+              {!onFlashSale && product.discount_percent && product.discount_percent > 0 && (
+                <span className="bg-green-50 text-green-600 dark:bg-green-950/30 dark:text-green-400 text-[9px] font-bold px-1.5 py-0.5 rounded border border-green-200 dark:border-green-800/30">
+                  -{product.discount_percent}%
+                </span>
+              )}
+              {product.is_featured && (
+                <span className="bg-yellow-50 text-yellow-600 dark:bg-yellow-950/30 dark:text-yellow-400 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-yellow-200 dark:border-yellow-800/30">
+                  <Lightning size={10} weight="fill" /> FEATURED
+                </span>
+              )}
+            </div>
+          </div>
           <h3 className={`text-dark-800 dark:text-white font-medium leading-snug line-clamp-2 mb-1.5 sm:mb-2 group-hover:text-brand-400 transition-colors ${compact ? 'text-[12px] sm:text-sm' : 'text-[13px] sm:text-sm'}`}>
             {product.title}
           </h3>

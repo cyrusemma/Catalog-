@@ -6,9 +6,15 @@ export default function AnnouncementBanner() {
   if (!settings.announcement_active || !settings.announcement_text?.trim()) return null
 
   const inner = (
-    <div className="flex items-center justify-center gap-2 px-4 py-2 text-center text-[12px] sm:text-xs font-medium text-white bg-gradient-to-r from-brand-400 via-brand-500 to-brand-400 bg-[length:200%_100%] animate-gradient-x">
-      <Sparkle size={12} weight="fill" className="flex-shrink-0" />
-      <span className="truncate">{settings.announcement_text}</span>
+    <div className="relative flex items-center bg-brand-400 text-white overflow-hidden py-2 px-4 h-9">
+      <div className="flex animate-marquee whitespace-nowrap text-[12px] sm:text-xs font-medium items-center gap-2">
+        <Sparkle size={12} weight="fill" className="flex-shrink-0" />
+        <span className="mx-4">{settings.announcement_text}</span>
+        <Sparkle size={12} weight="fill" className="flex-shrink-0" />
+        <span className="mx-4">{settings.announcement_text}</span>
+        <Sparkle size={12} weight="fill" className="flex-shrink-0" />
+        <span className="mx-4">{settings.announcement_text}</span>
+      </div>
     </div>
   )
 
