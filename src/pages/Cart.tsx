@@ -61,6 +61,7 @@ export default function Cart() {
     setSubmitError('')
 
     const { data: order, error } = await supabase.from('orders').insert({
+      store_id: merchantStoreId,
       customer_name: customerName,
       customer_phone: customerPhone,
       customer_address: customerAddress,
