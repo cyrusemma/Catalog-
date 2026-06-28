@@ -6,6 +6,7 @@ import {
 import { motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import ProductCard from '../components/ui/ProductCard'
+import CustomerReviews from '../components/ui/CustomerReviews'
 import HeroShowcase from '../components/ui/HeroShowcase'
 import SlideGlassButton from '../components/ui/SlideGlassButton'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
@@ -267,6 +268,8 @@ export default function Home() {
           <p className="text-dark-800/50 dark:text-white/50">Products are being added. Check back soon!</p>
         </section>
       )}
+
+      <CustomerReviews />
     </main>
   )
 }

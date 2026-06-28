@@ -108,12 +108,13 @@ export default function Footer() {
         </Link>
 
         {/* Quick Links */}
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mb-8 text-sm font-semibold text-dark-800/70 dark:text-white/70">
-          <Link to="/" className="hover:text-brand-400 transition-colors">Home</Link>
-          <Link to="/shop" className="hover:text-brand-400 transition-colors">Shop</Link>
-          <Link to="/cart" className="hover:text-brand-400 transition-colors">Cart</Link>
-          <Link to="/settings" className="hover:text-brand-400 transition-colors">Contact & Settings</Link>
-        </div>
+          <div className="flex flex-wrap justify-center gap-6 text-sm font-semibold text-dark-800/60 dark:text-white/50 mb-12">
+            <Link to="/" className="hover:text-brand-400 transition-colors">Home</Link>
+            <Link to="/shop" className="hover:text-brand-400 transition-colors">Shop</Link>
+            <Link to="/cart" className="hover:text-brand-400 transition-colors">Cart</Link>
+            <Link to="/sell" className="hover:text-brand-400 transition-colors">Sell with us</Link>
+            <Link to="/settings" className="hover:text-brand-400 transition-colors">Contact & Settings</Link>
+          </div>
 
         {/* Interaction Grid: Reviews & Contacts */}
         <div className="mb-10 w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-12">

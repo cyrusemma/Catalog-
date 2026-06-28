@@ -33,6 +33,8 @@ const Cart = lazy(() => import('./pages/Cart'))
 const Wishlist = lazy(() => import('./pages/Wishlist'))
 const Account = lazy(() => import('./pages/Account'))
 const Settings = lazy(() => import('./pages/Settings'))
+const StoreFront = lazy(() => import('./pages/store/StoreFront'))
+const BecomeMerchant = lazy(() => import('./pages/BecomeMerchant'))
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
@@ -41,7 +43,6 @@ const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
 const AdminReviews = lazy(() => import('./pages/admin/AdminReviews'))
 const AdminApprovals = lazy(() => import('./pages/admin/AdminApprovals'))
-const StoreFront = lazy(() => import('./pages/store/StoreFront'))
 
 const qc = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 * 5 } } })
 
@@ -159,6 +160,7 @@ function AnimatedRoutes() {
       <Route path="/account" element={<StorefrontLayout><Account /></StorefrontLayout>} />
       <Route path="/settings" element={<StorefrontLayout><Settings /></StorefrontLayout>} />
       <Route path="/s/:storeSlug" element={<StorefrontLayout><StoreFront /></StorefrontLayout>} />
+      <Route path="/sell" element={<StorefrontLayout><BecomeMerchant /></StorefrontLayout>} />
 
       {/* Admin */}
       <Route path="/admin/login" element={<AdminLogin />} />
