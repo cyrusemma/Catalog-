@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Trash, Plus, Minus, WhatsappLogo, ShoppingBag } from '@phosphor-icons/react'
+import { ArrowLeft, Trash, Plus, Minus, ShoppingBag } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useCartStore } from '../store/cartStore'
