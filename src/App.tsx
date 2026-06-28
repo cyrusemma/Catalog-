@@ -35,6 +35,7 @@ const Account = lazy(() => import('./pages/Account'))
 const Settings = lazy(() => import('./pages/Settings'))
 const StoreFront = lazy(() => import('./pages/store/StoreFront'))
 const BecomeMerchant = lazy(() => import('./pages/BecomeMerchant'))
+const OfflineGame = lazy(() => import('./pages/OfflineGame'))
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
@@ -161,6 +162,7 @@ function AnimatedRoutes() {
       <Route path="/settings" element={<StorefrontLayout><Settings /></StorefrontLayout>} />
       <Route path="/s/:storeSlug" element={<StorefrontLayout><StoreFront /></StorefrontLayout>} />
       <Route path="/sell" element={<StorefrontLayout><BecomeMerchant /></StorefrontLayout>} />
+      <Route path="/offline-game" element={<OfflineGame />} />
 
       {/* Admin */}
       <Route path="/admin/login" element={<AdminLogin />} />
