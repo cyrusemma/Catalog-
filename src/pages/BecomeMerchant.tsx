@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Storefront, WhatsappLogo, Link as LinkIcon, CheckCircle } from '@phosphor-icons/react'
 import { supabase } from '../lib/supabase'
+import { useSignInStore } from '../store/signInStore'
 
 export default function BecomeMerchant() {
   const navigate = useNavigate()
+  const openSignIn = useSignInStore(s => s.openModal)
   const [user, setUser] = useState<any>(null)
   const [storeName, setStoreName] = useState('')
   const [storeSlug, setStoreSlug] = useState('')
@@ -82,7 +84,7 @@ export default function BecomeMerchant() {
         <p className="text-dark-800/60 dark:text-white/60 mb-8 max-w-md">
           Join our marketplace and start selling your products today. Please sign in or create an account first.
         </p>
-        <button onClick={() => window.dispatchEvent(new CustomEvent('open-signin'))} className="btn-primary">
+        <button onClick={() => openSignIn()} className="btn-primary">
           Sign In to Continue
         </button>
       </main>
