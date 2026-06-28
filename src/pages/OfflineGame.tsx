@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShoppingCart, TShirt, DeviceMobile, Sneaker, Handbag, XCircle, ArrowLeft, Play } from '@phosphor-icons/react'
+import { ShoppingCart, TShirt, DeviceMobile, Sneaker, Handbag, XCircle, ArrowLeft, Play, SpeakerHigh, SpeakerSlash } from '@phosphor-icons/react'
 
 type ItemType = 'good' | 'bad'
 
@@ -23,10 +23,68 @@ export default function OfflineGame() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [isGameOver, setIsGameOver] = useState(false)
   const [score, setScore] = useState(0)
+  const [highScore, setHighScore] = useState(0)
   const [lives, setLives] = useState(3)
+  const [isMuted, setIsMuted] = useState(false)
   
   const [cartX, setCartX] = useState(50) // percentage 0-100
   const [items, setItems] = useState<FallingItem[]>([])
+
+  // Audio Context Ref
+  const audioCtxRef = useRef<AudioContext | null>(null)
+
+  // Initialize High Score
+  useEffect(() => {
+    const stored = localStorage.getItem('offline-game-highscore')
+    if (stored) setHighScore(parseInt(stored, 10))
+  }, [])
+
+  // Audio Synthesizers
+  const playCatchSound = () => {
+    if (isMuted) return
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+    }
+    const ctx = audioCtxRef.current
+    if (ctx.state === 'suspended') ctx.resume()
+    
+    const osc = ctx.createOscillator()
+    const gainNode = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(800, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1)
+    
+    gainNode.gain.setValueAtTime(0.1, ctx.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1)
+    
+    osc.connect(gainNode)
+    gainNode.connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.1)
+  }
+
+  const playCrashSound = () => {
+    if (isMuted) return
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+    }
+    const ctx = audioCtxRef.current
+    if (ctx.state === 'suspended') ctx.resume()
+
+    const osc = ctx.createOscillator()
+    const gainNode = ctx.createGain()
+    osc.type = 'sawtooth'
+    osc.frequency.setValueAtTime(150, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.3)
+    
+    gainNode.gain.setValueAtTime(0.2, ctx.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
+    
+    osc.connect(gainNode)
+    gainNode.connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.3)
+  }
 
   // Game loop refs to avoid dependency staleness
   const reqRef = useRef<number>()
@@ -35,13 +93,14 @@ export default function OfflineGame() {
     cartX,
     items,
     score,
+    highScore,
     lives,
     lastSpawn: 0
   })
 
   useEffect(() => {
-    stateRef.current = { isPlaying, cartX, items, score, lives, lastSpawn: stateRef.current.lastSpawn }
-  }, [isPlaying, cartX, items, score, lives])
+    stateRef.current = { isPlaying, cartX, items, score, highScore, lives, lastSpawn: stateRef.current.lastSpawn }
+  }, [isPlaying, cartX, items, score, highScore, lives])
 
   // Key listeners
   useEffect(() => {
@@ -78,6 +137,7 @@ export default function OfflineGame() {
       let newItems = [...state.items]
       let newScore = state.score
       let newLives = state.lives
+      let newHighScore = state.highScore
 
       // Spawn new items
       if (time - state.lastSpawn > 1000) { // spawn every 1 second
@@ -109,8 +169,10 @@ export default function OfflineGame() {
             // Caught it!
             if (item.type === 'good') {
               newScore += 10
+              playCatchSound()
             } else {
               newLives -= 1
+              playCrashSound()
             }
             return false // remove item
           }
@@ -124,14 +186,24 @@ export default function OfflineGame() {
         return true
       })
 
+      if (newScore > newHighScore) {
+        newHighScore = newScore
+      }
+
       if (newLives <= 0) {
         setIsGameOver(true)
         setIsPlaying(false)
         setLives(0)
+        setScore(newScore)
+        if (newHighScore > highScore) {
+          setHighScore(newHighScore)
+          localStorage.setItem('offline-game-highscore', newHighScore.toString())
+        }
       } else {
         setItems(newItems)
         setScore(newScore)
         setLives(newLives)
+        setHighScore(newHighScore)
         reqRef.current = requestAnimationFrame(loop)
       }
     }
@@ -143,6 +215,14 @@ export default function OfflineGame() {
   }, [isPlaying])
 
   const startGame = () => {
+    // initialize audio context on user interaction to comply with browser autoplay policies
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+    }
+    if (audioCtxRef.current.state === 'suspended') {
+      audioCtxRef.current.resume()
+    }
+    
     setScore(0)
     setLives(3)
     setItems([])
@@ -151,19 +231,33 @@ export default function OfflineGame() {
     stateRef.current.lastSpawn = performance.now()
   }
 
+  // Dynamic Backgrounds
+  const getBackgroundClass = () => {
+    if (score < 100) return "from-brand-100 via-pink-100 to-brand-50"
+    if (score < 250) return "from-orange-400 via-amber-200 to-purple-400"
+    return "from-indigo-900 via-blue-800 to-purple-900"
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-brand-50 flex flex-col font-sans overflow-hidden select-none">
       {/* Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-100 via-pink-100 to-brand-50 opacity-70" />
+      <div className={`absolute inset-0 bg-gradient-to-br opacity-80 transition-colors duration-1000 ${getBackgroundClass()}`} />
       
       {/* Header */}
       <div className="relative z-10 p-4 flex items-center justify-between">
         <button onClick={() => navigate(-1)} className="p-2 bg-white/50 rounded-full hover:bg-white/80 transition-colors">
           <ArrowLeft size={24} className="text-gray-700" />
         </button>
-        <div className="flex items-center gap-6 font-bold text-lg text-gray-800">
+        <div className="flex items-center gap-4 font-bold text-sm sm:text-lg text-gray-800">
+          <button 
+            onClick={() => setIsMuted(!isMuted)} 
+            className="p-2 bg-white/50 rounded-full hover:bg-white/80 transition-colors text-gray-700"
+          >
+            {isMuted ? <SpeakerSlash size={20} /> : <SpeakerHigh size={20} />}
+          </button>
+          <div className="bg-white/60 px-4 py-1.5 rounded-full shadow-sm">Best: {highScore}</div>
           <div className="bg-white/60 px-4 py-1.5 rounded-full shadow-sm">Score: {score}</div>
-          <div className="bg-white/60 px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1">
+          <div className="bg-white/60 px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1 hidden sm:flex">
             Lives: 
             {[...Array(3)].map((_, i) => (
               <ShoppingCart key={i} size={16} weight="fill" className={i < lives ? 'text-brand-500' : 'text-gray-300'} />
@@ -185,7 +279,7 @@ export default function OfflineGame() {
               <ShoppingCart size={48} weight="duotone" />
             </div>
             <h1 className="text-4xl font-display font-bold text-gray-900 mb-4">Cart Catch</h1>
-            <p className="text-gray-600 mb-8 max-w-xs">
+            <p className="text-gray-800 font-medium mb-8 max-w-xs">
               Looks like you're offline! Catch the products in your cart, but avoid the broken boxes. 
               Drag the cart or use Arrow Keys.
             </p>
@@ -196,10 +290,13 @@ export default function OfflineGame() {
         )}
 
         {isGameOver && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-20 bg-white/40 backdrop-blur-sm">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-20 bg-white/40 backdrop-blur-md">
             <h1 className="text-5xl font-display font-bold text-gray-900 mb-2">Game Over</h1>
-            <p className="text-2xl font-bold text-brand-500 mb-8">Final Score: {score}</p>
-            <button onClick={startGame} className="btn-primary flex items-center gap-2 text-lg px-8 py-4 shadow-xl shadow-brand-500/20">
+            <p className="text-2xl font-bold text-gray-900 mb-2">Final Score: {score}</p>
+            {score >= highScore && score > 0 && (
+              <p className="text-xl font-bold text-amber-500 mb-6 animate-pulse">New High Score! 🏆</p>
+            )}
+            <button onClick={startGame} className="btn-primary flex items-center gap-2 text-lg px-8 py-4 mt-4 shadow-xl shadow-brand-500/20">
               Play Again
             </button>
           </div>
