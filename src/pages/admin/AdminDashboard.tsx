@@ -27,7 +27,11 @@ export default function AdminDashboard() {
           approvalStatus = store.approval_status
         }
       }
-      return { isAdmin, storeId, approvalStatus }
+
+      const { data: settings } = await supabase.from('store_settings').select('whatsapp_number').single()
+      const adminWhatsapp = settings?.whatsapp_number || '233000000000'
+
+      return { isAdmin, storeId, approvalStatus, adminWhatsapp }
     }
   })
 
@@ -164,7 +168,7 @@ export default function AdminDashboard() {
           <p className="text-gray-600 mb-8 max-w-md">
             Your store application has been submitted and is currently under review. Please contact the administrator to complete your payment and activate your seller dashboard.
           </p>
-          <a href="https://wa.me/233200000000" target="_blank" rel="noopener noreferrer" className="bg-brand-400 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-brand-500 transition-colors">
+          <a href={`https://wa.me/${context?.adminWhatsapp}`} target="_blank" rel="noopener noreferrer" className="bg-brand-400 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-brand-500 transition-colors">
             Contact Administrator
           </a>
         </div>
