@@ -9,6 +9,12 @@ interface Store {
   id: string
   name: string
   slug: string
+  whatsapp_number: string
+  business_category: string
+  description: string
+  instagram_handle: string
+  approval_status: 'pending' | 'approved' | 'rejected'
+  created_at: string
 }
 
 interface Product {
@@ -27,6 +33,7 @@ interface Product {
 }
 
 export default function AdminApprovals() {
+  const [activeView, setActiveView] = useState<'products' | 'stores'>('stores')
   const [activeTab, setActiveTab] = useState<'pending' | 'approved' | 'rejected'>('pending')
   const [search, setSearch] = useState('')
   const [priceOverrides, setPriceOverrides] = useState<Record<string, string>>({})
@@ -35,8 +42,8 @@ export default function AdminApprovals() {
   const qc = useQueryClient()
 
   // Fetch products that belong to a merchant store
-  const { data: products, isLoading } = useQuery<Product[]>({
-    queryKey: ['admin-approvals'],
+  const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ['admin-approvals', 'products'],
     queryFn: async () => {
       // Query joining stores
       const { data, error } = await supabase
@@ -47,6 +54,20 @@ export default function AdminApprovals() {
       
       if (error) throw error
       return (data as any) || []
+    },
+  })
+
+  // Fetch stores
+  const { data: stores, isLoading: storesLoading } = useQuery<Store[]>({
+    queryKey: ['admin-approvals', 'stores'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      return data || []
     },
   })
 
@@ -82,15 +103,33 @@ export default function AdminApprovals() {
       if (error) throw error
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin-approvals'] })
+      qc.invalidateQueries({ queryKey: ['admin-approvals', 'products'] })
       setUpdatingId(null)
     },
   })
 
-  const filtered = products?.filter(product => {
+  // Mutation to update store approval status
+  const updateStoreApproval = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: 'pending' | 'approved' | 'rejected' }) => {
+      const { error } = await supabase.from('stores').update({ approval_status: status }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-approvals', 'stores'] })
+    }
+  })
+
+  const filteredProducts = products?.filter(product => {
     const matchesTab = product.approval_status === activeTab
     const matchesSearch = product.title?.toLowerCase().includes(search.toLowerCase()) || 
                           product.stores?.name?.toLowerCase().includes(search.toLowerCase())
+    return matchesTab && matchesSearch
+  })
+
+  const filteredStores = stores?.filter(store => {
+    const matchesTab = store.approval_status === activeTab
+    const matchesSearch = store.name?.toLowerCase().includes(search.toLowerCase()) || 
+                          store.whatsapp_number?.includes(search)
     return matchesTab && matchesSearch
   })
 
@@ -115,29 +154,54 @@ export default function AdminApprovals() {
           <div>
             <p className="text-gray-400 text-sm mb-1">Marketplace Controls</p>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <ClipboardCheck size={24} className="text-brand-400" /> Merchant Product Approvals
+              <ClipboardCheck size={24} className="text-brand-400" /> Approvals
             </h1>
+          </div>
+          
+          <div className="flex bg-gray-100 p-1 rounded-xl">
+            <button
+              onClick={() => { setActiveView('stores'); setSearch(''); setActiveTab('pending') }}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeView === 'stores' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Stores
+            </button>
+            <button
+              onClick={() => { setActiveView('products'); setSearch(''); setActiveTab('pending') }}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeView === 'products' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Products
+            </button>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="flex border-b border-gray-100 mb-6 gap-2">
-          {(['pending', 'approved', 'rejected'] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveTab(tab)
-                setSearch('')
-              }}
-              className={`pb-3 px-4 font-semibold text-sm capitalize transition-all border-b-2 -mb-[2px] ${
-                activeTab === tab
-                  ? 'border-brand-400 text-brand-400'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              {tab} ({(products || []).filter(p => p.approval_status === tab).length})
-            </button>
-          ))}
+          {(['pending', 'approved', 'rejected'] as const).map(tab => {
+            const count = activeView === 'stores' 
+              ? (stores || []).filter(s => s.approval_status === tab).length
+              : (products || []).filter(p => p.approval_status === tab).length
+
+            return (
+              <button
+                key={tab}
+                onClick={() => {
+                  setActiveTab(tab)
+                  setSearch('')
+                }}
+                className={`pb-3 px-4 font-semibold text-sm capitalize transition-all border-b-2 -mb-[2px] ${
+                  activeTab === tab
+                    ? 'border-brand-400 text-brand-400'
+                    : 'border-transparent text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                {tab} ({count})
+              </button>
+            )
+          })}
         </div>
 
         {/* Search */}
@@ -154,15 +218,15 @@ export default function AdminApprovals() {
 
         {/* List */}
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          {isLoading ? (
+          {(activeView === 'products' ? productsLoading : storesLoading) ? (
             <div className="p-8 text-center text-gray-400">Loading approvals list...</div>
-          ) : filtered?.length === 0 ? (
+          ) : (activeView === 'products' ? filteredProducts : filteredStores)?.length === 0 ? (
             <div className="p-12 text-center text-gray-400 text-sm">
-              No products found in this tab.
+              No items found in this tab.
             </div>
           ) : (
             <div className="divide-y divide-gray-50">
-              {filtered?.map(product => {
+              {activeView === 'products' && filteredProducts?.map(product => {
                 const currentOverride = priceOverrides[product.id] ?? (product.marketplace_price?.toString() || '')
                 const isPriceDirty = currentOverride !== (product.marketplace_price?.toString() || '')
                 
@@ -272,6 +336,44 @@ export default function AdminApprovals() {
                   </div>
                 )
               })}
+
+              {activeView === 'stores' && filteredStores?.map(store => (
+                <div key={store.id} className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 hover:bg-gray-50/50 transition-colors">
+                  <div className="flex-1">
+                    <p className="text-gray-900 text-base font-bold flex items-center gap-2">
+                      {store.name} 
+                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">
+                        {store.business_category || 'No Category'}
+                      </span>
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1 max-w-xl">{store.description || 'No description provided.'}</p>
+                    <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
+                      <span>WhatsApp: {store.whatsapp_number}</span>
+                      {store.instagram_handle && <span>IG: @{store.instagram_handle}</span>}
+                      <span>Slug: /{store.slug}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {store.approval_status !== 'approved' && (
+                      <button
+                        onClick={() => updateStoreApproval.mutate({ id: store.id, status: 'approved' })}
+                        className="flex items-center gap-1 bg-green-50 text-green-600 hover:bg-green-100 px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
+                      >
+                        <Check size={14} /> Approve Store
+                      </button>
+                    )}
+                    {store.approval_status !== 'rejected' && (
+                      <button
+                        onClick={() => updateStoreApproval.mutate({ id: store.id, status: 'rejected' })}
+                        className="flex items-center gap-1 bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
+                      >
+                        <X size={14} /> Reject
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

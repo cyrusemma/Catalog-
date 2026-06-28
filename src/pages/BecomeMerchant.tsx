@@ -9,6 +9,9 @@ export default function BecomeMerchant() {
   const [storeName, setStoreName] = useState('')
   const [storeSlug, setStoreSlug] = useState('')
   const [whatsappNumber, setWhatsappNumber] = useState('')
+  const [businessCategory, setBusinessCategory] = useState('Fashion')
+  const [description, setDescription] = useState('')
+  const [instagramHandle, setInstagramHandle] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -44,6 +47,9 @@ export default function BecomeMerchant() {
         name: storeName,
         slug: storeSlug,
         whatsapp_number: whatsappNumber,
+        business_category: businessCategory,
+        description: description,
+        instagram_handle: instagramHandle,
         owner_id: user.id
       })
 
@@ -150,6 +156,56 @@ export default function BecomeMerchant() {
             className="input w-full"
           />
           <p className="text-xs text-dark-800/40 dark:text-white/40 mt-1">Orders for your products will be sent here.</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-dark-800 dark:text-white mb-2">
+            Business Category
+          </label>
+          <select
+            value={businessCategory}
+            onChange={(e) => setBusinessCategory(e.target.value)}
+            className="input w-full"
+          >
+            <option value="Fashion">Fashion & Apparel</option>
+            <option value="Electronics">Electronics & Tech</option>
+            <option value="Beauty">Beauty & Cosmetics</option>
+            <option value="Home">Home & Decor</option>
+            <option value="Food">Food & Groceries</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-dark-800 dark:text-white mb-2">
+            Store Description
+          </label>
+          <textarea
+            required
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Tell us what you sell and why customers will love it!"
+            className="input w-full resize-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-dark-800 dark:text-white mb-2">
+            Instagram Handle (Optional)
+          </label>
+          <div className="relative flex items-center">
+            <span className="absolute left-4 text-dark-800/40 dark:text-white/40 select-none text-sm">
+              @
+            </span>
+            <input
+              type="text"
+              value={instagramHandle}
+              onChange={(e) => setInstagramHandle(e.target.value)}
+              placeholder="yourshop"
+              className="input w-full pl-8"
+            />
+          </div>
         </div>
 
         {error && (

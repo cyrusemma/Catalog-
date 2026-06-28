@@ -14,16 +14,20 @@ export default function AdminDashboard() {
       const user = sessionData.session?.user
       const isAdmin = user?.app_metadata?.role === 'admin'
       let storeId: string | null = null
+      let approvalStatus: string | null = null
 
       if (user && !isAdmin) {
         const { data: store } = await supabase
           .from('stores')
-          .select('id')
+          .select('id, approval_status')
           .eq('owner_id', user.id)
           .maybeSingle()
-        if (store) storeId = store.id
+        if (store) {
+          storeId = store.id
+          approvalStatus = store.approval_status
+        }
       }
-      return { isAdmin, storeId }
+      return { isAdmin, storeId, approvalStatus }
     }
   })
 
@@ -146,6 +150,27 @@ export default function AdminDashboard() {
       { label: 'Revenue', value: stats ? formatPrice(stats.revenue) : '—', icon: TrendingUp, color: 'bg-purple-500' }
     ]),
   ]
+
+  if (context?.approvalStatus === 'pending' && !context?.isAdmin) {
+    return (
+      <AdminLayout>
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[60vh]">
+          <div className="w-20 h-20 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Store size={40} />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Store Pending Approval
+          </h1>
+          <p className="text-gray-600 mb-8 max-w-md">
+            Your store application has been submitted and is currently under review. Please contact the administrator to complete your payment and activate your seller dashboard.
+          </p>
+          <a href="https://wa.me/233200000000" target="_blank" rel="noopener noreferrer" className="bg-brand-400 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-brand-500 transition-colors">
+            Contact Administrator
+          </a>
+        </div>
+      </AdminLayout>
+    )
+  }
 
   return (
     <AdminLayout>
