@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Trash, Plus, Minus, WhatsappLogo, ShoppingBag } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
@@ -43,20 +43,69 @@ export default function Cart() {
   )
   const grandTotal = subtotal + deliveryFee
 
-  const handleWhatsAppOrder = () => {
+  const [isCheckingOut, setIsCheckingOut] = useState(false)
+  const [customerName, setCustomerName] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
+  const [customerAddress, setCustomerAddress] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+
+  const submitOrder = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (!customerName || !customerPhone) {
+      setSubmitError('Please provide your name and phone number.')
+      return
+    }
+
+    setIsSubmitting(true)
+    setSubmitError('')
+
+    const { data: order, error } = await supabase.from('orders').insert({
+      customer_name: customerName,
+      customer_phone: customerPhone,
+      customer_address: customerAddress,
+      items: items.map(i => ({
+        product_id: i.product.id,
+        title: i.product.title,
+        price: effectivePrice(i.product),
+        quantity: i.quantity,
+      })),
+      subtotal,
+      delivery_fee: deliveryFee,
+      total: grandTotal,
+      currency: settings.currency || 'GHS',
+      payment_method: 'whatsapp',
+      payment_status: 'pending'
+    }).select('id').single()
+
+    setIsSubmitting(false)
+
+    if (error || !order) {
+      console.error(error)
+      setSubmitError("There was an error recording your order. Please try again.")
+      return
+    }
+
     const targetCurrency = merchantStore?.currency || settings.currency || 'GHS'
     const targetTemplate = merchantStore?.whatsapp_template || settings.whatsapp_template
     const targetNumber = merchantStore?.whatsapp_number || settings.whatsapp_number || '233000000000'
 
-    const message = buildCartWhatsAppMessage(
+    const baseMessage = buildCartWhatsAppMessage(
       items.map(i => ({ title: i.product.title, qty: i.quantity, price: effectivePrice(i.product) })),
       subtotal,
       deliveryFee,
       targetCurrency,
       targetTemplate
     )
-    const url = buildWhatsAppUrl(targetNumber, message)
+    
+    const orderIdShort = order.id.split('-')[0].toUpperCase()
+    const finalMessage = `*Order ID: #${orderIdShort}*\n\n${baseMessage}`
+
+    const url = buildWhatsAppUrl(targetNumber, finalMessage)
     window.open(url, '_blank')
+
+    clearCart()
+    setIsCheckingOut(false)
   }
 
   if (items.length === 0) {
@@ -108,60 +157,113 @@ export default function Cart() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Items */}
         <div className="lg:col-span-2 space-y-3">
-          {items.map((item, idx) => (
+          {isCheckingOut ? (
             <motion.div
-              key={item.product.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: idx * 0.05 }}
-              className="card p-4 flex gap-4"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="card p-6"
             >
-              <Link to={`/product/${item.product.id}`}>
-                <img
-                  src={item.product.images?.[0] || 'https://placehold.co/80x80/1a1008/d4820a?text=?'}
-                  alt={item.product.title}
-                  className="w-20 h-20 object-cover rounded-xl flex-shrink-0"
-                />
-              </Link>
-              <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-display font-bold text-dark-800 dark:text-white mb-6">Delivery Details</h2>
+              <form onSubmit={submitOrder} className="space-y-4">
+                <div>
+                  <label className="block text-dark-800/60 dark:text-white/60 text-sm font-medium mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                    className="input w-full"
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div>
+                  <label className="block text-dark-800/60 dark:text-white/60 text-sm font-medium mb-1">Phone Number</label>
+                  <input
+                    type="tel"
+                    required
+                    value={customerPhone}
+                    onChange={e => setCustomerPhone(e.target.value)}
+                    className="input w-full"
+                    placeholder="+233 20 000 0000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-dark-800/60 dark:text-white/60 text-sm font-medium mb-1">Delivery Address</label>
+                  <textarea
+                    rows={3}
+                    value={customerAddress}
+                    onChange={e => setCustomerAddress(e.target.value)}
+                    className="input w-full resize-none"
+                    placeholder="Street, City, Landmark (optional)"
+                  />
+                </div>
+                {submitError && <p className="text-red-500 text-sm">{submitError}</p>}
+                <div className="flex gap-3 pt-4">
+                  <button type="button" onClick={() => setIsCheckingOut(false)} className="btn-ghost flex-1">
+                    Back to Cart
+                  </button>
+                  <button type="submit" disabled={isSubmitting} className="btn-primary flex-1">
+                    {isSubmitting ? 'Recording...' : 'Complete Order'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          ) : (
+            items.map((item, idx) => (
+              <motion.div
+                key={item.product.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: idx * 0.05 }}
+                className="card p-4 flex gap-4"
+              >
                 <Link to={`/product/${item.product.id}`}>
-                  <h3 className="text-dark-800 dark:text-white text-sm font-medium line-clamp-2 hover:text-brand-400 transition-colors">
-                    {item.product.title}
-                  </h3>
+                  <img
+                    src={item.product.images?.[0] || 'https://placehold.co/80x80/1a1008/d4820a?text=?'}
+                    alt={item.product.title}
+                    className="w-20 h-20 object-cover rounded-xl flex-shrink-0"
+                  />
                 </Link>
-                <p className="text-brand-400 font-bold mt-1">{formatPrice(effectivePrice(item.product))}</p>
-                <div className="flex items-center justify-between mt-3">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                      aria-label="Decrease quantity"
-                      className="w-8 h-8 bg-cream-100 dark:bg-dark-700 hover:bg-brand-400 hover:text-white rounded-full flex items-center justify-center transition-colors text-dark-800 dark:text-white"
-                    >
-                      <Minus size={12} weight="bold" />
-                    </button>
-                    <span className="text-dark-800 dark:text-white font-semibold text-sm w-6 text-center">{item.quantity}</span>
-                    <button
-                      onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                      aria-label="Increase quantity"
-                      className="w-8 h-8 bg-cream-100 dark:bg-dark-700 hover:bg-brand-400 hover:text-white rounded-full flex items-center justify-center transition-colors text-dark-800 dark:text-white"
-                    >
-                      <Plus size={12} weight="bold" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <p className="text-dark-800/70 dark:text-white/60 text-sm font-medium">{formatPrice(effectivePrice(item.product) * item.quantity)}</p>
-                    <button
-                      onClick={() => removeItem(item.product.id)}
-                      aria-label="Remove item"
-                      className="text-dark-800/40 dark:text-white/30 hover:text-red-500 transition-colors"
-                    >
-                      <Trash size={14} />
-                    </button>
+                <div className="flex-1 min-w-0">
+                  <Link to={`/product/${item.product.id}`}>
+                    <h3 className="text-dark-800 dark:text-white text-sm font-medium line-clamp-2 hover:text-brand-400 transition-colors">
+                      {item.product.title}
+                    </h3>
+                  </Link>
+                  <p className="text-brand-400 font-bold mt-1">{formatPrice(effectivePrice(item.product))}</p>
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                        aria-label="Decrease quantity"
+                        className="w-8 h-8 bg-cream-100 dark:bg-dark-700 hover:bg-brand-400 hover:text-white rounded-full flex items-center justify-center transition-colors text-dark-800 dark:text-white"
+                      >
+                        <Minus size={12} weight="bold" />
+                      </button>
+                      <span className="text-dark-800 dark:text-white font-semibold text-sm w-6 text-center">{item.quantity}</span>
+                      <button
+                        onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                        aria-label="Increase quantity"
+                        className="w-8 h-8 bg-cream-100 dark:bg-dark-700 hover:bg-brand-400 hover:text-white rounded-full flex items-center justify-center transition-colors text-dark-800 dark:text-white"
+                      >
+                        <Plus size={12} weight="bold" />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <p className="text-dark-800/70 dark:text-white/60 text-sm font-medium">{formatPrice(effectivePrice(item.product) * item.quantity)}</p>
+                      <button
+                        onClick={() => removeItem(item.product.id)}
+                        aria-label="Remove item"
+                        className="text-dark-800/40 dark:text-white/30 hover:text-red-500 transition-colors"
+                      >
+                        <Trash size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))
+          )}
         </div>
 
         {/* Order Summary */}
@@ -196,12 +298,19 @@ export default function Cart() {
                 <span className="text-brand-400 font-bold text-2xl">{formatPrice(grandTotal)}</span>
               </div>
             </div>
-            <button onClick={handleWhatsAppOrder} className="btn-whatsapp w-full justify-center py-4 text-base">
-              <WhatsappLogo size={20} weight="fill" />
-              Order via WhatsApp
-            </button>
+            {isCheckingOut ? (
+              <button disabled className="btn-primary w-full justify-center py-4 text-base opacity-50 cursor-not-allowed">
+                Fill details to complete
+              </button>
+            ) : (
+              <button onClick={() => setIsCheckingOut(true)} className="btn-primary w-full justify-center py-4 text-base">
+                Proceed to Checkout
+              </button>
+            )}
             <p className="text-dark-800/40 dark:text-white/30 text-xs text-center mt-3">
-              You'll be redirected to WhatsApp to complete your order
+              {isCheckingOut 
+                ? "Your order will be recorded and you'll be redirected to WhatsApp."
+                : "Checkout to enter your delivery details."}
             </p>
           </div>
         </div>
