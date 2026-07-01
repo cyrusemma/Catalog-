@@ -273,17 +273,31 @@ export default function SignInModal({ open, onClose, reason }: Props) {
                       </label>
                       <div className="flex items-center gap-2 rounded-2xl bg-white/10 border border-white/15 focus-within:border-brand-400/60 px-3 py-2.5">
                         <LockKey size={16} className="text-white/55" />
-                        <input
-                          name="password"
-                          type={showPassword ? 'text' : 'password'}
-                          value={password}
-                          onChange={e => setPassword(e.target.value)}
-                          placeholder={mode === 'signup' ? 'Pick a strong one' : '••••••••'}
-                          autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-                          required
-                          minLength={6}
-                          className="flex-1 bg-transparent text-white placeholder-white/35 text-sm outline-none"
-                        />
+                        {mode === 'signup' ? (
+                          <input
+                            name="password"
+                            type={showPassword ? 'text' : 'password'}
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            placeholder="Pick a strong one"
+                            autoComplete="new-password"
+                            required
+                            minLength={6}
+                            className="flex-1 bg-transparent text-white placeholder-white/35 text-sm outline-none"
+                          />
+                        ) : (
+                          <input
+                            name="password"
+                            type={showPassword ? 'text' : 'password'}
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            autoComplete="current-password"
+                            required
+                            minLength={6}
+                            className="flex-1 bg-transparent text-white placeholder-white/35 text-sm outline-none"
+                          />
+                        )}
                         <button
                           type="button"
                           onClick={() => setShowPassword(s => !s)}

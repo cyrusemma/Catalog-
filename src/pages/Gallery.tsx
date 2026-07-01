@@ -230,10 +230,10 @@ export default function Gallery() {
           {/* Loading More Indicator */}
           {hasMoreProducts && (
             <div className="flex justify-center mt-4">
-              <div className="animate-pulse flex gap-1">
-                <div className="w-2 h-2 rounded-full bg-brand-400" />
-                <div className="w-2 h-2 rounded-full bg-brand-400" style={{ animation: 'pulse 1.5s ease-in-out 0.3s infinite' }} />
-                <div className="w-2 h-2 rounded-full bg-brand-400" style={{ animation: 'pulse 1.5s ease-in-out 0.6s infinite' }} />
+              <div className="flex gap-1">
+                <div className="w-2 h-2 rounded-full bg-brand-400 animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-brand-400 animate-pulse [animation-duration:1.5s] [animation-timing-function:ease-in-out] [animation-delay:0.3s]" />
+                <div className="w-2 h-2 rounded-full bg-brand-400 animate-pulse [animation-duration:1.5s] [animation-timing-function:ease-in-out] [animation-delay:0.6s]" />
               </div>
             </div>
           )}
