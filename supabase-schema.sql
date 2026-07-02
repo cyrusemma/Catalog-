@@ -38,6 +38,7 @@ create table if not exists products (
   specs jsonb,
   key_features text[] default '{}',
   sizes text[] not null default '{}',
+  colors text[] not null default '{}',
   delivery_fee numeric(10,2) not null default 0,  -- 0 = free delivery
   rating numeric(3,1),
   rating_count int,

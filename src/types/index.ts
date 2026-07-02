@@ -15,6 +15,7 @@ export interface Product {
   category: string
   category_id: string | null
   sizes: string[]
+  colors: string[]
   brand?: string
   specs?: Record<string, string>
   key_features?: string[]

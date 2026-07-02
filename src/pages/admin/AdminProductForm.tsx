@@ -21,7 +21,7 @@ interface FormData {
   parent_category_id: string; category_id: string
   selling_price: string; original_price: string; discount_percent: string
   stock: string; stock_status: 'in_stock' | 'few_units_left' | 'out_of_stock'
-  images: string[]; key_features: string[]; sizes: string[]
+  images: string[]; key_features: string[]; sizes: string[]; colors: string[]
   is_featured: boolean; is_published: boolean
   is_preorder: boolean
   free_delivery: boolean; delivery_fee: string
@@ -37,7 +37,7 @@ const emptyForm: FormData = {
   parent_category_id: '', category_id: '',
   selling_price: '', original_price: '', discount_percent: '',
   stock: '1', stock_status: 'few_units_left',
-  images: [], key_features: [], sizes: [],
+  images: [], key_features: [], sizes: [], colors: [],
   is_featured: false, is_published: false,
   is_preorder: false,
   free_delivery: false, delivery_fee: '20',
@@ -110,6 +110,7 @@ export default function AdminProductForm() {
   })
   const [newFeature, setNewFeature] = useState('')
   const [newSize, setNewSize] = useState('')
+  const [newColor, setNewColor] = useState('')
   const [newImageUrl, setNewImageUrl] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -217,7 +218,7 @@ export default function AdminProductForm() {
         ? findCategory(categoryTree, selectedCat.parent_id)
         : selectedCat
       setForm({
-        title: duplicateId ? `${existingProduct.title} (Copy)` : (existingProduct.title || ''),
+        title: existingProduct.title || '',
         brand: existingProduct.brand || '',
         description: existingProduct.description || '',
         parent_category_id: parentCat?.id || '',
@@ -230,6 +231,7 @@ export default function AdminProductForm() {
         images: existingProduct.images || [],
         key_features: existingProduct.key_features || [],
         sizes: existingProduct.sizes || [],
+        colors: existingProduct.colors || [],
         is_featured: duplicateId ? false : (existingProduct.is_featured || false),
         is_published: duplicateId ? false : (existingProduct.is_published || false),
         is_preorder: existingProduct.is_preorder || false,
@@ -368,6 +370,7 @@ export default function AdminProductForm() {
         images: form.images,
         key_features: form.key_features,
         sizes: form.sizes,
+        colors: form.colors,
         is_featured: form.is_featured,
         is_published: publish ? true : form.is_published,
         is_preorder: form.is_preorder,
@@ -710,6 +713,57 @@ export default function AdminProductForm() {
                   }}
                   aria-label="Add size"
                   title="Add size"
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-xl transition-colors"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Available Colors</h2>
+              <p className="text-gray-400 text-[11px] mb-3">
+                Add any colors/variants the customer can pick from — e.g. Red, Black, White or custom names. Leave empty if not applicable.
+              </p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {form.colors.map((c, i) => (
+                  <span key={i} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 text-sm rounded-full pl-3 pr-1 py-1">
+                    {c}
+                    <button
+                      type="button"
+                      onClick={() => set('colors', form.colors.filter((_, j) => j !== i))}
+                      aria-label={`Remove color ${c}`}
+                      className="w-5 h-5 rounded-full hover:bg-gray-200 text-gray-500 flex items-center justify-center"
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={newColor}
+                  onChange={e => setNewColor(e.target.value)}
+                  placeholder="e.g. Red or Black"
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && newColor.trim()) {
+                      e.preventDefault()
+                      const val = newColor.trim()
+                      if (!form.colors.includes(val)) set('colors', [...form.colors, val])
+                      setNewColor('')
+                    }
+                  }}
+                  className="flex-1 border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-gray-50 focus:bg-white outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const val = newColor.trim()
+                    if (val && !form.colors.includes(val)) set('colors', [...form.colors, val])
+                    setNewColor('')
+                  }}
+                  aria-label="Add color"
+                  title="Add color"
                   className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-xl transition-colors"
                 >
                   <Plus size={14} />
