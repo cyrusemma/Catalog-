@@ -137,6 +137,8 @@ export default function Footer() {
                       key={star}
                       type="button"
                       onClick={() => setRating(star)}
+                      title={`Rate ${star} stars`}
+                      aria-label={`Rate ${star} stars`}
                       className="text-2xl transition-transform hover:scale-110 focus:outline-none"
                     >
                       <Star size={24} weight={star <= rating ? 'fill' : 'regular'} className={star <= rating ? 'text-brand-400' : 'text-brand-400/30'} />
@@ -169,6 +171,8 @@ export default function Footer() {
                   <button
                     type="submit"
                     disabled={isSubmitting || !message.trim()}
+                    title="Submit review"
+                    aria-label="Submit review"
                     className="absolute bottom-2 right-2 p-2 bg-brand-400 text-white rounded-lg hover:bg-brand-500 disabled:opacity-50 disabled:hover:bg-brand-400 transition-colors shadow-sm"
                   >
                     <PaperPlaneRight size={16} weight="fill" />

@@ -165,6 +165,8 @@ export default function BecomeMerchant() {
             Business Category
           </label>
           <select
+            title="Business Category"
+            aria-label="Business Category"
             value={businessCategory}
             onChange={(e) => setBusinessCategory(e.target.value)}
             className="input w-full"

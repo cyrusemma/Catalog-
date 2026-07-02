@@ -245,11 +245,13 @@ export default function OfflineGame() {
       
       {/* Header */}
       <div className="relative z-10 p-4 flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="p-2 bg-white/50 rounded-full hover:bg-white/80 transition-colors">
+        <button title="Go back" aria-label="Go back" onClick={() => navigate(-1)} className="p-2 bg-white/50 rounded-full hover:bg-white/80 transition-colors">
           <ArrowLeft size={24} className="text-gray-700" />
         </button>
         <div className="flex items-center gap-4 font-bold text-sm sm:text-lg text-gray-800">
           <button 
+            title={isMuted ? 'Unmute' : 'Mute'} 
+            aria-label={isMuted ? 'Unmute' : 'Mute'} 
             onClick={() => setIsMuted(!isMuted)} 
             className="p-2 bg-white/50 rounded-full hover:bg-white/80 transition-colors text-gray-700"
           >
