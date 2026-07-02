@@ -77,6 +77,7 @@ create table if not exists orders (
   cancelled_at timestamptz,
   status text default 'pending' check (status in ('pending','confirmed','processing','shipped','delivered','cancelled')),
   notes text,
+  customer_id uuid references auth.users(id) on delete set null,
   created_at timestamptz default now()
 );
 
@@ -95,9 +96,11 @@ alter table if exists orders
   add column if not exists processing_at timestamptz,
   add column if not exists shipped_at timestamptz,
   add column if not exists delivered_at timestamptz,
-  add column if not exists cancelled_at timestamptz;
+  add column if not exists cancelled_at timestamptz,
+  add column if not exists customer_id uuid references auth.users(id) on delete set null;
 
 create unique index if not exists orders_receipt_number_unique on orders (receipt_number) where receipt_number is not null;
+create index if not exists orders_customer_id_idx on orders (customer_id);
 
 -- Store settings — enforced singleton (only one row ever exists)
 create table if not exists store_settings (
@@ -168,6 +171,8 @@ create policy "Public read settings" on store_settings for select using (true);
 
 -- Guest checkout: anyone can place an order (storefront uses WhatsApp redirect but also writes to orders table)
 create policy "Public insert orders" on orders for insert with check (true);
+
+create policy "Users read own orders" on orders for select using (customer_id = auth.uid());
 
 -- Admin-only management
 create policy "Admin manage products" on products

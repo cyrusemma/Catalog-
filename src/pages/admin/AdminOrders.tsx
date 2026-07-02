@@ -74,21 +74,23 @@ export default function AdminOrders() {
 
   return (
     <AdminLayout>
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <div className="mb-8">
-          <p className="text-gray-400 text-sm mb-1">Orders</p>
-          <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
+          <p className="text-dark-800/40 dark:text-white/40 text-sm font-bold uppercase tracking-wider mb-1">Store Management</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-dark-800 dark:text-white">Orders</h1>
         </div>
 
         {/* Filter tabs */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+          <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0 hide-scrollbar">
             {['all', ...STATUSES].map(s => (
               <button
                 key={s}
                 onClick={() => setFilter(s)}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all capitalize ${
-                  filter === s ? 'bg-brand-400 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-400/40'
+                className={`flex-shrink-0 px-5 py-2 rounded-xl text-sm font-bold transition-all capitalize ${
+                  filter === s 
+                    ? 'bg-brand-400 text-white shadow-sm' 
+                    : 'bg-white dark:bg-dark-800 text-dark-800/60 dark:text-white/60 border border-cream-200 dark:border-brand-400/15 hover:border-brand-400/40'
                 }`}
               >
                 {s}
@@ -96,11 +98,11 @@ export default function AdminOrders() {
             ))}
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(Number(e.target.value))}
-              className="bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl px-3 py-1.5 outline-none focus:border-brand-400"
+              className="bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 text-dark-800 dark:text-white text-sm font-medium rounded-xl px-4 py-2 outline-none focus:border-brand-400"
             >
               <option value={7}>Last 7 Days</option>
               <option value={30}>Last 30 Days</option>
@@ -111,74 +113,122 @@ export default function AdminOrders() {
             <button
               onClick={exportToCSV}
               disabled={!filtered?.length}
-              className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 bg-cream-100 dark:bg-white/5 hover:bg-cream-200 dark:hover:bg-white/10 text-dark-800 dark:text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-transparent dark:border-white/5"
             >
-              <Download size={14} /> Export CSV
+              <Download size={16} weight="bold" /> Export CSV
             </button>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-16 text-gray-400">Loading orders...</div>
+          <div className="text-center py-20 text-dark-800/40 dark:text-white/40 font-medium">Loading orders...</div>
         ) : !filtered?.length ? (
-          <div className="bg-white rounded-2xl border border-gray-100 py-20 text-center">
-            <ShoppingBag size={40} className="text-gray-200 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm">No orders yet</p>
+          <div className="bg-white dark:bg-dark-800 rounded-3xl border border-cream-200 dark:border-brand-400/15 py-20 text-center shadow-sm">
+            <ShoppingBag size={48} weight="duotone" className="text-brand-400/50 mx-auto mb-4" />
+            <p className="text-dark-800/50 dark:text-white/50 font-semibold">No orders found.</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {filtered.map(order => (
-              <div key={order.id} className="bg-white rounded-2xl border border-gray-100 p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-gray-900 text-sm">#{order.id.slice(-6).toUpperCase()}</span>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full border capitalize ${STATUS_COLORS[order.status]}`}>
-                        {order.status}
-                      </span>
+              <div key={order.id} className="bg-white dark:bg-dark-800 rounded-3xl border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 shadow-sm flex flex-col lg:flex-row gap-6">
+                
+                {/* Left side: Order Info & Items */}
+                <div className="flex-1">
+                  <div className="flex flex-wrap items-center gap-3 mb-5">
+                    <span className="font-mono font-bold text-dark-800 dark:text-white text-lg">#{order.id.slice(-6).toUpperCase()}</span>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-lg border uppercase tracking-wider ${STATUS_COLORS[order.status]}`}>
+                      {order.status}
+                    </span>
+                    <span className="text-dark-800/40 dark:text-white/40 font-medium text-sm ml-auto">
+                      {new Date(order.created_at).toLocaleString('en-GH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+
+                  {/* Items List */}
+                  <div className="space-y-3 mb-5">
+                    {order.items?.map((item, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-cream-50 dark:bg-dark-700/50 p-2.5 rounded-2xl border border-cream-100 dark:border-white/5">
+                        <img src={item.product_image || 'https://placehold.co/100x100/f3f4f6/9ca3af?text=?'} alt="" className="w-12 h-12 rounded-xl object-cover bg-white dark:bg-dark-800" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-dark-800 dark:text-white text-sm font-semibold truncate">{item.product_title}</p>
+                          <p className="text-brand-400 text-xs font-bold mt-0.5">{formatPrice(item.price)} <span className="text-dark-800/40 dark:text-white/40 font-medium ml-1">x {item.quantity}</span></p>
+                        </div>
+                        <div className="text-right pl-2">
+                          <span className="text-dark-800 dark:text-white text-sm font-bold">{formatPrice(item.price * item.quantity)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Customer Info */}
+                  <div className="bg-cream-100/50 dark:bg-white/5 rounded-2xl p-4 text-sm border border-cream-200 dark:border-white/10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 mb-1">Customer</p>
+                        <p className="font-semibold text-dark-800 dark:text-white">{order.customer_name}</p>
+                        <p className="text-dark-800/60 dark:text-white/60 font-medium">{order.customer_phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 mb-1">Delivery Address</p>
+                        <p className="text-dark-800/60 dark:text-white/60 font-medium leading-relaxed">{order.customer_address || 'No address provided'}</p>
+                      </div>
                     </div>
-                    <p className="text-gray-500 text-xs">{new Date(order.created_at).toLocaleDateString('en-GH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-900">{formatPrice(order.total)}</p>
-                    <p className="text-gray-400 text-xs">{order.items?.length} item{order.items?.length !== 1 ? 's' : ''}</p>
+                    {order.notes && (
+                      <div className="mt-3 pt-3 border-t border-cream-200 dark:border-white/10">
+                        <p className="text-xs font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 mb-1">Order Notes</p>
+                        <p className="text-dark-800/80 dark:text-white/80 italic">"{order.notes}"</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Customer */}
-                <div className="bg-gray-50 rounded-xl p-3 mb-4 text-sm">
-                  <p className="font-medium text-gray-900">{order.customer_name}</p>
-                  <p className="text-gray-500">{order.customer_phone}</p>
-                  <p className="text-gray-500">{order.customer_address}</p>
-                  {order.notes && <p className="text-gray-500 mt-1 italic">"{order.notes}"</p>}
-                </div>
-
-                {/* Items */}
-                <div className="space-y-2 mb-4">
-                  {order.items?.map((item, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <img src={item.product_image || 'https://placehold.co/32x32/f3f4f6/9ca3af?text=?'} alt="" className="w-8 h-8 rounded-lg object-cover" />
-                      <span className="flex-1 text-gray-700 text-sm truncate">{item.product_title}</span>
-                      <span className="text-gray-500 text-xs">x{item.quantity}</span>
-                      <span className="text-gray-900 text-sm font-medium">{formatPrice(item.price * item.quantity)}</span>
+                {/* Right side: Financials & Actions */}
+                <div className="w-full lg:w-72 flex flex-col">
+                  <div className="bg-cream-50 dark:bg-dark-700/30 rounded-2xl p-5 border border-cream-200 dark:border-brand-400/15 flex-1">
+                    <h3 className="text-dark-800 dark:text-white font-bold mb-4 flex items-center gap-2">
+                      <ShoppingBag size={18} className="text-brand-400" weight="duotone" /> 
+                      Order Summary
+                    </h3>
+                    
+                    <div className="space-y-2.5 mb-4 text-sm">
+                      <div className="flex justify-between text-dark-800/60 dark:text-white/60 font-medium">
+                        <span>Subtotal</span>
+                        <span>{formatPrice(order.subtotal)}</span>
+                      </div>
+                      <div className="flex justify-between text-dark-800/60 dark:text-white/60 font-medium">
+                        <span>Delivery Fee</span>
+                        <span>{formatPrice(order.delivery_fee)}</span>
+                      </div>
+                      {order.discount_amount > 0 && (
+                        <div className="flex justify-between text-green-500 font-medium">
+                          <span>Discount</span>
+                          <span>-{formatPrice(order.discount_amount)}</span>
+                        </div>
+                      )}
+                      <div className="pt-2.5 mt-2.5 border-t border-cream-200 dark:border-white/10 flex justify-between items-center">
+                        <span className="font-bold text-dark-800 dark:text-white">Total</span>
+                        <span className="text-lg font-bold text-brand-400">{formatPrice(order.total)}</span>
+                      </div>
                     </div>
-                  ))}
-                </div>
 
-                {/* Status updater */}
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500 text-xs">Update status:</span>
-                  <div className="relative">
-                    <select
-                      value={order.status}
-                      onChange={e => updateStatus.mutate({ id: order.id, status: e.target.value })}
-                      className="appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-xs font-medium rounded-xl pl-3 pr-7 py-1.5 outline-none focus:border-brand-400 cursor-pointer"
-                    >
-                      {STATUSES.map(s => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
-                    </select>
-                    <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    <div className="mt-6">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 mb-2">
+                        Update Status
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={order.status}
+                          onChange={e => updateStatus.mutate({ id: order.id, status: e.target.value })}
+                          className="w-full appearance-none bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 text-dark-800 dark:text-white text-sm font-bold rounded-xl pl-4 pr-10 py-3 outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 cursor-pointer shadow-sm transition-all"
+                        >
+                          {STATUSES.map(s => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                        </select>
+                        <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 pointer-events-none" weight="bold" />
+                      </div>
+                    </div>
                   </div>
                 </div>
+
               </div>
             ))}
           </div>

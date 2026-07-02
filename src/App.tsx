@@ -33,6 +33,7 @@ const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const Cart = lazy(() => import('./pages/Cart'))
 const Wishlist = lazy(() => import('./pages/Wishlist'))
 const Account = lazy(() => import('./pages/Account'))
+const CustomerOrders = lazy(() => import('./pages/CustomerOrders'))
 const Settings = lazy(() => import('./pages/Settings'))
 const StoreFront = lazy(() => import('./pages/store/StoreFront'))
 const BecomeMerchant = lazy(() => import('./pages/BecomeMerchant'))
@@ -160,6 +161,7 @@ function AnimatedRoutes() {
       <Route path="/cart" element={<StorefrontLayout><Cart /></StorefrontLayout>} />
       <Route path="/wishlist" element={<StorefrontLayout><Wishlist /></StorefrontLayout>} />
       <Route path="/account" element={<StorefrontLayout><Account /></StorefrontLayout>} />
+      <Route path="/account/orders" element={<StorefrontLayout><CustomerOrders /></StorefrontLayout>} />
       <Route path="/settings" element={<StorefrontLayout><Settings /></StorefrontLayout>} />
       <Route path="/s/:storeSlug" element={<StorefrontLayout><StoreFront /></StorefrontLayout>} />
       <Route path="/sell" element={<StorefrontLayout><BecomeMerchant /></StorefrontLayout>} />

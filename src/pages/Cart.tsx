@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useCartStore } from '../store/cartStore'
 import { useStoreSettings } from '../hooks/useStoreSettings'
+import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
 import { buildWhatsAppUrl, buildCartWhatsAppMessage, effectivePrice } from '../lib/utils'
 import { supabase } from '../lib/supabase'
@@ -18,6 +19,7 @@ export default function Cart() {
   const formatPrice = useCurrencyFormatter()
   const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCartStore()
   const settings = useStoreSettings()
+  const { user } = useCustomerSession()
 
   const storeIds = useMemo(() => Array.from(new Set(items.map(i => i.product.store_id).filter(Boolean))), [items])
   const merchantStoreId = storeIds.length === 1 ? storeIds[0] : null
@@ -66,6 +68,7 @@ export default function Cart() {
     const orderPayload = {
       id: orderId,
       store_id: merchantStoreId,
+      customer_id: user?.id || null,
       customer_name: customerName,
       customer_phone: customerPhone,
       customer_address: customerAddress,

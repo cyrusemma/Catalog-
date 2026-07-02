@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Bell, BellSlash, SignOut, User as UserIcon, EnvelopeSimple, CheckCircle, Sparkle, Storefront, ArrowSquareOut } from '@phosphor-icons/react'
+import { Bell, BellSlash, SignOut, User as UserIcon, EnvelopeSimple, CheckCircle, Sparkle, Storefront, ArrowSquareOut, Package } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
@@ -231,6 +231,29 @@ export default function Account() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+        className="rounded-3xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 mb-5"
+      >
+        <div className="flex items-start gap-3">
+          <Package size={18} weight="duotone" className="text-brand-400 mt-0.5" />
+          <div className="flex-1">
+            <h2 className="text-dark-800 dark:text-white font-semibold">My Orders</h2>
+            <p className="text-dark-800/55 dark:text-white/50 text-sm mt-1.5">
+              View your order history and track the delivery status of your recent purchases.
+            </p>
+            <Link
+              to="/account/orders"
+              className="inline-block mt-3 text-brand-400 hover:text-brand-500 text-sm font-semibold"
+            >
+              Track orders →
+            </Link>
+          </div>
+        </div>
+      </motion.section>
+
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
         className="rounded-3xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 mb-5"
       >
         <div className="flex items-start gap-3">
