@@ -48,13 +48,19 @@ export function buildProductWhatsAppMessage(productTitle: string, price: number,
 }
 
 export function buildCartWhatsAppMessage(
-  items: { title: string; qty: number; price: number }[],
+  items: { title: string; qty: number; price: number; url?: string }[],
   subtotal: number,
   deliveryFee = 0,
   currency = 'GHS',
   template?: string | null
 ): string {
-  const lines = items.map(i => `• ${i.title} x${i.qty} — ${currency} ${(i.price * i.qty).toFixed(2)}`).join('\n')
+  const lines = items.map(i => {
+    let line = `• ${i.title} x${i.qty} — ${currency} ${(i.price * i.qty).toFixed(2)}`
+    if (i.url) {
+      line += `\n  Link: ${i.url}`
+    }
+    return line
+  }).join('\n\n')
   const total = subtotal + deliveryFee
   const summary =
     deliveryFee > 0

@@ -60,14 +60,18 @@ export default function Cart() {
     setIsSubmitting(true)
     setSubmitError('')
 
-    const { data: order, error } = await supabase.from('orders').insert({
+    const orderId = crypto.randomUUID()
+
+    const { error } = await supabase.from('orders').insert({
+      id: orderId,
       store_id: merchantStoreId,
       customer_name: customerName,
       customer_phone: customerPhone,
       customer_address: customerAddress,
       items: items.map(i => ({
         product_id: i.product.id,
-        title: i.product.title,
+        product_title: i.product.title,
+        product_image: i.product.images?.[0] || '',
         price: effectivePrice(i.product),
         quantity: i.quantity,
       })),
@@ -76,12 +80,13 @@ export default function Cart() {
       total: grandTotal,
       currency: settings.currency || 'GHS',
       payment_method: 'whatsapp',
-      payment_status: 'pending'
-    }).select('id').single()
+      payment_status: 'pending',
+      status: 'pending'
+    })
 
     setIsSubmitting(false)
 
-    if (error || !order) {
+    if (error) {
       console.error(error)
       setSubmitError("There was an error recording your order. Please try again.")
       return
@@ -92,14 +97,19 @@ export default function Cart() {
     const targetNumber = merchantStore?.whatsapp_number || settings.whatsapp_number || '233000000000'
 
     const baseMessage = buildCartWhatsAppMessage(
-      items.map(i => ({ title: i.product.title, qty: i.quantity, price: effectivePrice(i.product) })),
+      items.map(i => ({ 
+        title: i.product.title, 
+        qty: i.quantity, 
+        price: effectivePrice(i.product),
+        url: `${window.location.origin}/product/${i.product.id}`
+      })),
       subtotal,
       deliveryFee,
       targetCurrency,
       targetTemplate
     )
     
-    const orderIdShort = order.id.split('-')[0].toUpperCase()
+    const orderIdShort = orderId.split('-')[0].toUpperCase()
     const finalMessage = `*Order ID: #${orderIdShort}*\n\n${baseMessage}`
 
     const url = buildWhatsAppUrl(targetNumber, finalMessage)
