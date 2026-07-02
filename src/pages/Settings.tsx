@@ -67,7 +67,13 @@ export default function Settings() {
     try {
       if (pushSubscribed) {
         await unsubscribeFromPush(user.id)
-        await supabase.from('profiles').update({ notify_new_arrivals: false }).eq('id', user.id)
+        const { error: profileErr } = await supabase
+          .from('profiles')
+          .update({ notify_new_arrivals: false })
+          .eq('id', user.id)
+        if (profileErr) {
+          console.warn('Could not sync notify_new_arrivals flag:', profileErr.message)
+        }
         setPushSubscribed(false)
       } else {
         const sub = await subscribeToPush(user.id)
@@ -76,7 +82,13 @@ export default function Settings() {
           setPushSubscribed(false)
           return
         }
-        await supabase.from('profiles').update({ notify_new_arrivals: true }).eq('id', user.id)
+        const { error: profileErr } = await supabase
+          .from('profiles')
+          .update({ notify_new_arrivals: true })
+          .eq('id', user.id)
+        if (profileErr) {
+          console.warn('Could not sync notify_new_arrivals flag:', profileErr.message)
+        }
         setPushSubscribed(true)
       }
       qc.invalidateQueries({ queryKey: ['customer-profile'] })
@@ -132,7 +144,6 @@ export default function Settings() {
                 key={t.value}
                 type="button"
                 onClick={() => setColor(t.value)}
-                aria-pressed={active}
                 className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all ${
                   active
                     ? 'bg-brand-400/10 ring-2 ring-brand-400/40'
@@ -141,8 +152,7 @@ export default function Settings() {
               >
                 <span
                   aria-hidden="true"
-                  className="flex-shrink-0 w-8 h-8 rounded-lg ring-1 ring-black/10 dark:ring-white/10"
-                  style={{ background: t.swatch }}
+                  className={`flex-shrink-0 w-8 h-8 rounded-lg ring-1 ring-black/10 dark:ring-white/10 ${t.swatchClass}`}
                 />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1 text-sm font-medium text-dark-800 dark:text-white truncate">
@@ -166,7 +176,6 @@ export default function Settings() {
               key={m}
               type="button"
               onClick={() => setMode(m)}
-              aria-pressed={mode === m}
               className={`px-5 py-2 rounded-xl text-sm font-semibold capitalize transition-colors ${
                 mode === m
                   ? 'bg-brand-400 text-white shadow-sm'
@@ -235,7 +244,6 @@ export default function Settings() {
               type="button"
               onClick={handleTogglePush}
               disabled={pushWorking || pushSubscribed === null}
-              aria-pressed={!!pushSubscribed}
               aria-label="Toggle new-arrival notifications"
               className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors ${
                 pushSubscribed ? 'bg-brand-400' : 'bg-cream-200 dark:bg-dark-700'

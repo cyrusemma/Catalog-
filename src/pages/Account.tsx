@@ -208,7 +208,6 @@ export default function Account() {
             type="button"
             onClick={toggleNotify}
             disabled={savingNotify}
-            aria-pressed={profile.notify_new_arrivals}
             aria-label="Toggle new-arrival notifications"
             className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors ${
               profile.notify_new_arrivals ? 'bg-brand-400' : 'bg-cream-200 dark:bg-dark-700'

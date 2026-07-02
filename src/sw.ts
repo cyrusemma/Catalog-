@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching'
-import { CacheFirst, NetworkFirst, NetworkOnly } from 'workbox-strategies'
+import { CacheFirst, NetworkFirst } from 'workbox-strategies'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
 import { ExpirationPlugin } from 'workbox-expiration'
 import { CacheableResponsePlugin } from 'workbox-cacheable-response'
@@ -16,6 +16,15 @@ declare const self: ServiceWorkerGlobalScope
 
 precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()
+
+const REST_CACHEABLE_TABLES = new Set(['products', 'categories', 'store_settings'])
+
+function getSupabaseRestTable(url: URL): string | null {
+  if (!url.hostname.endsWith('.supabase.co')) return null
+  if (!url.pathname.startsWith('/rest/v1/')) return null
+  const table = url.pathname.slice('/rest/v1/'.length).split('/')[0]
+  return table || null
+}
 
 // Navigation fallback for the SPA. Deep links like /shop or /product/:id have
 // no precached entry of their own, so every navigation is served the precached
@@ -39,7 +48,10 @@ registerRoute(
 // shop look empty even after products exist in the database. The cache name is
 // bumped (-v2) so any already-poisoned `supabase-rest` cache is abandoned.
 registerRoute(
-  ({ url }) => url.hostname.endsWith('.supabase.co') && url.pathname.startsWith('/rest/v1/'),
+  ({ url }) => {
+    const table = getSupabaseRestTable(url)
+    return table !== null && REST_CACHEABLE_TABLES.has(table)
+  },
   new NetworkFirst({
     cacheName: 'supabase-rest-v2',
     networkTimeoutSeconds: 4,
@@ -75,13 +87,9 @@ registerRoute(
   }),
 )
 
-// Auth requests must always go to the network — never serve a cached login or
-// token refresh. Browsers default to no-cache on these, but stating it out
-// loud keeps a future Workbox upgrade from accidentally intercepting them.
-registerRoute(
-  ({ url }) => url.hostname.endsWith('.supabase.co') && url.pathname.startsWith('/auth/v1/'),
-  new NetworkOnly(),
-)
+// Intentionally do not route Supabase auth/profile endpoints through Workbox.
+// Let the browser fetch pipeline handle them directly to avoid noisy
+// `no-response` runtime errors when the network flakes.
 
 // ──────────────────────────────────────────────────────────────────────────
 // Web Push — new-arrival notifications.

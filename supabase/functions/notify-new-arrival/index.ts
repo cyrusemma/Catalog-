@@ -59,11 +59,12 @@ Deno.serve(async (req: Request) => {
     .maybeSingle()
   if (productErr || !product) return json({ error: 'Product not found' }, 404)
 
-  // 4. Pull every subscription whose owning profile has notify_new_arrivals=true.
+  // 4. Pull every saved subscription. Delivery should follow actual browser
+  // subscriptions, not profile-flag joins that can exclude valid users when
+  // profile rows/columns are missing.
   const { data: rows, error: rowsErr } = await adminClient
     .from('push_subscriptions')
-    .select('id, endpoint, p256dh, auth, user_id, profiles!inner(notify_new_arrivals)')
-    .eq('profiles.notify_new_arrivals', true)
+    .select('id, endpoint, p256dh, auth, user_id')
   if (rowsErr) return json({ error: rowsErr.message }, 500)
 
   const subs = (rows ?? []) as Array<{

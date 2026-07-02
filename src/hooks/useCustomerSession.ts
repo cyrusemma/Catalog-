@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import type { Session, User } from '@supabase/supabase-js'
 
@@ -45,6 +45,60 @@ function hasPendingAuthCallback(): boolean {
   )
 }
 
+function normalizeProfileRow(row: any, fallback: CustomerProfile): CustomerProfile {
+  return {
+    id: typeof row?.id === 'string' ? row.id : fallback.id,
+    email: typeof row?.email === 'string' || row?.email === null ? row.email : fallback.email,
+    display_name:
+      typeof row?.display_name === 'string' || row?.display_name === null
+        ? row.display_name
+        : fallback.display_name,
+    avatar_url:
+      typeof row?.avatar_url === 'string' || row?.avatar_url === null
+        ? row.avatar_url
+        : fallback.avatar_url,
+    notify_new_arrivals: typeof row?.notify_new_arrivals === 'boolean' ? row.notify_new_arrivals : false,
+    cart: Array.isArray(row?.cart) ? row.cart : [],
+    created_at: typeof row?.created_at === 'string' ? row.created_at : fallback.created_at,
+  }
+}
+
+function looksLikeMissingColumnError(message: string): boolean {
+  const m = message.toLowerCase()
+  return m.includes('column') || m.includes('schema cache') || m.includes('does not exist')
+}
+
+async function fetchProfileWithFallback(user: User): Promise<CustomerProfile> {
+  const fallback = deriveProfileFromUser(user)
+
+  const projections = [
+    'id, email, display_name, avatar_url, notify_new_arrivals, cart, created_at',
+    'id, email, display_name, avatar_url, created_at',
+    'id, email, display_name, avatar_url',
+  ]
+
+  for (const projection of projections) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(projection)
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (!error) {
+      if (!data) return fallback
+      return normalizeProfileRow(data, fallback)
+    }
+
+    // If the schema is missing one of our requested columns, retry with a
+    // slimmer select. Any other error (RLS/network/etc) falls back immediately.
+    if (!looksLikeMissingColumnError(error.message)) {
+      return fallback
+    }
+  }
+
+  return fallback
+}
+
 /**
  * Tracks the current Supabase auth session and the matching profile row.
  * Admin sessions count as logged in here too — the storefront just sees an
@@ -53,7 +107,6 @@ function hasPendingAuthCallback(): boolean {
 export function useCustomerSession() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  const qc = useQueryClient()
 
   useEffect(() => {
     let mounted = true
@@ -80,8 +133,6 @@ export function useCustomerSession() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s)
       setLoading(false)
-      // Bust the profile cache so a fresh sign-in pulls the new row.
-      qc.invalidateQueries({ queryKey: ['customer-profile'] })
     })
     unsubscribe = () => subscription.unsubscribe()
 
@@ -90,7 +141,7 @@ export function useCustomerSession() {
       if (callbackGuardTimer) window.clearTimeout(callbackGuardTimer)
       unsubscribe?.()
     }
-  }, [qc])
+  }, [])
 
   const user: User | null = session?.user ?? null
 
@@ -98,22 +149,16 @@ export function useCustomerSession() {
     queryKey: ['customer-profile', user?.id ?? null],
     queryFn: async (): Promise<CustomerProfile | null> => {
       if (!user) return null
-      const fallback = deriveProfileFromUser(user)
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email, display_name, avatar_url, notify_new_arrivals, cart, created_at')
-        .eq('id', user.id)
-        .maybeSingle()
-
-      if (error) {
-        return fallback
+      try {
+        return await fetchProfileWithFallback(user)
+      } catch {
+        return deriveProfileFromUser(user)
       }
-
-      return (data as CustomerProfile) ?? fallback
     },
     enabled: !!user,
     staleTime: 1000 * 60,
+    retry: false,
+    refetchOnWindowFocus: false,
   })
 
   return {

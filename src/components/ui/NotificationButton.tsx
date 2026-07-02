@@ -59,9 +59,14 @@ export default function NotificationButton() {
         setPushSubscribed(false)
         return
       }
-      // Flip the profile flag so the Account toggle reflects reality.
-      await supabase.from('profiles').update({ notify_new_arrivals: true }).eq('id', user.id)
-      qc.invalidateQueries({ queryKey: ['customer-profile'] })
+      // Best effort: keep profile flag in sync where that column exists.
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .update({ notify_new_arrivals: true })
+        .eq('id', user.id)
+      if (!profileErr) {
+        qc.invalidateQueries({ queryKey: ['customer-profile'] })
+      }
       setPushSubscribed(true)
     } catch (err) {
       setPushError(err instanceof Error ? err.message : 'Could not subscribe.')
@@ -76,8 +81,13 @@ export default function NotificationButton() {
     setPushWorking(true)
     try {
       await unsubscribeFromPush(user.id)
-      await supabase.from('profiles').update({ notify_new_arrivals: false }).eq('id', user.id)
-      qc.invalidateQueries({ queryKey: ['customer-profile'] })
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .update({ notify_new_arrivals: false })
+        .eq('id', user.id)
+      if (!profileErr) {
+        qc.invalidateQueries({ queryKey: ['customer-profile'] })
+      }
       setPushSubscribed(false)
     } catch (err) {
       setPushError(err instanceof Error ? err.message : 'Could not unsubscribe.')
@@ -157,7 +167,7 @@ export default function NotificationButton() {
             exit={{ opacity: 0, y: -6, scale: 0.96 }}
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
             role="menu"
-            className="absolute right-0 top-12 z-50 w-80 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-cream-200 dark:border-white/10 bg-white/95 dark:bg-dark-800/95 backdrop-blur-2xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.4)] p-3 space-y-2"
+            className="fixed left-3 right-3 top-[calc(env(safe-area-inset-top)+4rem)] z-50 w-auto max-h-[70dvh] overflow-y-auto rounded-2xl border border-cream-200 dark:border-white/10 bg-white/95 dark:bg-dark-800/95 backdrop-blur-2xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.4)] p-3 space-y-2 sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-80 sm:max-h-none sm:overflow-visible"
           >
             <div className="flex items-center justify-between px-2 pt-1">
               <p className="text-sm font-semibold text-dark-800 dark:text-white">Notifications</p>
