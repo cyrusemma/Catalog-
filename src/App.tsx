@@ -10,6 +10,7 @@ function ScrollToTop() {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { supabase } from './lib/supabase'
 import type { Session } from '@supabase/supabase-js'
+import { syncOfflineOrders } from './lib/offlineOrders'
 
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
@@ -207,6 +208,14 @@ export default function App() {
       window.clearTimeout(timer)
       removeChannel?.()
     }
+  }, [])
+
+  // Offline orders sync listener
+  useEffect(() => {
+    syncOfflineOrders()
+    const handleOnline = () => syncOfflineOrders()
+    window.addEventListener('online', handleOnline)
+    return () => window.removeEventListener('online', handleOnline)
   }, [])
 
   return (

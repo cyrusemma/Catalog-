@@ -11,6 +11,7 @@ import { supabase } from '../lib/supabase'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useProducts } from '../hooks/useProducts'
 import ProductCard from '../components/ui/ProductCard'
+import { saveOfflineOrder } from '../lib/offlineOrders'
 
 export default function Cart() {
   useDocumentTitle('Your Cart')
@@ -61,8 +62,8 @@ export default function Cart() {
     setSubmitError('')
 
     const orderId = crypto.randomUUID()
-
-    const { error } = await supabase.from('orders').insert({
+    
+    const orderPayload = {
       id: orderId,
       store_id: merchantStoreId,
       customer_name: customerName,
@@ -82,15 +83,26 @@ export default function Cart() {
       payment_method: 'whatsapp',
       payment_status: 'pending',
       status: 'pending'
-    })
+    }
+
+    if (!navigator.onLine) {
+      saveOfflineOrder(orderPayload)
+    } else {
+      const { error } = await supabase.from('orders').insert(orderPayload)
+
+      if (error) {
+        if (error.message?.includes('fetch') || error.message?.includes('Failed to fetch')) {
+          saveOfflineOrder(orderPayload)
+        } else {
+          setIsSubmitting(false)
+          console.error(error)
+          setSubmitError("There was an error recording your order. Please try again.")
+          return
+        }
+      }
+    }
 
     setIsSubmitting(false)
-
-    if (error) {
-      console.error(error)
-      setSubmitError("There was an error recording your order. Please try again.")
-      return
-    }
 
     const targetCurrency = merchantStore?.currency || settings.currency || 'GHS'
     const targetTemplate = merchantStore?.whatsapp_template || settings.whatsapp_template
