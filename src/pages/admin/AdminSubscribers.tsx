@@ -20,7 +20,7 @@ import {
   ShoppingBag as CartIcon
 } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
-import { supabase } from '../../lib/supabase'
+import { supabase, supabaseUrl } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils'
 
 // Helper to determine device icon from user agent string
@@ -51,6 +51,72 @@ export default function AdminSubscribers() {
   const [subscriptionFilter, setSubscriptionFilter] = useState<'all' | 'subscribed' | 'unsubscribed'>('all')
   const [cartFilter, setCartFilter] = useState<'all' | 'has_items'>('all')
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
+
+  const [pushTitles, setPushTitles] = useState<Record<string, string>>({})
+  const [pushBodies, setPushBodies] = useState<Record<string, string>>({})
+  const [sendingPushId, setSendingPushId] = useState<string | null>(null)
+  const [pushStatus, setPushStatus] = useState<Record<string, { kind: 'ok' | 'err'; text: string } | null>>({})
+
+  const handleSendPushNotification = async (userId: string) => {
+    const title = pushTitles[userId]?.trim()
+    const body = pushBodies[userId]?.trim()
+    if (!title || !body) return
+
+    setSendingPushId(userId)
+    setPushStatus(prev => ({ ...prev, [userId]: null }))
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        setPushStatus(prev => ({ 
+          ...prev, 
+          [userId]: { kind: 'err', text: 'You must be logged in as admin.' } 
+        }))
+        return
+      }
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/notify-new-arrival`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          title,
+          body,
+          click_url: '/'
+        }),
+      })
+
+      const result = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setPushStatus(prev => ({ 
+          ...prev, 
+          [userId]: { kind: 'err', text: result.error || `Failed with status ${res.status}` } 
+        }))
+        return
+      }
+
+      const sentCount = result.sent ?? 0
+      setPushStatus(prev => ({ 
+        ...prev, 
+        [userId]: { kind: 'ok', text: `Notification sent successfully to ${sentCount} device(s)!` } 
+      }))
+      
+      // Clear inputs
+      setPushTitles(prev => ({ ...prev, [userId]: '' }))
+      setPushBodies(prev => ({ ...prev, [userId]: '' }))
+
+    } catch (err) {
+      setPushStatus(prev => ({ 
+        ...prev, 
+        [userId]: { kind: 'err', text: err instanceof Error ? err.message : 'Error sending notification.' } 
+      }))
+    } finally {
+      setSendingPushId(null)
+    }
+  }
 
   // Fetch registered customer profiles
   const { data: profiles, isLoading: isLoadingProfiles } = useQuery({
@@ -404,27 +470,71 @@ export default function AdminSubscribers() {
                                     {user.pushSubscriptions.length === 0 ? (
                                       <p className="text-gray-400 text-sm italic">No active browser push endpoints registered.</p>
                                     ) : (
-                                      <div className="space-y-2">
-                                        {user.pushSubscriptions.map((sub: any, subIdx: number) => {
-                                          const Icon = getDeviceIcon(sub.user_agent)
-                                          return (
-                                            <div key={subIdx} className="bg-white border border-gray-100 rounded-xl p-3 flex items-center justify-between text-xs">
-                                              <div className="flex items-center gap-2.5">
-                                                <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500">
-                                                  <Icon size={14} />
+                                      <>
+                                        <div className="space-y-2">
+                                          {user.pushSubscriptions.map((sub: any, subIdx: number) => {
+                                            const Icon = getDeviceIcon(sub.user_agent)
+                                            return (
+                                              <div key={subIdx} className="bg-white border border-gray-100 rounded-xl p-3 flex items-center justify-between text-xs">
+                                                <div className="flex items-center gap-2.5">
+                                                  <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500">
+                                                    <Icon size={14} />
+                                                  </div>
+                                                  <div>
+                                                    <p className="font-semibold text-gray-900">{getBrowserName(sub.user_agent)}</p>
+                                                    <p className="text-gray-400 text-[10px] truncate max-w-[200px] sm:max-w-[300px]">{sub.user_agent || 'Unknown details'}</p>
+                                                  </div>
                                                 </div>
-                                                <div>
-                                                  <p className="font-semibold text-gray-900">{getBrowserName(sub.user_agent)}</p>
-                                                  <p className="text-gray-400 text-[10px] truncate max-w-[200px] sm:max-w-[300px]">{sub.user_agent || 'Unknown details'}</p>
-                                                </div>
+                                                <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                                                  <Calendar size={10} /> {new Date(sub.created_at).toLocaleDateString()}
+                                                </span>
                                               </div>
-                                              <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                                                <Calendar size={10} /> {new Date(sub.created_at).toLocaleDateString()}
-                                              </span>
-                                            </div>
-                                          )
-                                        })}
-                                      </div>
+                                            )
+                                          })}
+                                        </div>
+
+                                        {/* Send Push Notification Form */}
+                                        <div className="mt-4 border border-gray-100 rounded-2xl bg-white p-4 space-y-3 shadow-sm">
+                                          <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">Send Push Notification</p>
+                                          <div>
+                                            <input
+                                              type="text"
+                                              placeholder="Notification Title (e.g. Exclusive Discount!)"
+                                              value={pushTitles[user.id] || ''}
+                                              onChange={e => setPushTitles(prev => ({ ...prev, [user.id]: e.target.value }))}
+                                              className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2.5 text-xs text-gray-900 placeholder-gray-400 outline-none bg-gray-50 focus:bg-white transition-colors font-medium"
+                                            />
+                                          </div>
+                                          <div>
+                                            <textarea
+                                              placeholder="Notification Message..."
+                                              rows={2}
+                                              value={pushBodies[user.id] || ''}
+                                              onChange={e => setPushBodies(prev => ({ ...prev, [user.id]: e.target.value }))}
+                                              className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2.5 text-xs text-gray-900 placeholder-gray-400 outline-none bg-gray-50 focus:bg-white transition-colors resize-none font-medium"
+                                            />
+                                          </div>
+
+                                          {pushStatus[user.id] && (
+                                            <p className={`text-[11px] px-3 py-2 rounded-xl border font-semibold ${
+                                              pushStatus[user.id]?.kind === 'ok' 
+                                                ? 'bg-green-50 border-green-200 text-green-700' 
+                                                : 'bg-red-50 border-red-200 text-red-600'
+                                            }`}>
+                                              {pushStatus[user.id]?.text}
+                                            </p>
+                                          )}
+
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSendPushNotification(user.id)}
+                                            disabled={sendingPushId === user.id || !pushTitles[user.id]?.trim() || !pushBodies[user.id]?.trim()}
+                                            className="w-full flex items-center justify-center gap-2 bg-brand-400 hover:bg-brand-500 disabled:opacity-60 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors shadow-sm"
+                                          >
+                                            <Send size={12} /> {sendingPushId === user.id ? 'Sending...' : 'Send Push'}
+                                          </button>
+                                        </div>
+                                      </>
                                     )}
                                   </div>
                                 </div>

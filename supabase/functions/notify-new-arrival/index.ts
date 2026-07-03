@@ -46,25 +46,68 @@ Deno.serve(async (req: Request) => {
   if (role !== 'admin') return json({ error: 'Admin only' }, 403)
 
   // 2. Parse payload.
-  let body: { product_id?: string } = {}
+  let body: { 
+    product_id?: string;
+    user_id?: string;
+    title?: string;
+    body?: string;
+    click_url?: string;
+  } = {}
   try { body = await req.json() } catch { /* tolerate empty body */ }
+
   const productId = body.product_id
-  if (!productId) return json({ error: 'product_id required' }, 400)
+  const targetUserId = body.user_id
+  const customTitle = body.title
+  const customBody = body.body
+  const customClickUrl = body.click_url
 
-  // 3. Fetch the product so the notification has a real title/image.
-  const { data: product, error: productErr } = await adminClient
-    .from('products')
-    .select('id, title, selling_price, images')
-    .eq('id', productId)
-    .maybeSingle()
-  if (productErr || !product) return json({ error: 'Product not found' }, 404)
+  let payload = ''
 
-  // 4. Pull every saved subscription. Delivery should follow actual browser
-  // subscriptions, not profile-flag joins that can exclude valid users when
-  // profile rows/columns are missing.
-  const { data: rows, error: rowsErr } = await adminClient
+  if (customTitle && customBody) {
+    payload = JSON.stringify({
+      title: customTitle,
+      body: customBody,
+      icon: '/pwa-192x192.png',
+      badge: '/favicon-32.png',
+      click_url: customClickUrl || '/',
+      tag: targetUserId ? `custom-user-${targetUserId}` : 'custom-broadcast',
+    })
+  } else if (productId) {
+    // 3. Fetch the product so the notification has a real title/image.
+    const { data: product, error: productErr } = await adminClient
+      .from('products')
+      .select('id, title, selling_price, images')
+      .eq('id', productId)
+      .maybeSingle()
+    if (productErr || !product) return json({ error: 'Product not found' }, 404)
+
+    const image = Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : null
+    const clickUrl = `${SITE_URL || ''}/product/${product.id}`
+
+    payload = JSON.stringify({
+      title: `New arrival: ${product.title}`,
+      body: typeof product.selling_price === 'number'
+        ? `Just dropped — GHS ${product.selling_price.toFixed(2)}. Tap to take a look.`
+        : 'Just dropped. Tap to take a look.',
+      icon: image || '/pwa-192x192.png',
+      badge: '/favicon-32.png',
+      click_url: clickUrl,
+      tag: `product-${product.id}`,
+    })
+  } else {
+    return json({ error: 'product_id or title/body required' }, 400)
+  }
+
+  // 4. Pull saved subscription(s).
+  let query = adminClient
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth, user_id')
+
+  if (targetUserId) {
+    query = query.eq('user_id', targetUserId)
+  }
+
+  const { data: rows, error: rowsErr } = await query
   if (rowsErr) return json({ error: rowsErr.message }, 500)
 
   const subs = (rows ?? []) as Array<{
