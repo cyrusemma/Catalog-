@@ -1,8 +1,15 @@
-import { useState, useRef, useEffect } from 'react'
-import { CaretDown } from '@phosphor-icons/react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { useCurrencyStore } from '../../store/currencyStore'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
+
+const CURRENCY_DETAILS: Record<string, { symbol: string; flag: string; label: string }> = {
+  GHS: { symbol: 'GH₵', flag: '🇬🇭', label: 'Ghanaian Cedi' },
+  USD: { symbol: '$', flag: '🇺🇸', label: 'US Dollar' },
+  GBP: { symbol: '£', flag: '🇬🇧', label: 'British Pound' },
+  EUR: { symbol: '€', flag: '🇪🇺', label: 'Euro' },
+  NGN: { symbol: '₦', flag: '🇳🇬', label: 'Nigerian Naira' },
+  KES: { symbol: 'KSh', flag: '🇰🇪', label: 'Kenyan Shilling' },
+  ZAR: { symbol: 'R', flag: '🇿🇦', label: 'South African Rand' },
+}
 
 const CURRENCIES = ['GHS', 'USD', 'GBP', 'EUR', 'NGN', 'KES', 'ZAR']
 
@@ -12,69 +19,40 @@ export default function CurrencySelector() {
   const baseCurrency = settings?.currency || 'GHS'
   
   const currentCurrency = displayCurrency || baseCurrency
-  const [isOpen, setIsOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   return (
-    <div className="relative" ref={menuRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-3 py-2 hover:bg-cream-100 dark:hover:bg-dark-700 rounded-xl transition-colors text-sm font-semibold text-dark-800 dark:text-white"
-        title="Change currency"
-      >
-        {currentCurrency}
-        <CaretDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full mt-2">
+      {CURRENCIES.map(code => {
+        const details = CURRENCY_DETAILS[code] || { symbol: code, flag: '🏳️', label: code }
+        const isSelected = currentCurrency === code
+        const isBase = code === baseCurrency
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="absolute top-full right-0 mt-2 w-24 bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 rounded-2xl shadow-xl overflow-hidden z-50"
+        return (
+          <button
+            key={code}
+            type="button"
+            onClick={() => setDisplayCurrency(isBase ? null : code)}
+            className={`flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all ${
+              isSelected
+                ? 'bg-brand-400/10 border-brand-400 text-brand-600 dark:text-brand-400 font-semibold shadow-sm'
+                : 'bg-cream-50/50 dark:bg-dark-900/30 border-cream-200 dark:border-white/5 text-dark-800 dark:text-white hover:bg-cream-100/50 dark:hover:bg-dark-700/30'
+            }`}
           >
-            <div className="py-2">
-              <button
-                onClick={() => {
-                  setDisplayCurrency(null) // Reset to base currency
-                  setIsOpen(false)
-                }}
-                className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                  !displayCurrency ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-500 font-bold' : 'text-dark-800 dark:text-white hover:bg-cream-50 dark:hover:bg-dark-700'
-                }`}
-              >
-                {baseCurrency}
-              </button>
-              {CURRENCIES.filter(c => c !== baseCurrency).map(c => (
-                <button
-                  key={c}
-                  onClick={() => {
-                    setDisplayCurrency(c)
-                    setIsOpen(false)
-                  }}
-                  className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                    displayCurrency === c ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-500 font-bold' : 'text-dark-800 dark:text-white hover:bg-cream-50 dark:hover:bg-dark-700'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
+            <span className="text-2xl flex-shrink-0" role="img" aria-label={details.label}>
+              {details.flag}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-bold tracking-tight">{code}</span>
+                <span className="text-xs text-dark-800/40 dark:text-white/40 font-mono font-bold">({details.symbol})</span>
+              </div>
+              <p className="text-[10px] text-dark-800/55 dark:text-white/40 truncate mt-0.5 font-medium">
+                {details.label} {isBase ? '(Store Base)' : ''}
+              </p>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </button>
+        )
+      })}
     </div>
   )
 }

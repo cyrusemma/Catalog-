@@ -7,7 +7,6 @@ import { useCustomerSession } from '../../hooks/useCustomerSession'
 import { useSignInStore } from '../../store/signInStore'
 import ThemeToggle from '../ui/ThemeToggle'
 import NotificationButton from '../ui/NotificationButton'
-import CurrencySelector from '../ui/CurrencySelector'
 
 export default function Navbar() {
   const location = useLocation()
@@ -93,7 +92,6 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-1">
-            <CurrencySelector />
             <ThemeToggle />
             <NotificationButton />
 

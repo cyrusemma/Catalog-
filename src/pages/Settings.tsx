@@ -203,9 +203,7 @@ export default function Settings() {
               Choose your preferred currency to display prices across the store. This setting is saved to your device.
             </p>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-800/50 dark:text-white/40 mb-2">Display Currency</p>
-            <div className="inline-block bg-cream-100 dark:bg-dark-700 rounded-xl px-2">
-              <CurrencySelector />
-            </div>
+            <CurrencySelector />
           </div>
         </div>
       </motion.section>
