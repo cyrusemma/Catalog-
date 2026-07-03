@@ -291,6 +291,7 @@ export default function AdminSubscribers() {
 
           <div className="flex flex-wrap gap-3 w-full md:w-auto">
             <select
+              title="Subscription Filter"
               value={subscriptionFilter}
               onChange={e => setSubscriptionFilter(e.target.value as any)}
               className="border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2.5 text-sm text-gray-700 bg-gray-50 outline-none cursor-pointer"
@@ -301,6 +302,7 @@ export default function AdminSubscribers() {
             </select>
 
             <select
+              title="Cart Status Filter"
               value={cartFilter}
               onChange={e => setCartFilter(e.target.value as any)}
               className="border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2.5 text-sm text-gray-700 bg-gray-50 outline-none cursor-pointer"

@@ -130,6 +130,7 @@ export default function AdminOrders() {
           
           <div className="flex flex-wrap items-center gap-3">
             <select
+              title="Filter by date range"
               value={dateFilter}
               onChange={(e) => setDateFilter(Number(e.target.value))}
               className="bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 text-dark-800 dark:text-white text-sm font-medium rounded-xl px-4 py-2 outline-none focus:border-brand-400"
@@ -247,6 +248,7 @@ export default function AdminOrders() {
                       </label>
                       <div className="relative">
                         <select
+                          title="Order Status"
                           value={order.status}
                           onChange={e => updateStatus.mutate({ id: order.id, status: e.target.value })}
                           className="w-full appearance-none bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 text-dark-800 dark:text-white text-sm font-bold rounded-xl pl-4 pr-10 py-3 outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 cursor-pointer shadow-sm transition-all"
