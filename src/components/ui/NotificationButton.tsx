@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bell, X, BellRinging, BellSlash } from '@phosphor-icons/react'
+import { Bell, X, BellRinging, BellSlash, Sparkle, ArrowRight } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
 import { useSignInStore } from '../../store/signInStore'
 import { supabase } from '../../lib/supabase'
 import { getActiveSubscription, pushIsSupported, subscribeToPush, unsubscribeFromPush } from '../../lib/pushSubscription'
+import { useStoreSettings } from '../../hooks/useStoreSettings'
 
 const SIGNIN_DISMISSED_KEY = 'catalog-signin-prompt-seen-v1'
 
@@ -35,6 +36,30 @@ export default function NotificationButton() {
   const [pushSubscribed, setPushSubscribed] = useState<boolean | null>(null)
   const [pushWorking, setPushWorking] = useState(false)
   const [pushError, setPushError] = useState<string | null>(null)
+
+  const settings = useStoreSettings()
+  const [announcementSeen, setAnnouncementSeen] = useState(true)
+
+  const activeAnnouncementText = settings.announcement_text?.trim() || ''
+  const announcementSeenKey = activeAnnouncementText ? `announcement-seen-${btoa(activeAnnouncementText)}` : ''
+
+  useEffect(() => {
+    if (!activeAnnouncementText) return
+    const checkSeen = () => {
+      setAnnouncementSeen(!!localStorage.getItem(announcementSeenKey))
+    }
+    checkSeen()
+    window.addEventListener('announcement-dismissed', checkSeen)
+    return () => window.removeEventListener('announcement-dismissed', checkSeen)
+  }, [activeAnnouncementText, announcementSeenKey])
+
+  useEffect(() => {
+    if (open && settings.announcement_active && !announcementSeen && announcementSeenKey) {
+      localStorage.setItem(announcementSeenKey, 'true')
+      setAnnouncementSeen(true)
+      window.dispatchEvent(new Event('announcement-dismissed'))
+    }
+  }, [open, settings.announcement_active, announcementSeen, announcementSeenKey])
 
   useEffect(() => {
     let active = true
@@ -139,7 +164,7 @@ export default function NotificationButton() {
   // profile flag suggests they want it (the toggle is on but the device isn't
   // subscribed).
   const pushWantedButOff = showPushCard && profile?.notify_new_arrivals === true && pushSubscribed === false
-  const hasUnreadAction = showSignInCard || pushWantedButOff
+  const hasUnreadAction = showSignInCard || pushWantedButOff || (settings.announcement_active && !announcementSeen)
 
   return (
     <div ref={rootRef} className="relative">
@@ -175,6 +200,33 @@ export default function NotificationButton() {
                 <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-brand-400">New</span>
               )}
             </div>
+
+            {/* Store Announcement card */}
+            {settings.announcement_active && settings.announcement_text?.trim() && (
+              <div className="rounded-xl bg-gradient-to-br from-amber-500/10 to-brand-500/5 border border-brand-400/20 p-3">
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-sm">
+                    <Sparkle size={15} weight="fill" className="text-white" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-dark-800 dark:text-white uppercase tracking-wider">Announcement</p>
+                    <p className="text-[12px] text-dark-800/75 dark:text-white/70 leading-relaxed mt-1 font-medium">
+                      {settings.announcement_text}
+                    </p>
+                    {settings.announcement_link && (
+                      <a
+                        href={settings.announcement_link}
+                        target={settings.announcement_link.startsWith('http') ? '_blank' : undefined}
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-400 hover:text-brand-500 mt-2 transition-colors"
+                      >
+                        Learn more <ArrowRight size={10} />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Stay in the loop — only for guests who haven't dismissed it. */}
             {showSignInCard && (
