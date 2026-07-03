@@ -24,5 +24,11 @@ create policy "Users manage own push subscriptions" on push_subscriptions
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+drop policy if exists "Admin read all push subscriptions" on push_subscriptions;
+create policy "Admin read all push subscriptions" on push_subscriptions
+  for select
+  using ((((auth.jwt() -> 'app_metadata'::text) ->> 'role'::text) = 'admin'::text));
+
 -- Edge Function uses the service_role key (RLS bypassed), so it can read every
--- subscription for fan-out. No explicit admin-read policy needed.
+-- subscription for fan-out.
+

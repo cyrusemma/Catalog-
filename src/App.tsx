@@ -46,6 +46,7 @@ const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
 const AdminReviews = lazy(() => import('./pages/admin/AdminReviews'))
 const AdminApprovals = lazy(() => import('./pages/admin/AdminApprovals'))
+const AdminSubscribers = lazy(() => import('./pages/admin/AdminSubscribers'))
 
 const qc = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 * 5 } } })
 
@@ -177,6 +178,7 @@ function AnimatedRoutes() {
       <Route path="/admin/orders" element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
       <Route path="/admin/reviews" element={<AdminProtectedRoute><AdminReviews /></AdminProtectedRoute>} />
       <Route path="/admin/settings" element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
+      <Route path="/admin/subscribers" element={<AdminProtectedRoute><AdminSubscribers /></AdminProtectedRoute>} />
 
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />
