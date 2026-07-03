@@ -72,6 +72,36 @@ export default function AdminOrders() {
     document.body.removeChild(link)
   }
 
+  const handleSendWhatsAppStatus = (order: Order) => {
+    if (!order.customer_phone) return
+    const orderId = order.id.slice(0, 8)
+    const name = order.customer_name
+    let statusText = ''
+    switch (order.status) {
+      case 'confirmed':
+        statusText = `Hi ${name}! 🌟 Your order #${orderId} has been confirmed and is now being prepared.`
+        break
+      case 'processing':
+        statusText = `Hi ${name}! 🛠️ Your order #${orderId} is being processed and will be ready for dispatch soon.`
+        break
+      case 'shipped':
+        statusText = `Hi ${name}! 🚚 Exciting news! Your order #${orderId} has been shipped and is on its way to you.`
+        break
+      case 'delivered':
+        statusText = `Hi ${name}! 🎉 Your order #${orderId} has been delivered. Thank you for shopping with us, we hope you love your items!`
+        break
+      case 'cancelled':
+        statusText = `Hi ${name}! We would like to inform you that your order #${orderId} has been cancelled. Please let us know if you have any questions.`
+        break
+      default:
+        statusText = `Hi ${name}! This is an update regarding your order #${orderId}. Current status: ${order.status}.`
+        break
+    }
+    const cleanPhone = order.customer_phone.replace(/\D/g, '')
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(statusText)}`
+    window.open(url, '_blank')
+  }
+
   return (
     <AdminLayout>
       <div className="p-4 sm:p-8">
@@ -225,6 +255,15 @@ export default function AdminOrders() {
                         </select>
                         <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 pointer-events-none" />
                       </div>
+                      {order.customer_phone && (
+                        <button
+                          type="button"
+                          onClick={() => handleSendWhatsAppStatus(order)}
+                          className="w-full mt-3 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors shadow-sm"
+                        >
+                          Send WhatsApp Status Update
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
