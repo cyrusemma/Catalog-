@@ -129,8 +129,8 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
                 </span>
               )}
               {product.is_featured && (
-                <span className="bg-yellow-50 text-yellow-600 dark:bg-yellow-950/30 dark:text-yellow-400 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-yellow-200 dark:border-yellow-800/30">
-                  <Lightning size={10} weight="fill" /> FEATURED
+                <span className="text-amber-500 dark:text-amber-400 animate-pulse flex items-center justify-center px-1 py-0.5" title="Featured">
+                  <Sparkle size={12} weight="fill" />
                 </span>
               )}
             </div>
