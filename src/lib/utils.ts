@@ -1,7 +1,21 @@
 import type { Product } from '../types'
 
+export const CURRENCY_SYMBOLS: Record<string, string> = {
+  GHS: 'GH₵',
+  USD: '$',
+  GBP: '£',
+  EUR: '€',
+  NGN: '₦',
+  KES: 'KSh',
+  ZAR: 'R',
+}
+
+export function getCurrencySymbol(code: string): string {
+  return CURRENCY_SYMBOLS[code] || code
+}
+
 export function formatPrice(amount: number, currency = 'GHS'): string {
-  return `${currency} ${amount.toFixed(2)}`
+  return `${getCurrencySymbol(currency)} ${amount.toFixed(2)}`
 }
 
 type FlashSaleFields = Pick<Product, 'selling_price' | 'flash_sale_price' | 'flash_sale_ends_at'>
@@ -28,7 +42,13 @@ export function effectivePrice(product: FlashSaleFields, now: number = Date.now(
 }
 
 export function slugify(text: string): string {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
 }
 
 export function isNewProduct(createdAt: string, days = 7): boolean {
@@ -43,8 +63,8 @@ export function buildWhatsAppUrl(phone: string, message: string): string {
   return `https://wa.me/${clean}?text=${encodeURIComponent(message)}`
 }
 
-export function buildProductWhatsAppMessage(productTitle: string, price: number, productUrl: string): string {
-  return `Hi! I'd like to order:\n\n*${productTitle}*\nPrice: GHS ${price.toFixed(2)}\n\nProduct link: ${productUrl}\n\nPlease confirm availability and delivery details. Thank you!`
+export function buildProductWhatsAppMessage(productTitle: string, price: number, productUrl: string, currency = 'GHS'): string {
+  return `Hi! I'd like to order:\n\n*${productTitle}*\nPrice: ${getCurrencySymbol(currency)} ${price.toFixed(2)}\n\nProduct link: ${productUrl}\n\nPlease confirm availability and delivery details. Thank you!`
 }
 
 export function buildCartWhatsAppMessage(
@@ -54,8 +74,9 @@ export function buildCartWhatsAppMessage(
   currency = 'GHS',
   template?: string | null
 ): string {
+  const sym = getCurrencySymbol(currency)
   const lines = items.map(i => {
-    let line = `• ${i.title} x${i.qty} — ${currency} ${(i.price * i.qty).toFixed(2)}`
+    let line = `• ${i.title} x${i.qty} — ${sym} ${(i.price * i.qty).toFixed(2)}`
     if (i.url) {
       line += `\n  Link: ${i.url}`
     }
@@ -64,17 +85,17 @@ export function buildCartWhatsAppMessage(
   const total = subtotal + deliveryFee
   const summary =
     deliveryFee > 0
-      ? `Subtotal: ${currency} ${subtotal.toFixed(2)}\nDelivery: ${currency} ${deliveryFee.toFixed(2)}\n*Total: ${currency} ${total.toFixed(2)}*`
-      : `*Total: ${currency} ${total.toFixed(2)}*`
+      ? `Subtotal: ${sym} ${subtotal.toFixed(2)}\nDelivery: ${sym} ${deliveryFee.toFixed(2)}\n*Total: ${sym} ${total.toFixed(2)}*`
+      : `*Total: ${sym} ${total.toFixed(2)}*`
 
   // Custom template support: admin can override the message body using
   // {items}, {subtotal}, {delivery}, {total}, {currency} placeholders.
   if (template && template.trim()) {
     return template
       .replace(/\{items\}/g, lines)
-      .replace(/\{subtotal\}/g, `${currency} ${subtotal.toFixed(2)}`)
-      .replace(/\{delivery\}/g, deliveryFee > 0 ? `${currency} ${deliveryFee.toFixed(2)}` : 'Free')
-      .replace(/\{total\}/g, `${currency} ${total.toFixed(2)}`)
+      .replace(/\{subtotal\}/g, `${sym} ${subtotal.toFixed(2)}`)
+      .replace(/\{delivery\}/g, deliveryFee > 0 ? `${sym} ${deliveryFee.toFixed(2)}` : 'Free')
+      .replace(/\{total\}/g, `${sym} ${total.toFixed(2)}`)
       .replace(/\{currency\}/g, currency)
   }
 

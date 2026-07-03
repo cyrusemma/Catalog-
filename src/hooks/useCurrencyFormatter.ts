@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react'
 import { useCurrencyStore } from '../store/currencyStore'
 import { useStoreSettings } from './useStoreSettings'
+import { getCurrencySymbol } from '../lib/utils'
 
 export function useCurrencyFormatter() {
   const { displayCurrency, exchangeRates, fetchRates } = useCurrencyStore()
@@ -29,7 +30,7 @@ export function useCurrencyFormatter() {
       }
     }
 
-    return `${finalCurrency} ${finalAmount.toFixed(2)}`
+    return `${getCurrencySymbol(finalCurrency)} ${finalAmount.toFixed(2)}`
   }, [displayCurrency, exchangeRates, settings.currency])
 
   return formatPrice
