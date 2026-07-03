@@ -115,7 +115,7 @@ export default function AdminOrders() {
               disabled={!filtered?.length}
               className="flex items-center gap-1.5 bg-cream-100 dark:bg-white/5 hover:bg-cream-200 dark:hover:bg-white/10 text-dark-800 dark:text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-transparent dark:border-white/5"
             >
-              <Download size={16} weight="bold" /> Export CSV
+              <Download size={16} /> Export CSV
             </button>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function AdminOrders() {
           <div className="text-center py-20 text-dark-800/40 dark:text-white/40 font-medium">Loading orders...</div>
         ) : !filtered?.length ? (
           <div className="bg-white dark:bg-dark-800 rounded-3xl border border-cream-200 dark:border-brand-400/15 py-20 text-center shadow-sm">
-            <ShoppingBag size={48} weight="duotone" className="text-brand-400/50 mx-auto mb-4" />
+            <ShoppingBag size={48} className="text-brand-400/50 mx-auto mb-4" />
             <p className="text-dark-800/50 dark:text-white/50 font-semibold">No orders found.</p>
           </div>
         ) : (
@@ -186,7 +186,7 @@ export default function AdminOrders() {
                 <div className="w-full lg:w-72 flex flex-col">
                   <div className="bg-cream-50 dark:bg-dark-700/30 rounded-2xl p-5 border border-cream-200 dark:border-brand-400/15 flex-1">
                     <h3 className="text-dark-800 dark:text-white font-bold mb-4 flex items-center gap-2">
-                      <ShoppingBag size={18} className="text-brand-400" weight="duotone" /> 
+                      <ShoppingBag size={18} className="text-brand-400" /> 
                       Order Summary
                     </h3>
                     
@@ -223,7 +223,7 @@ export default function AdminOrders() {
                         >
                           {STATUSES.map(s => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                         </select>
-                        <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 pointer-events-none" weight="bold" />
+                        <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 pointer-events-none" />
                       </div>
                     </div>
                   </div>

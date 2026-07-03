@@ -39,6 +39,9 @@ export interface Order {
   customer_phone: string
   customer_address: string
   items: OrderItem[]
+  subtotal: number
+  delivery_fee: number
+  discount_amount: number
   total: number
   status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
   notes?: string

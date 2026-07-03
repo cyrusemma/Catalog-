@@ -37,6 +37,7 @@ export default defineConfig({
     })
   ],
   build: {
+    chunkSizeWarningLimit: 1600,
     modulePreload: {
       resolveDependencies(_filename, deps) {
         return deps.filter(dep => !dep.includes('/motion-'))
