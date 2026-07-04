@@ -125,9 +125,16 @@ export default function StoreFooter() {
             />
             Browse the full marketplace
           </Link>
-          <p className="text-[11px] text-dark-800/25 dark:text-white/20 mt-3">
-            &copy; {new Date().getFullYear()} {storeName}. All rights reserved.
-          </p>
+          <div className="mt-3 flex flex-col items-center gap-2">
+            <p className="text-[11px] text-dark-800/25 dark:text-white/20">
+              &copy; {new Date().getFullYear()} {storeName}. All rights reserved.
+            </p>
+            <div className="flex items-center gap-3 text-[11px] text-dark-800/25 dark:text-white/20">
+              <Link to="/privacy" className="hover:text-brand-400 transition-colors">Privacy Policy</Link>
+              <span>•</span>
+              <Link to="/terms" className="hover:text-brand-400 transition-colors">Terms of Service</Link>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

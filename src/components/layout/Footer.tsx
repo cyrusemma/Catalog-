@@ -130,8 +130,8 @@ export default function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between w-full max-w-md border-t border-brand-400/10 pt-6 text-xs text-dark-800/40 dark:text-white/30 gap-4">
           <span>&copy; {new Date().getFullYear()} {settings.store_name}. All rights reserved.</span>
           <div className="flex items-center gap-4">
-            <Link to="#" className="hover:text-brand-400 transition-colors">Privacy Policy</Link>
-            <Link to="#" className="hover:text-brand-400 transition-colors">Terms of Service</Link>
+            <Link to="/privacy" className="hover:text-brand-400 transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-brand-400 transition-colors">Terms of Service</Link>
           </div>
         </div>
       </div>

@@ -39,6 +39,8 @@ const Wishlist = lazy(() => import('./pages/Wishlist'))
 const Account = lazy(() => import('./pages/Account'))
 const CustomerOrders = lazy(() => import('./pages/CustomerOrders'))
 const Settings = lazy(() => import('./pages/Settings'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const Terms = lazy(() => import('./pages/Terms'))
 const StoreFront = lazy(() => import('./pages/store/StoreFront'))
 const BecomeMerchant = lazy(() => import('./pages/BecomeMerchant'))
 const OfflineGame = lazy(() => import('./pages/OfflineGame'))
@@ -235,6 +237,8 @@ function AnimatedRoutes() {
       <Route path="/account" element={<StorefrontLayout><Account /></StorefrontLayout>} />
       <Route path="/account/orders" element={<StorefrontLayout><CustomerOrders /></StorefrontLayout>} />
       <Route path="/settings" element={<StorefrontLayout><Settings /></StorefrontLayout>} />
+      <Route path="/privacy" element={<StorefrontLayout><Privacy /></StorefrontLayout>} />
+      <Route path="/terms" element={<StorefrontLayout><Terms /></StorefrontLayout>} />
       {/* Merchant storefronts — fully isolated tenant surface, no global nav */}
       <Route path="/s/:storeSlug" element={<MerchantStorefrontLayout><StoreFront /></MerchantStorefrontLayout>} />
       <Route path="/sell" element={<StorefrontLayout><BecomeMerchant /></StorefrontLayout>} />
