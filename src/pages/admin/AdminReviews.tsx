@@ -1,119 +1,215 @@
-import { useQuery } from '@tanstack/react-query'
-import { Star, MessageSquareQuote, Mail, ExternalLink } from 'lucide-react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Star, Eye, EyeSlash, Trash, MagnifyingGlass, Funnel } from '@phosphor-icons/react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
-import type { SiteReview } from '../../types'
+import type { ProductReview } from '../../types'
 
-function RatingStars({ rating }: { rating: number }) {
+type StatusFilter = 'all' | 'pending' | 'published' | 'hidden'
+
+function StarDisplay({ rating }: { rating: number }) {
   return (
-    <div className="flex items-center gap-1">
-      {Array.from({ length: 5 }).map((_, index) => (
+    <div className="flex items-center gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
         <Star
-          key={index}
-          size={14}
-          className={index < rating ? 'text-brand-400 fill-brand-400 drop-shadow-[0_0_5px_rgba(212,130,10,0.55)]' : 'text-gray-300'}
+          key={i}
+          size={12}
+          weight={i < rating ? 'fill' : 'regular'}
+          className={i < rating ? 'text-brand-400' : 'text-gray-200'}
         />
       ))}
     </div>
   )
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  pending:   'bg-amber-50 text-amber-600 border-amber-200',
+  published: 'bg-green-50 text-green-600 border-green-200',
+  hidden:    'bg-gray-100 text-gray-500 border-gray-200',
+}
+
 export default function AdminReviews() {
-  const { data: reviews, isLoading } = useQuery({
-    queryKey: ['admin-reviews'],
+  const qc = useQueryClient()
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('pending')
+  const [search, setSearch] = useState('')
+
+  const { data: reviews, isLoading } = useQuery<(ProductReview & { products?: { title: string } })[]>({
+    queryKey: ['admin-product-reviews', statusFilter],
     queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('site_reviews')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (error) {
-          const msg = (error.message || '').toLowerCase()
-          // If table is missing on remote DB, fall back to local mock data
-          if (msg.includes('relation "site_reviews" does not exist') || msg.includes("could not find the table 'public.site_reviews'")) {
-            const local = JSON.parse(window.localStorage.getItem('mock_site_reviews') || '[]') as SiteReview[]
-            return local
-          }
-          throw error
-        }
-
-        return (data || []) as SiteReview[]
-      } catch (e) {
-        // If anything else goes wrong, try local fallback
-        try {
-          const local = JSON.parse(window.localStorage.getItem('mock_site_reviews') || '[]') as SiteReview[]
-          return local
-        } catch (err) {
-          return []
-        }
+      let query = supabase
+        .from('product_reviews')
+        .select('*, products(title)')
+        .order('created_at', { ascending: false })
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter)
       }
+      const { data, error } = await query
+      if (error) throw error
+      return (data || []) as any
     },
   })
 
+  const updateStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: 'published' | 'hidden' }) => {
+      const { error } = await supabase
+        .from('product_reviews')
+        .update({ status })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-product-reviews'] })
+    },
+  })
+
+  const deleteReview = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('product_reviews').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-product-reviews'] })
+    },
+  })
+
+  const filtered = reviews?.filter(r => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return (
+      (r.reviewer_name?.toLowerCase().includes(q)) ||
+      (r.comment?.toLowerCase().includes(q)) ||
+      ((r as any).products?.title?.toLowerCase().includes(q))
+    )
+  })
+
+  const pendingCount = reviews?.filter(r => r.status === 'pending').length ?? 0
+
   return (
     <AdminLayout>
-      <div className="p-8 max-w-6xl">
+      <div className="p-6 sm:p-8 max-w-5xl">
         <div className="mb-8">
-          <p className="text-gray-400 text-sm mb-1">Feedback</p>
-          <h1 className="text-2xl font-bold text-gray-900">Reviews</h1>
-          <p className="text-sm text-gray-500 mt-2">Read site ratings and suggestions submitted by visitors.</p>
+          <p className="text-gray-400 text-sm mb-1">Moderation</p>
+          <h1 className="text-2xl font-bold text-gray-900">Product Reviews</h1>
+          <p className="text-sm text-gray-500 mt-2">
+            Approve, hide, or delete customer reviews per product.
+            {pendingCount > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-xs font-semibold">
+                {pendingCount} pending
+              </span>
+            )}
+          </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MessageSquareQuote size={16} className="text-brand-400" />
-              <h2 className="font-semibold text-gray-900">Submitted reviews</h2>
-            </div>
-            <span className="text-xs text-gray-400">{reviews?.length || 0} entries</span>
+        {/* Controls */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          {/* Search */}
+          <div className="relative flex-1">
+            <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search reviews..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-brand-400/60 focus:ring-2 focus:ring-brand-400/15"
+            />
           </div>
+          {/* Status filter */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-gray-100 flex-shrink-0">
+            {(['all', 'pending', 'published', 'hidden'] as const).map(s => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setStatusFilter(s)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
+                  statusFilter === s
+                    ? 'bg-white text-brand-400 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
 
+        {/* Reviews list */}
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           {isLoading ? (
             <div className="p-6 text-sm text-gray-500">Loading reviews...</div>
-          ) : reviews && reviews.length > 0 ? (
+          ) : !filtered || filtered.length === 0 ? (
+            <div className="p-12 text-center text-sm text-gray-400">
+              <Funnel size={32} className="mx-auto mb-3 text-gray-200" />
+              {search ? 'No reviews match your search.' : `No ${statusFilter === 'all' ? '' : statusFilter + ' '}reviews yet.`}
+            </div>
+          ) : (
             <div className="divide-y divide-gray-100">
-              {reviews.map(review => (
-                <div key={review.id} className="p-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-3 mb-3">
-                      <RatingStars rating={review.rating} />
-                      <span className="text-sm font-semibold text-gray-900">
-                        {review.name?.trim() || 'Anonymous visitor'}
-                      </span>
-                      <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleString()}</span>
+              {filtered.map(review => (
+                <div key={review.id} className="p-5">
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      {/* Product name */}
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-brand-400 mb-1">
+                        {(review as any).products?.title || 'Unknown product'}
+                      </p>
+                      {/* Reviewer info + rating */}
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <StarDisplay rating={review.rating} />
+                        <span className="text-sm font-semibold text-gray-900">
+                          {review.reviewer_name || 'Anonymous'}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {new Date(review.created_at).toLocaleDateString(undefined, {
+                            year: 'numeric', month: 'short', day: 'numeric',
+                          })}
+                        </span>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_COLORS[review.status]}`}>
+                          {review.status}
+                        </span>
+                      </div>
+                      {review.comment && (
+                        <p className="text-sm text-gray-700 leading-relaxed">{review.comment}</p>
+                      )}
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{review.message}</p>
-                    {review.page_url && (
-                      <a
-                        href={review.page_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 mt-3 text-xs font-medium text-brand-400 hover:text-brand-500"
-                      >
-                        <ExternalLink size={12} />
-                        Open page source
-                      </a>
-                    )}
-                  </div>
 
-                  <div className="flex flex-wrap gap-2 text-xs lg:justify-end">
-                    {review.email ? (
-                      <a href={`mailto:${review.email}`} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-brand-50 text-brand-600 hover:bg-brand-100 transition-colors">
-                        <Mail size={12} />
-                        {review.email}
-                      </a>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-400">
-                        No email provided
-                      </span>
-                    )}
+                    {/* Actions */}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {review.status !== 'published' && (
+                        <button
+                          type="button"
+                          onClick={() => updateStatus.mutate({ id: review.id, status: 'published' })}
+                          title="Publish"
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition-colors"
+                        >
+                          <Eye size={13} /> Publish
+                        </button>
+                      )}
+                      {review.status !== 'hidden' && (
+                        <button
+                          type="button"
+                          onClick={() => updateStatus.mutate({ id: review.id, status: 'hidden' })}
+                          title="Hide"
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gray-100 text-gray-500 hover:bg-gray-200 border border-gray-200 transition-colors"
+                        >
+                          <EyeSlash size={13} /> Hide
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm('Delete this review permanently?')) {
+                            deleteReview.mutate(review.id)
+                          }
+                        }}
+                        title="Delete"
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash size={15} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="p-8 text-center text-sm text-gray-500">No reviews submitted yet.</div>
           )}
         </div>
       </div>

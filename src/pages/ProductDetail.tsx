@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useLocation } from 'react-router-dom'
-import { ArrowLeft, ShoppingCart, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck, Lightning, Clock } from '@phosphor-icons/react'
+import { ArrowLeft, ShoppingCart, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck, Lightning, Clock, Heart } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useProduct } from '../hooks/useProducts'
@@ -14,6 +14,7 @@ import ProductCard from '../components/ui/ProductCard'
 import { useSignInStore } from '../store/signInStore'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { trackProductView, trackCartInteraction } from '../components/ui/AppReviewPrompt'
 
 export default function ProductDetail() {
   const formatPrice = useCurrencyFormatter()
@@ -23,6 +24,12 @@ export default function ProductDetail() {
   const isMarketplaceView = !searchParams.get('store')
   const { data: product, isLoading } = useProduct(id!, isMarketplaceView)
   useDocumentTitle(product?.title || 'Product')
+
+  useEffect(() => {
+    if (product) {
+      trackProductView()
+    }
+  }, [product?.id])
 
 
   // Fetch related products in the same category
@@ -73,6 +80,7 @@ export default function ProductDetail() {
     if (!product) return
     addItem(product)
     setAdded(true)
+    trackCartInteraction()
     setTimeout(() => setAdded(false), 2000)
     
     if (!session) {
@@ -184,17 +192,26 @@ export default function ProductDetail() {
 
           {product.rating && (
             <div className="flex items-center gap-2 mb-4">
-              <div className="flex">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    size={14}
-                    weight={i < Math.round(product.rating!) ? 'fill' : 'regular'}
-                    className={i < Math.round(product.rating!) ? 'text-brand-400 fill-brand-400 drop-shadow-[0_0_6px_rgba(212,130,10,0.6)]' : 'text-cream-300 dark:text-white/20'}
-                  />
-                ))}
-              </div>
-              <span className="text-dark-800/60 dark:text-white/50 text-sm">{product.rating} ({product.rating_count} reviews)</span>
+              <a 
+                href="#reviews"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer group"
+              >
+                <div className="flex">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      size={14}
+                      weight={i < Math.round(product.rating!) ? 'fill' : 'regular'}
+                      className={i < Math.round(product.rating!) ? 'text-brand-400 fill-brand-400 drop-shadow-[0_0_6px_rgba(212,130,10,0.6)] group-hover:drop-shadow-[0_0_8px_rgba(212,130,10,0.8)] transition-all' : 'text-cream-300 dark:text-white/20'}
+                    />
+                  ))}
+                </div>
+                <span className="text-brand-400 text-sm font-medium hover:underline decoration-brand-400/30 underline-offset-4">{product.rating} ({product.rating_count} reviews)</span>
+              </a>
             </div>
           )}
 
@@ -387,6 +404,227 @@ export default function ProductDetail() {
           </div>
         </div>
       )}
+
+      {/* ── Product Reviews ── */}
+      <ProductReviewsSection productId={product.id} storeId={product.store_id ?? null} />
     </main>
+  )
+}
+
+// ─── Reviews Section Component ───────────────────────────────────────────────
+
+function StarDisplay({ rating, size = 14 }: { rating: number; size?: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          size={size}
+          weight={i < Math.round(rating) ? 'fill' : 'regular'}
+          className={
+            i < Math.round(rating)
+              ? 'text-brand-400 fill-brand-400 drop-shadow-[0_0_4px_rgba(212,130,10,0.5)]'
+              : 'text-cream-300 dark:text-white/20'
+          }
+        />
+      ))}
+    </div>
+  )
+}
+
+function ProductReviewsSection({
+  productId,
+  storeId,
+}: {
+  productId: string
+  storeId: string | null
+}) {
+  const { session } = useCustomerSession()
+  const openSignInModal = useSignInStore(s => s.openModal)
+  const [formOpen, setFormOpen] = useState(false)
+  const [rating, setRating] = useState(5)
+  const [hoverRating, setHoverRating] = useState(0)
+  const [comment, setComment] = useState('')
+  const [reviewerName, setReviewerName] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+
+  const { data: reviews, refetch } = useQuery({
+    queryKey: ['product-reviews', productId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('product_reviews')
+        .select('*')
+        .eq('product_id', productId)
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+      return data || []
+    },
+  })
+
+  const avgRating =
+    reviews && reviews.length > 0
+      ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length
+      : null
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!session) {
+      openSignInModal('Sign in to leave a review.')
+      return
+    }
+    setIsSubmitting(true)
+    try {
+      await supabase.from('product_reviews').insert({
+        product_id: productId,
+        store_id: storeId,
+        customer_id: session.user.id,
+        reviewer_name: reviewerName.trim() || null,
+        rating,
+        comment: comment.trim() || null,
+        status: 'pending',
+      })
+      setSubmitted(true)
+      setFormOpen(false)
+      refetch()
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div id="reviews" className="mt-16 sm:mt-24 pt-10 border-t border-cream-200 dark:border-dark-700/50">
+      {/* Section header */}
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-display font-bold text-dark-800 dark:text-white">
+            Customer Reviews
+          </h2>
+          {avgRating && (
+            <div className="flex items-center gap-2 mt-1">
+              <StarDisplay rating={avgRating} size={16} />
+              <span className="text-sm text-dark-800/60 dark:text-white/50">
+                {avgRating.toFixed(1)} · {reviews?.length} review{reviews?.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+          )}
+        </div>
+        {!submitted && (
+          <button
+            type="button"
+            onClick={() => {
+              if (!session) { openSignInModal('Sign in to leave a review.'); return }
+              setFormOpen(v => !v)
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-2xl border border-brand-400/30 text-brand-400 text-sm font-semibold hover:bg-brand-400/10 transition-colors"
+          >
+            <Star size={14} weight="duotone" />
+            {formOpen ? 'Cancel' : 'Write a review'}
+          </button>
+        )}
+      </div>
+
+      {/* Submission confirmation */}
+      {submitted && (
+        <div className="flex items-center justify-center gap-3 bg-brand-50 dark:bg-brand-950/20 border border-brand-200 dark:border-brand-800/30 rounded-2xl px-6 py-6 mb-6 text-brand-600 dark:text-brand-400 font-medium text-center">
+          <Heart size={24} weight="fill" className="animate-pulse" />
+          Thank you for your review!
+        </div>
+      )}
+
+      {/* Review form */}
+      <AnimatePresence>
+        {formOpen && (
+          <motion.form
+            key="review-form"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            onSubmit={handleSubmit}
+            className="card p-5 mb-8 space-y-4"
+          >
+            <div>
+              <p className="text-sm font-semibold text-dark-800 dark:text-white mb-2">Your rating</p>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="transition-transform hover:scale-110"
+                    aria-label={`Rate ${star} stars`}
+                  >
+                    <Star
+                      size={28}
+                      weight={(hoverRating || rating) >= star ? 'fill' : 'regular'}
+                      className={(hoverRating || rating) >= star ? 'text-brand-400' : 'text-cream-300 dark:text-white/20'}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <input
+              type="text"
+              placeholder="Your name (optional)"
+              value={reviewerName}
+              onChange={e => setReviewerName(e.target.value)}
+              className="input w-full text-sm"
+            />
+            <textarea
+              placeholder="Share your thoughts about this product..."
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              rows={3}
+              className="input w-full text-sm resize-none"
+            />
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="btn-primary w-full py-3 text-sm"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Review'}
+            </button>
+          </motion.form>
+        )}
+      </AnimatePresence>
+
+      {/* Published reviews list */}
+      {!reviews || reviews.length === 0 ? (
+        <div className="text-center py-10 text-dark-800/40 dark:text-white/30 text-sm">
+          No reviews yet. Be the first to review this product!
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {reviews.map((review: any) => (
+            <div key={review.id} className="card p-5">
+              <div className="flex items-start justify-between gap-4 mb-2">
+                <div>
+                  <p className="font-semibold text-dark-800 dark:text-white text-sm">
+                    {review.reviewer_name || 'Anonymous'}
+                  </p>
+                  <p className="text-[11px] text-dark-800/40 dark:text-white/30 mt-0.5">
+                    {new Date(review.created_at).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </p>
+                </div>
+                <StarDisplay rating={review.rating} />
+              </div>
+              {review.comment && (
+                <p className="text-sm text-dark-800/70 dark:text-white/60 leading-relaxed">
+                  {review.comment}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

@@ -87,3 +87,23 @@ export interface SiteReview {
   page_url?: string
   created_at: string
 }
+
+export interface ProductReview {
+  id: string
+  product_id: string
+  store_id: string | null
+  customer_id: string | null
+  reviewer_name: string | null
+  reviewer_email: string | null
+  rating: number           // 1–5
+  comment: string | null
+  status: 'pending' | 'published' | 'hidden'
+  created_at: string
+}
+
+export interface ProductReviewStats {
+  product_id: string
+  review_count: number
+  avg_rating: number
+}
+

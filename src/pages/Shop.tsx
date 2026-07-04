@@ -359,7 +359,12 @@ export default function Shop() {
 
         {/* Top-level category pills */}
         <div className="relative -mx-4 lg:mx-0">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide px-4 lg:px-0 scroll-smooth snap-x snap-proximity overscroll-x-contain [-webkit-overflow-scrolling:touch]">
+          {/* Left fade — signals content behind the sticky filter area */}
+          <div
+            aria-hidden="true"
+            className="lg:hidden pointer-events-none absolute left-0 top-0 bottom-1 w-6 z-10 bg-gradient-to-r from-cream-50/95 dark:from-dark-900/95 to-transparent"
+          />
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide px-4 lg:px-0 scroll-smooth snap-x snap-mandatory overscroll-x-contain [-webkit-overflow-scrolling:touch]">
             <button
               type="button"
               onClick={() => handleParentChange(null)}
@@ -386,7 +391,7 @@ export default function Shop() {
               </button>
             ))}
           </div>
-          {/* Fade + chevron scroll hint, mobile only */}
+          {/* Right fade + chevron scroll hint — same as sub-category row */}
           <div
             aria-hidden="true"
             className="lg:hidden pointer-events-none absolute right-0 top-0 bottom-1 w-14 flex items-center justify-end pr-1 bg-gradient-to-l from-cream-50/95 dark:from-dark-900/95 via-cream-50/70 dark:via-dark-900/70 to-transparent"

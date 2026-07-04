@@ -16,12 +16,16 @@ import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import BottomNav from './components/layout/BottomNav'
 import AnnouncementBanner from './components/layout/AnnouncementBanner'
+import StoreNavbar from './components/store/StoreNavbar'
+import StoreBottomNav from './components/store/StoreBottomNav'
+import StoreFooter from './components/store/StoreFooter'
 import ShopLoader from './components/ui/ShopLoader'
 import OfflineIndicator from './components/ui/OfflineIndicator'
 import SignInModal from './components/ui/SignInModal'
 import ToastContainer from './components/ui/ToastContainer'
 import BackToTop from './components/ui/BackToTop'
 import PWAInstallPrompt from './components/ui/PWAInstallPrompt'
+import AppReviewPrompt, { trackSession } from './components/ui/AppReviewPrompt'
 import NewArrivalsListener from './components/ui/NewArrivalsListener'
 import CartSync from './components/ui/CartSync'
 import { useSignInStore } from './store/signInStore'
@@ -38,6 +42,7 @@ const Settings = lazy(() => import('./pages/Settings'))
 const StoreFront = lazy(() => import('./pages/store/StoreFront'))
 const BecomeMerchant = lazy(() => import('./pages/BecomeMerchant'))
 const OfflineGame = lazy(() => import('./pages/OfflineGame'))
+const MerchantDashboard = lazy(() => import('./pages/merchant/MerchantDashboard'))
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
@@ -49,6 +54,22 @@ const AdminApprovals = lazy(() => import('./pages/admin/AdminApprovals'))
 const AdminSubscribers = lazy(() => import('./pages/admin/AdminSubscribers'))
 
 const qc = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 * 5 } } })
+
+// ─── Route Guards ────────────────────────────────────────────────────────────
+
+/** Shared helper: checks if the current user owns a store */
+async function checkUserStore(userId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('stores')
+      .select('id')
+      .eq('owner_id', userId)
+      .maybeSingle()
+    return !!data && !error
+  } catch {
+    return false
+  }
+}
 
 function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -69,7 +90,6 @@ function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
         return
       }
 
-      // Check if platform admin
       const isAdmin = currentSession.user.app_metadata?.role === 'admin'
       if (isAdmin) {
         setHasStore(true)
@@ -77,31 +97,13 @@ function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
         return
       }
 
-      // Query if this user owns a store
-      try {
-        const { data, error } = await supabase
-          .from('stores')
-          .select('id')
-          .eq('owner_id', currentSession.user.id)
-          .maybeSingle()
-
-        if (mounted) {
-          setHasStore(!!data && !error)
-        }
-      } catch {
-        if (mounted) setHasStore(false)
-      } finally {
-        if (mounted) setLoading(false)
-      }
+      const has = await checkUserStore(currentSession.user.id)
+      if (mounted) setHasStore(has)
+      if (mounted) setLoading(false)
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      checkAccess(data.session)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
-      checkAccess(s)
-    })
+    supabase.auth.getSession().then(({ data }) => checkAccess(data.session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => checkAccess(s))
     unsubscribe = () => subscription.unsubscribe()
 
     return () => {
@@ -110,16 +112,54 @@ function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  if (loading) {
-    return <ShopLoader />
-  }
-
+  if (loading) return <ShopLoader />
   if (!session) return <Navigate to="/admin/login" replace />
 
   const isAdmin = session.user.app_metadata?.role === 'admin'
   if (!isAdmin && !hasStore) {
     return <Navigate to="/admin/login" replace state={{ error: 'unauthorized' }} />
   }
+
+  return <>{children}</>
+}
+
+/** Guards /merchant routes — user must own a store (doesn't need to be platform admin) */
+function MerchantProtectedRoute({ children }: { children: React.ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null)
+  const [hasStore, setHasStore] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let mounted = true
+    let unsubscribe: (() => void) | undefined
+
+    const checkAccess = async (currentSession: Session | null) => {
+      if (!mounted) return
+      setSession(currentSession)
+
+      if (!currentSession?.user) {
+        setLoading(false)
+        return
+      }
+
+      const has = await checkUserStore(currentSession.user.id)
+      if (mounted) setHasStore(has)
+      if (mounted) setLoading(false)
+    }
+
+    supabase.auth.getSession().then(({ data }) => checkAccess(data.session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => checkAccess(s))
+    unsubscribe = () => subscription.unsubscribe()
+
+    return () => {
+      mounted = false
+      unsubscribe?.()
+    }
+  }, [])
+
+  if (loading) return <ShopLoader />
+  if (!session) return <Navigate to="/" replace />
+  if (!hasStore) return <Navigate to="/sell" replace />
 
   return <>{children}</>
 }
@@ -142,6 +182,37 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
       <ToastContainer />
       <BackToTop />
       <PWAInstallPrompt />
+      {/* Smart app review prompt — only on platform layer, never on merchant storefronts */}
+      <AppReviewPrompt />
+    </div>
+  )
+}
+
+/**
+ * MerchantStorefrontLayout — completely isolated tenant surface.
+ *
+ * Uses StoreNavbar + StoreBottomNav + StoreFooter instead of the platform
+ * equivalents. Nothing here links to /shop or / except the one deliberate
+ * "Browse Marketplace" escape hatch in StoreFooter.
+ *
+ * The StoreContext.Provider lives inside StoreFront.tsx (so it has access to
+ * the fetched store data). This layout just provides the chrome.
+ */
+function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
+  const signInOpen = useSignInStore(s => s.open)
+  const closeSignIn = useSignInStore(s => s.closeModal)
+  const signInReason = useSignInStore(s => s.reason)
+  return (
+    <div className="flex flex-col min-h-dvh overflow-x-hidden">
+      <StoreNavbar />
+      <div className="pt-20 flex flex-col flex-1">
+        {children}
+      </div>
+      <StoreFooter />
+      <StoreBottomNav />
+      <SignInModal open={signInOpen} onClose={closeSignIn} reason={signInReason ?? undefined} />
+      <ToastContainer />
+      <BackToTop />
     </div>
   )
 }
@@ -164,9 +235,13 @@ function AnimatedRoutes() {
       <Route path="/account" element={<StorefrontLayout><Account /></StorefrontLayout>} />
       <Route path="/account/orders" element={<StorefrontLayout><CustomerOrders /></StorefrontLayout>} />
       <Route path="/settings" element={<StorefrontLayout><Settings /></StorefrontLayout>} />
-      <Route path="/s/:storeSlug" element={<StorefrontLayout><StoreFront /></StorefrontLayout>} />
+      {/* Merchant storefronts — fully isolated tenant surface, no global nav */}
+      <Route path="/s/:storeSlug" element={<MerchantStorefrontLayout><StoreFront /></MerchantStorefrontLayout>} />
       <Route path="/sell" element={<StorefrontLayout><BecomeMerchant /></StorefrontLayout>} />
       <Route path="/offline-game" element={<OfflineGame />} />
+
+      {/* Merchant dashboard — scoped to store owner, not platform admin */}
+      <Route path="/merchant" element={<MerchantProtectedRoute><MerchantDashboard /></MerchantProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin/login" element={<AdminLogin />} />
@@ -189,6 +264,9 @@ function AnimatedRoutes() {
 
 export default function App() {
   useEffect(() => {
+    // Only run on the browser side (avoid double tracking in strict mode if possible, but fine for now)
+    trackSession()
+    
     let mounted = true
     let removeChannel: (() => void) | undefined
 

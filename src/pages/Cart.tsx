@@ -13,6 +13,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useProducts } from '../hooks/useProducts'
 import ProductCard from '../components/ui/ProductCard'
 import { saveOfflineOrder } from '../lib/offlineOrders'
+import { trackOrderPlaced } from '../components/ui/AppReviewPrompt'
 
 export default function Cart() {
   useDocumentTitle('Your Cart')
@@ -128,9 +129,10 @@ export default function Cart() {
     const finalMessage = `*Order ID: #${orderIdShort}*\n\n${baseMessage}`
 
     const url = buildWhatsAppUrl(targetNumber, finalMessage)
-    window.open(url, '_blank')
-
+    
+    trackOrderPlaced()
     clearCart()
+    window.open(url, '_blank')
     setIsCheckingOut(false)
   }
 
