@@ -14,6 +14,7 @@ import { useProducts } from '../hooks/useProducts'
 import ProductCard from '../components/ui/ProductCard'
 import { saveOfflineOrder } from '../lib/offlineOrders'
 import { trackOrderPlaced } from '../components/ui/AppReviewPrompt'
+import Image from '../components/ui/Image'
 
 export default function Cart() {
   useDocumentTitle('Your Cart')
@@ -246,7 +247,7 @@ export default function Cart() {
                 className="card p-4 flex gap-4"
               >
                 <Link to={`/product/${item.product.id}`}>
-                  <img
+                  <Image
                     src={item.product.images?.[0] || 'https://placehold.co/80x80/1a1008/d4820a?text=?'}
                     alt={item.product.title}
                     className="w-20 h-20 object-cover rounded-xl flex-shrink-0"

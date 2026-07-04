@@ -17,6 +17,7 @@ import {
   Lightning,
 } from '@phosphor-icons/react'
 import { supabase } from '../lib/supabase'
+import { formatPhoneNumber } from '../lib/utils'
 import { useSignInStore } from '../store/signInStore'
 
 const BENEFITS = [
@@ -146,7 +147,7 @@ export default function BecomeMerchant() {
         tagline: tagline || null,
         description: description || null,
         business_category: businessCategory,
-        whatsapp_number: whatsappNumber,
+        whatsapp_number: formatPhoneNumber(whatsappNumber),
         social_instagram: instagramHandle ? `https://instagram.com/${instagramHandle.replace(/^@/, '')}` : null,
         social_tiktok: tiktokHandle ? `https://tiktok.com/@${tiktokHandle.replace(/^@/, '')}` : null,
         social_facebook: facebookHandle ? `https://facebook.com/${facebookHandle.replace(/^@/, '')}` : null,
@@ -432,7 +433,9 @@ export default function BecomeMerchant() {
             required
             value={whatsappNumber}
             onChange={e => setWhatsappNumber(e.target.value)}
+            onBlur={() => setWhatsappNumber(formatPhoneNumber(whatsappNumber))}
             placeholder="+233 20 000 0000"
+            autoComplete="tel"
             className="input w-full"
           />
           <p className="text-xs text-dark-800/40 dark:text-white/40 mt-1">

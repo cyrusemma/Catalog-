@@ -101,3 +101,23 @@ export function buildCartWhatsAppMessage(
 
   return `Hi! I'd like to order the following:\n\n${lines}\n\n${summary}\n\nPlease confirm availability and delivery. Thank you!`
 }
+
+export function formatPhoneNumber(val: string): string {
+  if (!val) return ''
+  const cleaned = val.replace(/[^\d+]/g, '')
+  if (cleaned.startsWith('+')) return cleaned
+  
+  if (cleaned.startsWith('0') && cleaned.length === 10) {
+    return '+233' + cleaned.substring(1)
+  }
+  
+  if (cleaned.startsWith('233') && cleaned.length === 12) {
+    return '+' + cleaned
+  }
+  
+  if (cleaned.length === 9 && !cleaned.startsWith('0')) {
+    return '+233' + cleaned
+  }
+  
+  return cleaned
+}

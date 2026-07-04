@@ -172,7 +172,7 @@ export default function AppReviewPrompt() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className="fixed bottom-0 left-0 right-0 z-[100] pb-[env(safe-area-inset-bottom)] sm:bottom-6 sm:left-auto sm:right-6 sm:max-w-sm"
+            className="fixed bottom-0 left-0 right-0 z-[100] pb-[env(safe-area-inset-bottom,0px)] sm:bottom-6 sm:left-auto sm:right-6 sm:max-w-sm"
           >
             <div className="
               bg-white dark:bg-dark-800

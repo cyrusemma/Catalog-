@@ -4,6 +4,8 @@ import { Save, CheckCircle, Upload, X, Image as ImageIcon, GripVertical, Loader2
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
 import { extensionForMime, isValidImageUrl, validateImageFile } from '../../lib/productValidation'
+import { compressImage } from '../../lib/imageOptimization'
+import { formatPhoneNumber } from '../../lib/utils'
 
 interface SettingsForm {
   store_name: string
@@ -132,7 +134,7 @@ export default function AdminSettings() {
         logo_url: form.logo_url || null,
         whatsapp_template: form.whatsapp_template || null,
         show_visitor_count: form.show_visitor_count,
-        whatsapp_number: form.whatsapp_number,
+        whatsapp_number: formatPhoneNumber(form.whatsapp_number),
       }
 
       if (context?.isAdmin) {
@@ -169,12 +171,16 @@ export default function AdminSettings() {
   const uploadToBucket = async (file: File, prefix: string) => {
     const fileError = validateImageFile(file)
     if (fileError) throw new Error(fileError)
-    const ext = extensionForMime(file.type)
+    
+    // Compress the image before uploading
+    const compressedFile = await compressImage(file)
+    
+    const ext = extensionForMime(compressedFile.type) || 'webp'
     const path = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
-    const { error } = await supabase.storage.from('product-images').upload(path, file, {
+    const { error } = await supabase.storage.from('product-images').upload(path, compressedFile, {
       cacheControl: '3600',
       upsert: false,
-      contentType: file.type,
+      contentType: compressedFile.type,
     })
     if (error) throw error
     const { data } = supabase.storage.from('product-images').getPublicUrl(path)
@@ -248,7 +254,14 @@ export default function AdminSettings() {
             <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400">Basic info</h2>
             <Field label="Store name" value={form.store_name} onChange={v => set('store_name', v)} placeholder="Catalog by Cyrus" />
             <Field label="Tagline / hero text" value={form.tagline} onChange={v => set('tagline', v)} placeholder="Discover Amazing Products…" />
-            <Field label="WhatsApp number" value={form.whatsapp_number} onChange={v => set('whatsapp_number', v)} placeholder="233244000000 (no +)" type="tel" />
+            <Field 
+              label="WhatsApp number" 
+              value={form.whatsapp_number} 
+              onChange={v => set('whatsapp_number', v)} 
+              onBlur={() => set('whatsapp_number', formatPhoneNumber(form.whatsapp_number))}
+              placeholder="+233 24 000 0000" 
+              type="tel" 
+            />
             <Field label="Currency symbol" value={form.currency} onChange={v => set('currency', v)} placeholder="GHS" />
           </section>
 
@@ -482,6 +495,7 @@ function Field({
   label: string
   value: string
   onChange: (v: string) => void
+  onBlur?: () => void
   placeholder?: string
   type?: string
 }) {
@@ -492,8 +506,9 @@ function Field({
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
+        onBlur={onBlur}
         placeholder={placeholder}
-        className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white"
+        className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white transition-colors"
       />
     </div>
   )

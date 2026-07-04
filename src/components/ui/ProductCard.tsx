@@ -10,6 +10,7 @@ import CountdownTimer from './CountdownTimer'
 import { useSignInStore } from '../../store/signInStore'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
 import type { Product } from '../../types'
+import Image from './Image'
 
 interface Props {
   product: Product
@@ -57,8 +58,6 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
     }
   }
 
-  const image = product.images?.[0] || 'https://placehold.co/400x400/1a1008/d4820a?text=No+Image'
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -70,12 +69,10 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
       <Link to={detailUrl} className={`card card-hover group flex flex-col h-full min-w-0 ${compact ? 'rounded-2xl' : ''}`}>
         {/* Image */}
         <div className={`relative overflow-hidden bg-cream-100 dark:bg-dark-700 ${compact ? 'aspect-[4/5] sm:aspect-square' : 'aspect-square'}`}>
-          <img
-            src={image}
+          <Image
+            src={product.images?.[0] || 'https://placehold.co/400x400/1a1008/d4820a?text=No+Image'}
             alt={product.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-            decoding="async"
           />
 
           {/* Discount Tag */}

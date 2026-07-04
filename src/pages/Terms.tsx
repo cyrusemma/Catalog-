@@ -1,6 +1,5 @@
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useStoreSettings } from '../hooks/useStoreSettings'
-import { ScrollContainer } from '../components/ui/ScrollContainer'
 
 export default function Terms() {
   const settings = useStoreSettings()
@@ -8,7 +7,7 @@ export default function Terms() {
   useDocumentTitle(`Terms of Service | ${storeName}`)
 
   return (
-    <ScrollContainer className="pt-24 pb-20 px-4 sm:px-6">
+    <div className="pt-24 pb-20 px-4 sm:px-6 w-full">
       <div className="max-w-3xl mx-auto prose prose-brand dark:prose-invert">
         <h1 className="text-3xl font-display font-bold text-dark-800 dark:text-white mb-2">
           Terms of Service
@@ -89,6 +88,6 @@ export default function Terms() {
           </p>
         </section>
       </div>
-    </ScrollContainer>
+    </div>
   )
 }

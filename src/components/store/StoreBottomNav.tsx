@@ -35,7 +35,7 @@ export default function StoreBottomNav() {
   const wishlistCount = useWishlistStore(s => s.count())
 
   return (
-    <nav className="sm:hidden fixed bottom-2 pb-[max(0px,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))] right-[max(1rem,env(safe-area-inset-right))] z-50 pointer-events-none">
+    <nav className="sm:hidden fixed bottom-2 pb-[env(safe-area-inset-bottom,0px)] left-[calc(1rem+env(safe-area-inset-left,0px))] right-[calc(1rem+env(safe-area-inset-right,0px))] z-50 pointer-events-none">
       <div className="max-w-[400px] mx-auto pointer-events-auto flex items-center justify-between bg-white/85 dark:bg-dark-900/85 backdrop-blur-2xl backdrop-saturate-150 border border-cream-200 dark:border-white/10 rounded-full p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         {items.map(({ getTo, label, Icon, badgeKind, exact }) => {
           const to = getTo(storeSlug)

@@ -5,6 +5,7 @@ import { ArrowLeft, Loader2, Plus, X, ImagePlus, Upload } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase, supabaseUrl } from '../../lib/supabase'
 import { slugify } from '../../lib/utils'
+import { compressImage } from '../../lib/imageOptimization'
 import { useCategoryTree, topLevelCategories, childCategories, findCategory } from '../../hooks/useProducts'
 import {
   extensionForMime,
@@ -164,16 +165,19 @@ export default function AdminProductForm() {
     }
   }, [pendingFiles, currentCropFile, uploading])
 
-  const proceedWithUpload = async (fileToUpload: Blob | File, contentType: string) => {
+  const proceedWithUpload = async (fileToUpload: Blob | File, _contentType: string) => {
     setUploading(true)
     setUploadError('')
     try {
-      const ext = extensionForMime(contentType) || 'webp'
+      // 1. Compress the file client-side before sending to Supabase
+      const compressedFile = await compressImage(fileToUpload)
+      
+      const ext = extensionForMime(compressedFile.type) || 'webp'
       const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
-      const { error } = await supabase.storage.from('product-images').upload(path, fileToUpload, {
+      const { error } = await supabase.storage.from('product-images').upload(path, compressedFile, {
         cacheControl: '3600',
         upsert: false,
-        contentType,
+        contentType: compressedFile.type,
       })
       if (error) throw error
       const { data } = supabase.storage.from('product-images').getPublicUrl(path)

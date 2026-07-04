@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import Image from '../../components/ui/Image'
 import { useQuery } from '@tanstack/react-query'
 import {
   Store,
@@ -210,10 +211,11 @@ export default function StoreFront() {
         {/* Cover image */}
         {store.hero_images?.[0] && (
           <div className="w-full h-48 md:h-64 lg:h-80 relative bg-gray-100 dark:bg-dark-800">
-            <img
+            <Image
               src={store.hero_images[0]}
               alt="Store Cover"
               className="w-full h-full object-cover"
+              priority={true}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           </div>
@@ -231,10 +233,11 @@ export default function StoreFront() {
           >
             {/* Logo */}
             {store.logo_url ? (
-              <img
+              <Image
                 src={store.logo_url}
                 alt={store.name}
                 className="w-24 h-24 rounded-2xl object-cover shadow-lg border-4 border-white dark:border-dark-800 flex-shrink-0"
+                priority={true}
               />
             ) : (
               <div className="w-24 h-24 bg-white dark:bg-dark-800 rounded-2xl flex items-center justify-center border-4 border-white dark:border-dark-800 shadow-lg flex-shrink-0">

@@ -13,6 +13,7 @@ import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import type { Product } from '../types'
+import Image from '../components/ui/Image'
 
 // Single shared reveal — used for the staggered hero load.
 const fadeUp = {
@@ -76,16 +77,14 @@ export default function Home() {
         <div aria-hidden="true" className="absolute inset-0">
           {usingCustomHero ? (
             heroSources.map((src, i) => (
-              <img
+              <Image
                 key={src}
                 src={src}
                 alt=""
                 role="presentation"
-                className={`absolute inset-0 w-full h-full object-cover object-[50%_25%] sm:object-center transition-opacity duration-700 ease-out ${i === heroIdx ? 'opacity-100' : 'opacity-0'
+                className={`absolute inset-0 w-full h-full object-[50%_25%] sm:object-center transition-opacity duration-700 ease-out ${i === heroIdx ? 'opacity-100' : 'opacity-0'
                   }`}
-                loading={i === 0 ? 'eager' : 'lazy'}
-                decoding="async"
-                {...(i === 0 ? { fetchPriority: 'high' as 'high' } : {})}
+                priority={i === 0}
               />
             ))
           ) : (

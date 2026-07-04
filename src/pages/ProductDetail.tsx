@@ -11,6 +11,7 @@ import { effectivePrice, activeFlashSalePrice } from '../lib/utils'
 import { supabase } from '../lib/supabase'
 import CountdownTimer from '../components/ui/CountdownTimer'
 import ProductCard from '../components/ui/ProductCard'
+import Image from '../components/ui/Image'
 import { useSignInStore } from '../store/signInStore'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
@@ -171,7 +172,7 @@ export default function ProductDetail() {
                     activeImg === i ? 'border-brand-400 shadow-amber-glow' : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <Image src={img} alt="" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>

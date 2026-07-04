@@ -61,7 +61,7 @@ export default function Navbar() {
 
   return (
     <div className={`fixed top-0 left-0 right-0 z-50 pointer-events-none transition-transform duration-300 ease-in-out ${hidden ? '-translate-y-full' : 'translate-y-0'}`}>
-      <div className="max-w-5xl mx-auto pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[max(0.75rem,env(safe-area-inset-top))] pointer-events-auto">
+      <div className="max-w-5xl mx-auto pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pointer-events-auto">
         <nav className="
           flex items-center justify-between px-4 h-14 rounded-2xl
           bg-white/60 dark:bg-dark-900/60
