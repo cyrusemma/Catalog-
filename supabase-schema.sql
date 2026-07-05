@@ -120,9 +120,16 @@ create table if not exists store_settings (
   social_instagram text,
   social_tiktok text,
   social_facebook text,
+  social_twitter text,
   whatsapp_template text,                         -- optional custom order message; supports {items} {subtotal} {delivery} {total} {currency}
+  show_visitor_count boolean not null default false,
   updated_at timestamptz default now()
 );
+
+-- Backfill: add new columns to existing store_settings installations
+alter table if exists store_settings
+  add column if not exists social_twitter text,
+  add column if not exists show_visitor_count boolean not null default false;
 
 -- Singleton enforcement: prevents accidental duplicate-insert bugs.
 -- ((true)) means there can only ever be one row where the expression "true" is true → at most 1 row total.
