@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Image from '../../components/ui/Image'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import PullToRefresh from '../../components/ui/PullToRefresh'
+import { motion } from 'framer-motion'
 import {
   Store,
   ShoppingBag,
@@ -66,6 +69,7 @@ function ShareStoreLinkButton({ storeSlug }: { storeSlug: string }) {
       document.body.removeChild(ta)
     }
     setCopied(true)
+    toast.success('Store link copied to clipboard!')
     setTimeout(() => setCopied(false), 2500)
   }
 
@@ -109,6 +113,7 @@ export default function StoreFront() {
   const formatPrice = useCurrencyFormatter()
   const { storeSlug } = useParams<{ storeSlug: string }>()
   const { session } = useCustomerSession()
+  const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [sortBy, setSortBy] = useState<string>('newest')
@@ -226,9 +231,15 @@ export default function StoreFront() {
       return 0
     })
 
+  const handleRefresh = async () => {
+    await qc.invalidateQueries({ queryKey: ['store-products', store.id] })
+    await qc.invalidateQueries({ queryKey: ['store', store.slug] })
+  }
+
   return (
     <StoreContext.Provider value={ctxValue}>
-      <div id="store-top" className="flex-1 bg-cream-50 dark:bg-dark-900 min-h-screen">
+      <PullToRefresh onRefresh={handleRefresh}>
+        <div id="store-top" className="flex-1 bg-cream-50 dark:bg-dark-900 min-h-screen">
         {/* Cover image */}
         {store.hero_images?.[0] && (
           <div className="w-full h-48 md:h-64 lg:h-80 relative bg-gray-100 dark:bg-dark-800">
@@ -454,12 +465,26 @@ export default function StoreFront() {
               ))}
             </div>
           ) : filtered?.length === 0 ? (
-            <div className="text-center py-20 bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 rounded-3xl">
-              <Package size={48} className="text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 dark:text-gray-400 font-medium">
-                No products matching your search.
+            <motion.div 
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="col-span-full flex flex-col items-center justify-center text-center py-20 bg-white/50 dark:bg-dark-800/50 backdrop-blur-sm border border-cream-200 dark:border-white/10 rounded-3xl"
+            >
+              <div className="relative mb-6">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-500/10 dark:to-brand-500/5 flex items-center justify-center">
+                  <Package size={36} className="text-brand-400" />
+                </div>
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
+                  transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+                  className="absolute inset-0 rounded-full border-2 border-brand-200 dark:border-brand-500/30"
+                />
+              </div>
+              <h3 className="text-xl font-display font-bold text-gray-900 dark:text-white mb-2">No products found</h3>
+              <p className="text-gray-500 dark:text-gray-400 font-medium text-sm max-w-xs">
+                We couldn't find any items matching your current filters or search terms. Try clearing them to see more!
               </p>
-            </div>
+            </motion.div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {filtered?.map(product => (
@@ -505,11 +530,12 @@ export default function StoreFront() {
                     </div>
                   </div>
                 </Link>
-              ))}
-            </div>
-          )}
-        </main>
+            ))}
+          </div>
+        )}
+      </main>
       </div>
+      </PullToRefresh>
     </StoreContext.Provider>
   )
 }

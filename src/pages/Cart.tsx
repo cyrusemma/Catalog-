@@ -7,7 +7,7 @@ import { useCartStore } from '../store/cartStore'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
-import { buildWhatsAppUrl, buildCartWhatsAppMessage, effectivePrice } from '../lib/utils'
+import { buildWhatsAppUrl, buildCartWhatsAppMessage, effectivePrice, formatPhoneNumber } from '../lib/utils'
 import { supabase } from '../lib/supabase'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useProducts } from '../hooks/useProducts'
@@ -222,7 +222,7 @@ export default function Cart() {
                     type="tel"
                     required
                     value={customerPhone}
-                    onChange={e => setCustomerPhone(e.target.value)}
+                    onChange={e => setCustomerPhone(formatPhoneNumber(e.target.value))}
                     className="input w-full"
                     placeholder="+233 20 000 0000"
                   />
@@ -242,9 +242,9 @@ export default function Cart() {
                   <button type="button" onClick={() => setIsCheckingOut(false)} className="btn-ghost flex-1">
                     Back to Cart
                   </button>
-                  <button type="submit" disabled={isSubmitting} className="btn-primary flex-1">
+                  <motion.button whileTap={{ scale: 0.95 }} type="submit" disabled={isSubmitting} className="btn-primary flex-1">
                     {isSubmitting ? 'Recording...' : 'Complete Order'}
-                  </button>
+                  </motion.button>
                 </div>
               </form>
             </motion.div>
@@ -343,9 +343,9 @@ export default function Cart() {
                 Fill details to complete
               </button>
             ) : (
-              <button onClick={() => setIsCheckingOut(true)} className="btn-primary w-full justify-center py-4 text-base">
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsCheckingOut(true)} className="btn-primary w-full justify-center py-4 text-base">
                 Proceed to Checkout
-              </button>
+              </motion.button>
             )}
             <p className="text-dark-800/40 dark:text-white/30 text-xs text-center mt-3">
               {isCheckingOut 

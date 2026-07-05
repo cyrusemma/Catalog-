@@ -7,6 +7,7 @@
  */
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useQuery } from '@tanstack/react-query'
 import {
   Storefront,
@@ -43,6 +44,7 @@ function CopyStoreLinkRow({ slug }: { slug: string }) {
   const handleCopy = async () => {
     try { await navigator.clipboard.writeText(url) } catch { /* ignore */ }
     setCopied(true)
+    toast.success('Store link copied to clipboard!')
     setTimeout(() => setCopied(false), 2500)
   }
 

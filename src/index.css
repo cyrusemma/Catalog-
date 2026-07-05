@@ -17,7 +17,7 @@
   }
 
   body {
-    @apply bg-cream-50 text-dark-800 font-sans antialiased;
+    @apply bg-cream-50 text-dark-800 font-sans antialiased transition-colors duration-300;
     min-height: 100dvh;
   }
 
@@ -99,7 +99,7 @@
 
   /* Inputs */
   .input {
-    @apply w-full bg-cream-100 dark:bg-dark-700 border border-cream-200 dark:border-white/10 focus:border-brand-400/60 focus:ring-2 focus:ring-brand-400/20 rounded-xl px-4 py-3 text-dark-800 dark:text-white placeholder-cream-400 dark:placeholder-white/30 outline-none transition-all;
+    @apply w-full bg-cream-100 dark:bg-dark-700 border border-cream-200 dark:border-white/10 focus:border-brand-400/60 focus:ring-2 focus:ring-brand-400/20 rounded-xl px-4 py-3 text-dark-800 dark:text-white placeholder-cream-400 dark:placeholder-white/30 outline-none transition-all duration-300;
   }
 
   /* Badges */

@@ -52,7 +52,7 @@ export default function Image({
     <div className={`relative overflow-hidden ${className}`}>
       {/* Optional skeleton/background while loading */}
       {!isLoaded && !priority && (
-        <div className="absolute inset-0 bg-dark-100 dark:bg-dark-800 animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-br from-cream-100 to-cream-200 dark:from-dark-800 dark:to-dark-700 animate-pulse" />
       )}
       
       <img

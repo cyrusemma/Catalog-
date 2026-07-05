@@ -5,13 +5,14 @@
  * /s/:storeSlug context. The store logo + name replace the platform brand mark.
  */
 import { Link, useLocation } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+
 import { ShoppingCart, Storefront, UserCircle } from '@phosphor-icons/react'
 import { useCartStore } from '../../store/cartStore'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
 import { useSignInStore } from '../../store/signInStore'
 import { useStoreContext } from '../../contexts/StoreContext'
 import ThemeToggle from '../ui/ThemeToggle'
+import { motion } from 'framer-motion'
 
 export default function StoreNavbar() {
   const { storeSlug, storeName, logoUrl } = useStoreContext()
@@ -19,24 +20,6 @@ export default function StoreNavbar() {
   const totalItems = useCartStore(s => s.totalItems())
   const { isLoggedIn, profile } = useCustomerSession()
   const openSignIn = useSignInStore(s => s.openModal)
-
-  const [hidden, setHidden] = useState(false)
-  const lastY = useRef(0)
-  useEffect(() => {
-    const onScroll = () => {
-      const currentY = window.scrollY
-      if (currentY < 60) {
-        setHidden(false)
-      } else if (currentY > lastY.current + 4) {
-        setHidden(false)
-      } else if (currentY < lastY.current - 4) {
-        setHidden(true)
-      }
-      lastY.current = currentY
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   const initials = profile
     ? (profile.display_name || profile.email || '?')
@@ -50,11 +33,7 @@ export default function StoreNavbar() {
   const isAtHome = location.pathname === storeHome
 
   return (
-    <div
-      className={`fixed top-0 left-0 right-0 z-50 pointer-events-none transition-transform duration-300 ease-in-out ${
-        hidden ? '-translate-y-full' : 'translate-y-0'
-      }`}
-    >
+    <div className="sticky top-0 z-50 pointer-events-none transition-all duration-300">
       <div className="max-w-5xl mx-auto pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pointer-events-auto">
         <nav
           className="
@@ -111,15 +90,18 @@ export default function StoreNavbar() {
             <ThemeToggle />
 
             {/* Cart — shared across all shops */}
-            <Link
-              to="/cart"
-              className="relative w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors"
-            >
+            <Link to="/cart" className="relative w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors pointer-events-auto">
               <ShoppingCart size={18} weight="duotone" className="text-dark-800 dark:text-white" />
               {totalItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 bg-brand-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-amber-glow animate-scale-in">
+                <motion.span 
+                  key={totalItems}
+                  initial={{ scale: 0.5 }}
+                  animate={{ scale: [1.3, 1] }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 bg-brand-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-amber-glow"
+                >
                   {totalItems > 9 ? '9+' : totalItems}
-                </span>
+                </motion.span>
               )}
             </Link>
 

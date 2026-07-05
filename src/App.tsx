@@ -24,6 +24,8 @@ import OfflineIndicator from './components/ui/OfflineIndicator'
 import SignInModal from './components/ui/SignInModal'
 import ToastContainer from './components/ui/ToastContainer'
 import BackToTop from './components/ui/BackToTop'
+import ScrollToTopButton from './components/ui/ScrollToTop'
+import { Toaster } from 'sonner'
 import PWAInstallPrompt from './components/ui/PWAInstallPrompt'
 import AppReviewPrompt, { trackSession } from './components/ui/AppReviewPrompt'
 import NewArrivalsListener from './components/ui/NewArrivalsListener'
@@ -306,9 +308,11 @@ export default function App() {
 
   return (
     <QueryClientProvider client={qc}>
+      <Toaster position="top-center" richColors />
       <BrowserRouter>
         <NewArrivalsListener />
         <CartSync />
+        <ScrollToTopButton />
         <Suspense
           fallback={<ShopLoader />}
         >

@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase'
 import { extensionForMime, isValidImageUrl, validateImageFile } from '../../lib/productValidation'
 import { compressImage } from '../../lib/imageOptimization'
 import { formatPhoneNumber } from '../../lib/utils'
+import { toast } from 'sonner'
 
 interface SettingsForm {
   store_name: string
@@ -163,9 +164,14 @@ export default function AdminSettings() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['store-settings'] })
       qc.invalidateQueries({ queryKey: ['store'] })
+      toast.success('Settings saved successfully!')
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     },
+    onError: (err) => {
+      console.error(err)
+      toast.error('Failed to save settings. Please try again.')
+    }
   })
 
   const uploadToBucket = async (file: File, prefix: string) => {
@@ -534,7 +540,7 @@ function PushSettings() {
 
   const handlePushToggle = async (enable: boolean) => {
     if (!('serviceWorker' in navigator && 'PushManager' in window)) {
-      alert('Push notifications are not supported in this browser. If you are on iOS, add the app to your Home Screen first.')
+      toast.error('Push notifications are not supported in this browser. If you are on iOS, add the app to your Home Screen first.')
       return
     }
     setIsPushLoading(true)
@@ -542,7 +548,7 @@ function PushSettings() {
       const reg = await navigator.serviceWorker.ready
       if (enable) {
         if (!import.meta.env.VITE_VAPID_PUBLIC_KEY) {
-          alert('VITE_VAPID_PUBLIC_KEY is missing from environment variables. Please configure Web Push first.')
+          toast.error('VITE_VAPID_PUBLIC_KEY is missing from environment variables. Please configure Web Push first.')
           setIsPushLoading(false)
           return
         }
@@ -573,7 +579,7 @@ function PushSettings() {
       }
     } catch (err: any) {
       console.error(err)
-      alert('Failed to toggle push notifications: ' + err.message)
+      toast.error('Failed to toggle push notifications: ' + err.message)
       setPushEnabled(false)
     } finally {
       setIsPushLoading(false)

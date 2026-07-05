@@ -166,13 +166,14 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
             {/* Desktop: inline buttons */}
             {product.stock_status !== 'out_of_stock' && (
               <div className="hidden sm:flex items-center ml-2">
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
                   onClick={handleAddToCart}
                   className={`bg-brand-400 hover:bg-brand-500 rounded-xl flex items-center justify-center transition-colors text-white ${compact ? 'w-8 h-8' : 'w-9 h-9'}`}
                   aria-label="Add to cart"
                 >
                   <ShoppingCart size={compact ? 13 : 14} weight="duotone" />
-                </button>
+                </motion.button>
               </div>
             )}
           </div>
@@ -180,14 +181,15 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
           {/* Mobile: full-width add to cart */}
           {product.stock_status !== 'out_of_stock' && (
             <div className={`flex sm:hidden mt-2`}>
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={handleAddToCart}
                 className={`w-full bg-brand-400 hover:bg-brand-500 active:bg-brand-600 rounded-lg flex items-center justify-center gap-2 transition-colors text-white font-semibold text-xs ${compact ? 'h-7' : 'h-8'}`}
                 aria-label="Add to cart"
               >
                 <ShoppingCart size={compact ? 12 : 14} weight="duotone" />
                 <span>Add</span>
-              </button>
+              </motion.button>
             </div>
           )}
         </div>
