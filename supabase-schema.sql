@@ -137,6 +137,7 @@ create table if not exists store_settings (
   urgent_banner_active boolean not null default false,
   urgent_banner_text text,
   theme_color text default 'amber',
+  markup_percentage numeric(5,2) default 0,
   updated_at timestamptz default now()
 );
 
@@ -157,7 +158,8 @@ alter table if exists store_settings
   add column if not exists order_auto_cancel_hours int default 0,
   add column if not exists urgent_banner_active boolean not null default false,
   add column if not exists urgent_banner_text text,
-  add column if not exists theme_color text default 'amber';
+  add column if not exists theme_color text default 'amber',
+  add column if not exists markup_percentage numeric(5,2) default 0;
 
 -- Singleton enforcement: prevents accidental duplicate-insert bugs.
 -- ((true)) means there can only ever be one row where the expression "true" is true → at most 1 row total.

@@ -37,6 +37,7 @@ create table if not exists public.stores (
   urgent_banner_active boolean not null default false,
   urgent_banner_text text,
   theme_color text default 'amber',
+  markup_percentage numeric(5,2) default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -57,7 +58,8 @@ alter table if exists public.stores
   add column if not exists order_auto_cancel_hours int default 0,
   add column if not exists urgent_banner_active boolean not null default false,
   add column if not exists urgent_banner_text text,
-  add column if not exists theme_color text default 'amber';
+  add column if not exists theme_color text default 'amber',
+  add column if not exists markup_percentage numeric(5,2) default 0;
 
 -- 2. Add columns to products table
 alter table public.products

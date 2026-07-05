@@ -54,6 +54,7 @@ interface SettingsForm {
   urgent_banner_active: boolean
   urgent_banner_text: string
   theme_color: string
+  markup_percentage: string
 }
 
 const emptyForm: SettingsForm = {
@@ -87,6 +88,7 @@ const emptyForm: SettingsForm = {
   urgent_banner_active: false,
   urgent_banner_text: "",
   theme_color: "amber",
+  markup_percentage: "0",
 }
 
 function formFromSettings(s: any): SettingsForm {
@@ -121,6 +123,7 @@ function formFromSettings(s: any): SettingsForm {
     urgent_banner_active: s.urgent_banner_active || false,
     urgent_banner_text: s.urgent_banner_text || "",
     theme_color: s.theme_color || "amber",
+    markup_percentage: s.markup_percentage?.toString() || "0",
   }
 }
 
@@ -233,6 +236,7 @@ export default function AdminSettings() {
         urgent_banner_active: form.urgent_banner_active,
         urgent_banner_text: form.urgent_banner_text || null,
         theme_color: form.theme_color,
+        markup_percentage: parseFloat(form.markup_percentage) || 0,
       }
       if (context?.isAdmin) {
         const adminPayload = { ...payload, store_name: form.store_name, tagline: form.tagline }
@@ -671,6 +675,15 @@ export default function AdminSettings() {
                   <Field label="Google Analytics (G-XXXX)" value={form.analytics_google_id} onChange={v => set("analytics_google_id", v)} placeholder="G-..." />
                   <Field label="Meta / Facebook Pixel ID" value={form.analytics_pixel_id} onChange={v => set("analytics_pixel_id", v)} placeholder="1234567890" />
                 </div>
+              </section>
+
+              <section className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm space-y-5">
+                <div>
+                  <h2 className="font-bold text-gray-900 text-lg">Global Pricing Markup</h2>
+                  <p className="text-gray-500 text-sm mt-1">Automatically add this percentage to the price of all merchant (and admin) products.</p>
+                </div>
+                <Field label="Markup Percentage (%)" value={form.markup_percentage} onChange={v => set("markup_percentage", v)} placeholder="e.g. 10" type="number" />
+                <p className="text-xs text-gray-400">If a product base price is 100 and markup is 10%, customers will see 110. You can override this per-store in Admin Approvals.</p>
               </section>
 
               {isAdmin && (

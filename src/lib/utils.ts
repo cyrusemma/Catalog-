@@ -37,8 +37,10 @@ export function activeFlashSalePrice(product: FlashSaleFields, now: number = Dat
 }
 
 /** The price the customer actually pays right now (flash-sale price if live, else selling price). */
-export function effectivePrice(product: FlashSaleFields, now: number = Date.now()): number {
-  return activeFlashSalePrice(product, now) ?? product.selling_price
+export function effectivePrice(product: FlashSaleFields, now: number = Date.now(), markupPercentage: number = 0): number {
+  const base = activeFlashSalePrice(product, now) ?? product.selling_price
+  if (!markupPercentage) return base
+  return Math.ceil(base * (1 + markupPercentage / 100))
 }
 
 export function slugify(text: string): string {

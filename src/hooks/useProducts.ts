@@ -2,6 +2,28 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import type { Category, Product } from '../types'
 
+async function getGlobalMarkup() {
+  const { data } = await supabase.from('store_settings').select('markup_percentage').single()
+  return data?.markup_percentage || 0
+}
+
+function applyMarkup(product: any, globalMarkup: number): Product {
+  let finalPrice = product.selling_price
+  const storeMarkup = product.store?.markup_percentage
+  const markup = storeMarkup !== undefined && storeMarkup !== null ? storeMarkup : globalMarkup
+
+  if (markup > 0) {
+    finalPrice = Math.ceil(finalPrice * (1 + markup / 100))
+  }
+
+  // legacy override
+  if (product.store_id && product.marketplace_price != null) {
+    finalPrice = product.marketplace_price
+  }
+
+  return { ...product, selling_price: finalPrice } as Product
+}
+
 export function useProducts(
   filters?: {
     categoryIds?: string[]
@@ -16,7 +38,7 @@ export function useProducts(
     queryFn: async () => {
       let query = supabase
         .from('products')
-        .select('*')
+        .select('*, store:stores(markup_percentage)')
         .eq('is_published', true)
         .or('store_id.is.null,is_approved_for_marketplace.eq.true')
         .order('created_at', { ascending: false })
@@ -34,15 +56,9 @@ export function useProducts(
       const { data, error } = await query
       if (error) throw error
       
-      const products = (data as any[] || []).map(product => {
-        if (product.store_id && product.marketplace_price !== null && product.marketplace_price !== undefined) {
-          return {
-            ...product,
-            selling_price: product.marketplace_price
-          }
-        }
-        return product
-      })
+      const globalMarkup = await getGlobalMarkup()
+      
+      const products = (data as any[] || []).map(product => applyMarkup(product, globalMarkup))
       
       return products as Product[]
     },
@@ -63,7 +79,7 @@ export function useInfiniteProducts(
     queryFn: async ({ pageParam = 0 }) => {
       let q = supabase
         .from('products')
-        .select('*')
+        .select('*, store:stores(markup_percentage)')
         .eq('is_published', true)
         .or('store_id.is.null,is_approved_for_marketplace.eq.true')
         .order('created_at', { ascending: false })
@@ -82,16 +98,9 @@ export function useInfiniteProducts(
       const { data, error } = await q
       if (error) throw error
       
+      const globalMarkup = await getGlobalMarkup()
       const rawProducts = data as any[]
-      const products = rawProducts.map(product => {
-        if (product.store_id && product.marketplace_price !== null && product.marketplace_price !== undefined) {
-          return {
-            ...product,
-            selling_price: product.marketplace_price
-          }
-        }
-        return product
-      }) as Product[]
+      const products = rawProducts.map(product => applyMarkup(product, globalMarkup))
       
       return {
         data: products,
@@ -111,18 +120,16 @@ export function useProduct(id: string, isMarketplaceView = true) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*, store:stores(markup_percentage)')
         .eq('id', id)
         .eq('is_published', true)
         .single()
       if (error) throw error
       
+      const globalMarkup = await getGlobalMarkup()
       const product = data as any
-      if (isMarketplaceView && product.store_id && product.marketplace_price !== null && product.marketplace_price !== undefined) {
-        return {
-          ...product,
-          selling_price: product.marketplace_price
-        } as Product
+      if (isMarketplaceView) {
+        return applyMarkup(product, globalMarkup)
       }
       return product as Product
     },
@@ -138,7 +145,7 @@ export function useNewProducts(days = 7) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*, store:stores(markup_percentage)')
         .eq('is_published', true)
         .or('store_id.is.null,is_approved_for_marketplace.eq.true')
         .gte('created_at', cutoff.toISOString())
@@ -146,16 +153,9 @@ export function useNewProducts(days = 7) {
         .limit(8)
       if (error) throw error
       
+      const globalMarkup = await getGlobalMarkup()
       const rawProducts = data as any[]
-      const products = rawProducts.map(product => {
-        if (product.store_id && product.marketplace_price !== null && product.marketplace_price !== undefined) {
-          return {
-            ...product,
-            selling_price: product.marketplace_price
-          }
-        }
-        return product
-      }) as Product[]
+      const products = rawProducts.map(product => applyMarkup(product, globalMarkup))
       
       return products
     },

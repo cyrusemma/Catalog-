@@ -14,6 +14,7 @@ interface Store {
   description: string
   instagram_handle: string
   approval_status: 'pending' | 'approved' | 'rejected'
+  markup_percentage: number
   created_at: string
 }
 
@@ -37,6 +38,7 @@ export default function AdminApprovals() {
   const [activeTab, setActiveTab] = useState<'pending' | 'approved' | 'rejected'>('pending')
   const [search, setSearch] = useState('')
   const [priceOverrides, setPriceOverrides] = useState<Record<string, string>>({})
+  const [markupOverrides, setMarkupOverrides] = useState<Record<string, string>>({})
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   
   const qc = useQueryClient()
@@ -110,12 +112,16 @@ export default function AdminApprovals() {
 
   // Mutation to update store approval status
   const updateStoreApproval = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'pending' | 'approved' | 'rejected' }) => {
-      const { error } = await supabase.from('stores').update({ approval_status: status }).eq('id', id)
+    mutationFn: async ({ id, status, markup }: { id: string; status?: 'pending' | 'approved' | 'rejected', markup?: number }) => {
+      const payload: any = {}
+      if (status) payload.approval_status = status
+      if (markup !== undefined) payload.markup_percentage = markup
+      const { error } = await supabase.from('stores').update(payload).eq('id', id)
       if (error) throw error
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-approvals', 'stores'] })
+      setUpdatingId(null)
     }
   })
 
@@ -145,6 +151,14 @@ export default function AdminApprovals() {
       status: product.approval_status,
       overridePrice: priceNum,
     })
+  }
+
+  const handleMarkupSave = (store: Store) => {
+    const val = markupOverrides[store.id]
+    if (val === undefined) return
+    setUpdatingId(store.id)
+    const markupNum = val === '' ? 0 : parseFloat(val)
+    updateStoreApproval.mutate({ id: store.id, markup: markupNum })
   }
 
   return (
@@ -354,23 +368,42 @@ export default function AdminApprovals() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {store.approval_status !== 'approved' && (
-                      <button
-                        onClick={() => updateStoreApproval.mutate({ id: store.id, status: 'approved' })}
-                        className="flex items-center gap-1 bg-green-50 text-green-600 hover:bg-green-100 px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="number" 
+                        placeholder="Markup %" 
+                        className="w-24 border rounded-lg px-2 py-1 text-sm outline-none focus:border-brand-400"
+                        value={markupOverrides[store.id] ?? store.markup_percentage ?? ''}
+                        onChange={e => setMarkupOverrides({ ...markupOverrides, [store.id]: e.target.value })}
+                      />
+                      <button 
+                        onClick={() => handleMarkupSave(store)}
+                        disabled={updatingId === store.id || (markupOverrides[store.id] === undefined)}
+                        className="bg-brand-50 hover:bg-brand-100 text-brand-600 px-3 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
                       >
-                        <Check size={14} /> Approve Store
+                        {updatingId === store.id ? 'Saving...' : 'Set %'}
                       </button>
-                    )}
-                    {store.approval_status !== 'rejected' && (
-                      <button
-                        onClick={() => updateStoreApproval.mutate({ id: store.id, status: 'rejected' })}
-                        className="flex items-center gap-1 bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
-                      >
-                        <X size={14} /> Reject
-                      </button>
-                    )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2 justify-end mt-2">
+                      {store.approval_status !== 'approved' && (
+                        <button
+                          onClick={() => updateStoreApproval.mutate({ id: store.id, status: 'approved' })}
+                          className="flex items-center gap-1 bg-green-50 text-green-600 hover:bg-green-100 px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
+                        >
+                          <Check size={14} /> Approve Store
+                        </button>
+                      )}
+                      {store.approval_status !== 'rejected' && (
+                        <button
+                          onClick={() => updateStoreApproval.mutate({ id: store.id, status: 'rejected' })}
+                          className="flex items-center gap-1 bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
+                        >
+                          <X size={14} /> Reject
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
