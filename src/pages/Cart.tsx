@@ -32,7 +32,7 @@ export default function Cart() {
       if (!merchantStoreId) return null
       const { data } = await supabase
         .from('stores')
-        .select('whatsapp_number, currency, whatsapp_template, name')
+        .select('whatsapp_number, currency, whatsapp_template, name, owner_id')
         .eq('id', merchantStoreId)
         .maybeSingle()
       return data
@@ -90,6 +90,8 @@ export default function Cart() {
       status: 'pending'
     }
 
+    const orderIdShort = orderId.split('-')[0].toUpperCase()
+
     if (!navigator.onLine) {
       saveOfflineOrder(orderPayload)
     } else {
@@ -104,6 +106,16 @@ export default function Cart() {
           setSubmitError("There was an error recording your order. Please try again.")
           return
         }
+      } else if (merchantStore?.owner_id) {
+        // Trigger push notification to the merchant
+        supabase.functions.invoke('notify-new-arrival', {
+          body: {
+            user_id: merchantStore.owner_id,
+            title: `New Order #${orderIdShort}`,
+            body: `${customerName} just placed an order for ${formatPrice(grandTotal)}.`,
+            click_url: `/admin/orders`
+          }
+        }).catch(err => console.error('Push error:', err))
       }
     }
 
@@ -126,7 +138,6 @@ export default function Cart() {
       targetTemplate
     )
     
-    const orderIdShort = orderId.split('-')[0].toUpperCase()
     const finalMessage = `*Order ID: #${orderIdShort}*\n\n${baseMessage}`
 
     const url = buildWhatsAppUrl(targetNumber, finalMessage)

@@ -32,6 +32,17 @@
       "destination": "/api/og/:id"
     },
     {
+      "source": "/s/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(whatsapp|facebookexternalhit|twitterbot|linkedinbot|slackbot|telegrambot|googlebot|bingbot|discordbot|pinterest).*"
+        }
+      ],
+      "destination": "/api/og/store/:slug"
+    },
+    {
       "source": "/((?!api/|assets/|.*\\..*).*)",
       "destination": "/index.html"
     }

@@ -469,6 +469,9 @@ export default function AdminSettings() {
             </div>
           </section>
 
+          {/* Push Notifications */}
+          <PushSettings />
+
           {/* Save button */}
           <button
             type="button"
@@ -512,6 +515,86 @@ function Field({
         className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white transition-colors"
       />
     </div>
+  )
+}
+
+function PushSettings() {
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [isPushLoading, setIsPushLoading] = useState(false)
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        reg?.pushManager.getSubscription().then(sub => {
+          setPushEnabled(!!sub)
+        })
+      })
+    }
+  }, [])
+
+  const handlePushToggle = async (enable: boolean) => {
+    if (!('serviceWorker' in navigator && 'PushManager' in window)) {
+      alert('Push notifications are not supported in this browser. If you are on iOS, add the app to your Home Screen first.')
+      return
+    }
+    setIsPushLoading(true)
+    try {
+      const reg = await navigator.serviceWorker.ready
+      if (enable) {
+        if (!import.meta.env.VITE_VAPID_PUBLIC_KEY) {
+          alert('VITE_VAPID_PUBLIC_KEY is missing from environment variables. Please configure Web Push first.')
+          setIsPushLoading(false)
+          return
+        }
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY
+        })
+        const subJson = sub.toJSON()
+        
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase.from('push_subscriptions').upsert({
+            user_id: user.id,
+            endpoint: subJson.endpoint,
+            p256dh: subJson.keys?.p256dh,
+            auth: subJson.keys?.auth,
+            user_agent: navigator.userAgent
+          }, { onConflict: 'user_id, endpoint' })
+        }
+        setPushEnabled(true)
+      } else {
+        const sub = await reg.pushManager.getSubscription()
+        if (sub) {
+          await sub.unsubscribe()
+          await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
+        }
+        setPushEnabled(false)
+      }
+    } catch (err: any) {
+      console.error(err)
+      alert('Failed to toggle push notifications: ' + err.message)
+      setPushEnabled(false)
+    } finally {
+      setIsPushLoading(false)
+    }
+  }
+
+  return (
+    <section className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400">Order Notifications (Web Push)</h2>
+          <p className="text-gray-400 text-[11px] mt-1">
+            Receive instant push notifications on this device when a customer places an order.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {isPushLoading && <Loader2 size={14} className="animate-spin text-gray-400" />}
+          <ToggleSwitch checked={pushEnabled} onChange={handlePushToggle} ariaLabel="Toggle push notifications" />
+        </div>
+      </div>
+    </section>
   )
 }
 

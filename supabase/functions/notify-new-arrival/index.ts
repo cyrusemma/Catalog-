@@ -114,20 +114,6 @@ Deno.serve(async (req: Request) => {
     id: string; endpoint: string; p256dh: string; auth: string; user_id: string
   }>
 
-  const image = Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : null
-  const clickUrl = `${SITE_URL || ''}/product/${product.id}`
-
-  const payload = JSON.stringify({
-    title: `New arrival: ${product.title}`,
-    body: typeof product.selling_price === 'number'
-      ? `Just dropped — GHS ${product.selling_price.toFixed(2)}. Tap to take a look.`
-      : 'Just dropped. Tap to take a look.',
-    icon: image || '/pwa-192x192.png',
-    badge: '/favicon-32.png',
-    click_url: clickUrl,
-    tag: `product-${product.id}`,
-  })
-
   // 5. Fan out. Gone-410 endpoints get deleted so the table stays clean.
   let sent = 0
   let failed = 0
