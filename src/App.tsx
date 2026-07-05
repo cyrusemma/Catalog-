@@ -23,7 +23,6 @@ import ShopLoader from './components/ui/ShopLoader'
 import OfflineIndicator from './components/ui/OfflineIndicator'
 import SignInModal from './components/ui/SignInModal'
 import ToastContainer from './components/ui/ToastContainer'
-import BackToTop from './components/ui/BackToTop'
 import ScrollToTopButton from './components/ui/ScrollToTop'
 import { Toaster } from 'sonner'
 import PWAInstallPrompt from './components/ui/PWAInstallPrompt'
@@ -184,7 +183,6 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
       <SignInModal open={signInOpen} onClose={closeSignIn} reason={signInReason ?? undefined} />
       <OfflineIndicator />
       <ToastContainer />
-      <BackToTop />
       <PWAInstallPrompt />
       {/* Smart app review prompt — only on platform layer, never on merchant storefronts */}
       <AppReviewPrompt />
@@ -216,7 +214,6 @@ function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
       <StoreBottomNav />
       <SignInModal open={signInOpen} onClose={closeSignIn} reason={signInReason ?? undefined} />
       <ToastContainer />
-      <BackToTop />
     </div>
   )
 }
