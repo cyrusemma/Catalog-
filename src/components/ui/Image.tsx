@@ -35,38 +35,36 @@ export default function Image({
     setIsLoaded(true)
   }
 
-  // If there's an error and no string fallback is provided, show a generic icon placeholder
-  if (hasError && (typeof fallback !== 'string')) {
-    return fallback ? (
-      <>{fallback}</>
-    ) : (
-      <div className={`flex items-center justify-center bg-dark-100 dark:bg-dark-800 text-dark-800/20 dark:text-white/20 ${className}`}>
-        <ImageSquare size={24} weight="duotone" />
-      </div>
-    )
-  }
-
   const imageSrc = hasError && typeof fallback === 'string' ? fallback : src
+  const showPlaceholder = hasError && typeof fallback !== 'string'
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      {/* Optional skeleton/background while loading */}
-      {!isLoaded && !priority && (
-        <div className="absolute inset-0 bg-gradient-to-br from-cream-100 to-cream-200 dark:from-dark-800 dark:to-dark-700 animate-pulse" />
+      {showPlaceholder ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-dark-100 dark:bg-dark-800 text-dark-800/20 dark:text-white/20">
+          {fallback || <ImageSquare size={24} weight="duotone" />}
+        </div>
+      ) : (
+        <>
+          {/* Optional skeleton/background while loading */}
+          {!isLoaded && !priority && (
+            <div className="absolute inset-0 bg-gradient-to-br from-cream-100 to-cream-200 dark:from-dark-800 dark:to-dark-700 animate-pulse" />
+          )}
+          
+          <img
+            src={imageSrc}
+            alt={alt}
+            onLoad={handleLoad}
+            onError={handleError}
+            loading={priority ? 'eager' : 'lazy'}
+            decoding={priority ? 'sync' : 'async'}
+            className={`w-full h-full transition-opacity duration-500 ease-out ${
+              isLoaded || priority ? 'opacity-100' : 'opacity-0'
+            }`}
+            {...props}
+          />
+        </>
       )}
-      
-      <img
-        src={imageSrc}
-        alt={alt}
-        onLoad={handleLoad}
-        onError={handleError}
-        loading={priority ? 'eager' : 'lazy'}
-        decoding={priority ? 'sync' : 'async'}
-        className={`w-full h-full transition-opacity duration-500 ease-out ${
-          isLoaded || priority ? 'opacity-100' : 'opacity-0'
-        }`}
-        {...props}
-      />
     </div>
   )
 }
