@@ -12,6 +12,7 @@ import SlideGlassButton from '../components/ui/SlideGlassButton'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useNavigate } from 'react-router-dom'
 import type { Product } from '../types'
 import Image from '../components/ui/Image'
 
@@ -39,6 +40,19 @@ export default function Home() {
   const settings = useStoreSettings()
   const reduceMotion = useReducedMotion()
   const headline = splitHeadline(settings.tagline || 'Discover Amazing Products Brought to you By Cyrus')
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    // If installed as PWA and they open the default route (/), trap them to their store
+    // unless they explicitly cleared it by clicking "Marketplace ↗".
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || ('standalone' in navigator && (navigator as any).standalone)
+    if (isStandalone) {
+      const lastStore = localStorage.getItem('catalog_last_store')
+      if (lastStore) {
+        navigate(`/s/${lastStore}`, { replace: true })
+      }
+    }
+  }, [navigate])
 
   // Hero product showcase — featured first, topped up with new arrivals, deduped.
   const heroShowcase = useMemo(() => {

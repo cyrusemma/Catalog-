@@ -99,6 +99,7 @@ export default function StoreNavbar() {
             {/* "Back to Marketplace" is deliberate and explicitly labelled — one way out */}
             <Link
               to="/"
+              onClick={() => localStorage.removeItem('catalog_last_store')}
               className="text-sm font-medium text-dark-800/40 dark:text-white/40 hover:text-brand-400 transition-colors"
             >
               Marketplace ↗

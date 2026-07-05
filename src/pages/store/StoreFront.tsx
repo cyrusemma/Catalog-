@@ -19,6 +19,7 @@ import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
 import { StoreContext } from '../../contexts/StoreContext'
 import type { StoreContextValue } from '../../contexts/StoreContext'
+import { useDynamicPWA } from '../../hooks/useDynamicPWA'
 
 interface StoreDetails {
   id: string
@@ -142,6 +143,26 @@ export default function StoreFront() {
     },
     enabled: !!store?.id,
   })
+
+  // 1. Remember the last store so standalone PWA can trap them
+  useEffect(() => {
+    if (storeSlug) {
+      localStorage.setItem('catalog_last_store', storeSlug)
+    }
+  }, [storeSlug])
+
+  // 2. Dynamically overwrite PWA manifest for THIS merchant so if they click "Add to Homescreen",
+  // it gets added as a standalone app for THIS store, not the platform home.
+  useDynamicPWA(
+    store
+      ? {
+          name: store.name,
+          shortName: store.name,
+          startUrl: `/s/${store.slug}`,
+          iconUrl: store.logo_url || undefined,
+        }
+      : null
+  )
 
   if (isStoreLoading) {
     return (
