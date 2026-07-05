@@ -18,14 +18,14 @@ export function useDynamicPWA(config: PwaConfig | null) {
     }
 
     // 1. Update Apple Mobile Web App Title
-    let appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]')
+    let appleTitle = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]')
     if (appleTitle) {
       appleTitle.setAttribute('content', config.shortName)
     }
 
     // 2. Update Apple Touch Icon
     if (config.iconUrl) {
-      let appleIcon = document.querySelector('link[rel="apple-touch-icon"]')
+      let appleIcon = document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]')
       if (appleIcon) {
         appleIcon.setAttribute('href', config.iconUrl)
       } else {
@@ -63,7 +63,7 @@ export function useDynamicPWA(config: PwaConfig | null) {
     const blob = new Blob([manifestString], { type: 'application/json' })
     const manifestUrl = URL.createObjectURL(blob)
 
-    let manifestLink = document.querySelector('link[rel="manifest"]')
+    let manifestLink = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
     if (manifestLink) {
       // Store original href just in case
       if (!manifestLink.hasAttribute('data-original-href')) {
@@ -92,17 +92,17 @@ export function useDynamicPWA(config: PwaConfig | null) {
 }
 
 function resetToDefaultManifest() {
-  let appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]')
+  let appleTitle = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]')
   if (appleTitle) {
     appleTitle.setAttribute('content', 'Catalog')
   }
 
-  let appleIcon = document.querySelector('link[rel="apple-touch-icon"]')
+  let appleIcon = document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]')
   if (appleIcon) {
     appleIcon.setAttribute('href', '/apple-touch-icon.png')
   }
 
-  let manifestLink = document.querySelector('link[rel="manifest"]')
+  let manifestLink = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
   if (manifestLink && manifestLink.hasAttribute('data-original-href')) {
     manifestLink.setAttribute('href', manifestLink.getAttribute('data-original-href') || '/manifest.webmanifest')
   }
