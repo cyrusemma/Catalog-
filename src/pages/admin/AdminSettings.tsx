@@ -521,7 +521,7 @@ function ToggleSwitch({ checked, onChange, ariaLabel }: { checked: boolean; onCh
       type="button"
       onClick={() => onChange(!checked)}
       role="switch"
-      aria-checked={checked}
+      aria-checked={checked ? 'true' : 'false'}
       aria-label={ariaLabel || 'Toggle setting'}
       title={ariaLabel || 'Toggle setting'}
       className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors ${checked ? 'bg-brand-400' : 'bg-gray-200'}`}

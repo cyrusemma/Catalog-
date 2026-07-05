@@ -302,6 +302,8 @@ export default function StoreFront() {
                   href={store.social_instagram}
                   target="_blank"
                   rel="noreferrer"
+                  title="Instagram"
+                  aria-label="Instagram"
                   className="w-10 h-10 rounded-full bg-gray-50 dark:bg-dark-900 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-brand-400 transition-colors"
                 >
                   <Instagram size={18} />
@@ -312,6 +314,8 @@ export default function StoreFront() {
                   href={store.social_facebook}
                   target="_blank"
                   rel="noreferrer"
+                  title="Facebook"
+                  aria-label="Facebook"
                   className="w-10 h-10 rounded-full bg-gray-50 dark:bg-dark-900 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-brand-400 transition-colors"
                 >
                   <Facebook size={18} />
@@ -322,6 +326,8 @@ export default function StoreFront() {
                   href={store.social_tiktok}
                   target="_blank"
                   rel="noreferrer"
+                  title="TikTok"
+                  aria-label="TikTok"
                   className="w-10 h-10 rounded-full bg-gray-50 dark:bg-dark-900 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-brand-400 transition-colors"
                 >
                   <Video size={18} />
@@ -394,6 +400,8 @@ export default function StoreFront() {
               <div className="relative">
                 <select
                   value={sortBy}
+                  title="Sort by"
+                  aria-label="Sort by"
                   onChange={e => setSortBy(e.target.value)}
                   className="w-full sm:w-auto appearance-none bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 rounded-2xl pl-5 pr-12 py-3.5 text-sm text-gray-900 dark:text-white outline-none focus:border-brand-400/60 focus:ring-2 focus:ring-brand-400/20 shadow-sm cursor-pointer"
                 >
