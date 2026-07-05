@@ -7,6 +7,7 @@ import { extensionForMime, isValidImageUrl, validateImageFile } from '../../lib/
 import { compressImage } from '../../lib/imageOptimization'
 import { formatPhoneNumber } from '../../lib/utils'
 import { toast } from 'sonner'
+import { getActiveSubscription, pushIsSupported, subscribeToPush, unsubscribeFromPush } from '../../lib/pushSubscription'
 
 interface SettingsForm {
   store_name: string
@@ -244,6 +245,15 @@ export default function AdminSettings() {
     }
     setUploadError('')
     set('hero_images', [...form.hero_images, url])
+  }
+  if (!context || settings === undefined) {
+    return (
+      <AdminLayout>
+        <div className="flex-1 flex items-center justify-center min-h-[60vh]">
+          <Loader2 size={40} className="animate-spin text-brand-400" />
+        </div>
+      </AdminLayout>
+    )
   }
 
   return (
@@ -529,53 +539,33 @@ function PushSettings() {
   const [isPushLoading, setIsPushLoading] = useState(false)
 
   useEffect(() => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-      navigator.serviceWorker.getRegistration().then(reg => {
-        reg?.pushManager.getSubscription().then(sub => {
-          setPushEnabled(!!sub)
-        })
-      })
-    }
+    getActiveSubscription().then(sub => {
+      setPushEnabled(!!sub)
+    })
   }, [])
 
   const handlePushToggle = async (enable: boolean) => {
-    if (!('serviceWorker' in navigator && 'PushManager' in window)) {
+    if (!pushIsSupported()) {
       toast.error('Push notifications are not supported in this browser. If you are on iOS, add the app to your Home Screen first.')
       return
     }
     setIsPushLoading(true)
     try {
-      const reg = await navigator.serviceWorker.ready
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not logged in')
+
       if (enable) {
-        if (!import.meta.env.VITE_VAPID_PUBLIC_KEY) {
-          toast.error('VITE_VAPID_PUBLIC_KEY is missing from environment variables. Please configure Web Push first.')
-          setIsPushLoading(false)
-          return
-        }
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY
-        })
-        const subJson = sub.toJSON()
-        
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          await supabase.from('push_subscriptions').upsert({
-            user_id: user.id,
-            endpoint: subJson.endpoint,
-            p256dh: subJson.keys?.p256dh,
-            auth: subJson.keys?.auth,
-            user_agent: navigator.userAgent
-          }, { onConflict: 'user_id, endpoint' })
-        }
-        setPushEnabled(true)
-      } else {
-        const sub = await reg.pushManager.getSubscription()
+        const sub = await subscribeToPush(user.id)
+        setPushEnabled(!!sub)
         if (sub) {
-          await sub.unsubscribe()
-          await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
+          toast.success('Push notifications enabled for this device!')
+        } else {
+          toast.error('Notification permission was denied.')
         }
+      } else {
+        await unsubscribeFromPush(user.id)
         setPushEnabled(false)
+        toast.success('Push notifications disabled.')
       }
     } catch (err: any) {
       console.error(err)
