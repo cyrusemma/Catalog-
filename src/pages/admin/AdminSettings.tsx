@@ -414,6 +414,7 @@ export default function AdminSettings() {
                   <div>
                     <label className="block text-gray-700 text-sm font-medium mb-1.5">Currency</label>
                     <select
+                      aria-label="Currency"
                       value={form.currency}
                       onChange={e => set("currency", e.target.value)}
                       className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 outline-none text-sm bg-gray-50 focus:bg-white transition-colors"
@@ -490,7 +491,7 @@ export default function AdminSettings() {
                     </div>
                     <div className="flex-1 flex flex-col gap-2">
                       <div className="flex flex-wrap gap-2">
-                        <input ref={logoInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" onChange={e => handleLogoUpload(e.target.files)} className="hidden" />
+                        <input ref={logoInputRef} type="file" aria-label="Brand Logo" accept="image/jpeg,image/png,image/webp,image/svg+xml" onChange={e => handleLogoUpload(e.target.files)} className="hidden" />
                         <button type="button" onClick={() => logoInputRef.current?.click()} disabled={uploadingLogo} className="bg-brand-50 hover:bg-brand-100 text-brand-600 disabled:opacity-50 text-sm font-medium px-4 py-2 rounded-xl flex items-center gap-2 transition-colors">
                           {uploadingLogo ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
                           {form.logo_url ? "Change Logo" : "Upload Logo"}
@@ -525,7 +526,7 @@ export default function AdminSettings() {
                   )}
 
                   <div className="flex flex-wrap gap-2 pt-2">
-                    <input ref={heroInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => handleHeroUpload(e.target.files)} className="hidden" />
+                    <input ref={heroInputRef} type="file" aria-label="Hero Images" accept="image/jpeg,image/png,image/webp" multiple onChange={e => handleHeroUpload(e.target.files)} className="hidden" />
                     <button type="button" onClick={() => heroInputRef.current?.click()} disabled={uploadingHero} className="bg-gray-900 hover:bg-black text-white disabled:opacity-50 text-sm font-medium px-5 py-2.5 rounded-xl flex items-center gap-2 transition-colors">
                       {uploadingHero ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
                       {uploadingHero ? "Uploading..." : "Add Images"}
@@ -535,7 +536,7 @@ export default function AdminSettings() {
                   
                   <div className="pt-4 border-t border-gray-100">
                     <label className="block text-gray-700 text-sm font-medium mb-2">Rotation Interval (seconds)</label>
-                    <input type="number" min="2" max="60" value={form.hero_rotation_seconds} onChange={e => handleRotationChange(e.target.value)} className={`w-32 border rounded-xl px-4 py-2 text-gray-900 outline-none text-sm bg-gray-50 focus:bg-white transition-colors ${rotationError ? "border-red-400" : "border-gray-200 focus:border-brand-400"}`} />
+                    <input type="number" min="2" max="60" aria-label="Rotation Interval" value={form.hero_rotation_seconds} onChange={e => handleRotationChange(e.target.value)} className={`w-32 border rounded-xl px-4 py-2 text-gray-900 outline-none text-sm bg-gray-50 focus:bg-white transition-colors ${rotationError ? "border-red-400" : "border-gray-200 focus:border-brand-400"}`} />
                     {rotationError && <p className="text-red-500 text-xs mt-1">{rotationError}</p>}
                   </div>
                 </section>
@@ -657,7 +658,7 @@ export default function AdminSettings() {
                 <Field label="Meta Title" value={form.seo_meta_title} onChange={v => set("seo_meta_title", v)} placeholder="Catalog | Buy Best Products" />
                 <div>
                   <label className="block text-gray-700 text-sm font-medium mb-1.5">Meta Description</label>
-                  <textarea value={form.seo_meta_description} onChange={e => set("seo_meta_description", e.target.value)} rows={3} className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 outline-none text-sm bg-gray-50 focus:bg-white resize-none transition-colors" />
+                  <textarea aria-label="Meta Description" value={form.seo_meta_description} onChange={e => set("seo_meta_description", e.target.value)} rows={3} className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 outline-none text-sm bg-gray-50 focus:bg-white resize-none transition-colors" />
                 </div>
               </section>
 
@@ -797,7 +798,7 @@ function PushSettings() {
 
 function ToggleSwitch({ checked, onChange, ariaLabel }: { checked: boolean; onChange: (v: boolean) => void; ariaLabel?: string }) {
   return (
-    <button type="button" onClick={() => onChange(!checked)} role="switch" aria-checked={checked ? "true" : "false"} aria-label={ariaLabel || "Toggle setting"} className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors ${checked ? "bg-brand-500" : "bg-gray-200"}`}>
+    <button type="button" onClick={() => onChange(!checked)} role="switch" aria-checked={checked} aria-label={ariaLabel || "Toggle setting"} className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors ${checked ? "bg-brand-500" : "bg-gray-200"}`}>
       <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${checked ? "translate-x-[26px]" : "translate-x-0.5"}`} />
     </button>
   )
