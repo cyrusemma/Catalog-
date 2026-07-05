@@ -489,6 +489,7 @@ function Field({
   label,
   value,
   onChange,
+  onBlur,
   placeholder,
   type = 'text',
 }: {
