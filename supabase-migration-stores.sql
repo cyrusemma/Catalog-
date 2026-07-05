@@ -22,9 +22,42 @@ create table if not exists public.stores (
   social_tiktok text,
   social_facebook text,
   show_visitor_count boolean default false,
+  social_twitter text,
+  minimum_order_amount numeric(10,2) default 0,
+  maintenance_mode boolean not null default false,
+  maintenance_message text,
+  operating_hours text,
+  payment_methods jsonb default '["momo", "cod"]',
+  seo_meta_title text,
+  seo_meta_description text,
+  seo_og_image text,
+  analytics_google_id text,
+  analytics_pixel_id text,
+  order_auto_cancel_hours int default 0,
+  urgent_banner_active boolean not null default false,
+  urgent_banner_text text,
+  theme_color text default 'amber',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Backfill: add new columns to existing stores
+alter table if exists public.stores
+  add column if not exists social_twitter text,
+  add column if not exists minimum_order_amount numeric(10,2) default 0,
+  add column if not exists maintenance_mode boolean not null default false,
+  add column if not exists maintenance_message text,
+  add column if not exists operating_hours text,
+  add column if not exists payment_methods jsonb default '["momo", "cod"]',
+  add column if not exists seo_meta_title text,
+  add column if not exists seo_meta_description text,
+  add column if not exists seo_og_image text,
+  add column if not exists analytics_google_id text,
+  add column if not exists analytics_pixel_id text,
+  add column if not exists order_auto_cancel_hours int default 0,
+  add column if not exists urgent_banner_active boolean not null default false,
+  add column if not exists urgent_banner_text text,
+  add column if not exists theme_color text default 'amber';
 
 -- 2. Add columns to products table
 alter table public.products

@@ -123,13 +123,41 @@ create table if not exists store_settings (
   social_twitter text,
   whatsapp_template text,                         -- optional custom order message; supports {items} {subtotal} {delivery} {total} {currency}
   show_visitor_count boolean not null default false,
+  minimum_order_amount numeric(10,2) default 0,
+  maintenance_mode boolean not null default false,
+  maintenance_message text,
+  operating_hours text,
+  payment_methods jsonb default '["momo", "cod"]',
+  seo_meta_title text,
+  seo_meta_description text,
+  seo_og_image text,
+  analytics_google_id text,
+  analytics_pixel_id text,
+  order_auto_cancel_hours int default 0,
+  urgent_banner_active boolean not null default false,
+  urgent_banner_text text,
+  theme_color text default 'amber',
   updated_at timestamptz default now()
 );
 
 -- Backfill: add new columns to existing store_settings installations
 alter table if exists store_settings
   add column if not exists social_twitter text,
-  add column if not exists show_visitor_count boolean not null default false;
+  add column if not exists show_visitor_count boolean not null default false,
+  add column if not exists minimum_order_amount numeric(10,2) default 0,
+  add column if not exists maintenance_mode boolean not null default false,
+  add column if not exists maintenance_message text,
+  add column if not exists operating_hours text,
+  add column if not exists payment_methods jsonb default '["momo", "cod"]',
+  add column if not exists seo_meta_title text,
+  add column if not exists seo_meta_description text,
+  add column if not exists seo_og_image text,
+  add column if not exists analytics_google_id text,
+  add column if not exists analytics_pixel_id text,
+  add column if not exists order_auto_cancel_hours int default 0,
+  add column if not exists urgent_banner_active boolean not null default false,
+  add column if not exists urgent_banner_text text,
+  add column if not exists theme_color text default 'amber';
 
 -- Singleton enforcement: prevents accidental duplicate-insert bugs.
 -- ((true)) means there can only ever be one row where the expression "true" is true → at most 1 row total.
