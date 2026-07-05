@@ -11,7 +11,7 @@ import {
   FacebookLogo,
   TiktokLogo,
   Image,
-  Sparkle,
+  Star,
   ShieldCheck,
   CurrencyCircleDollar,
   Lightning,
@@ -57,7 +57,7 @@ const BENEFITS = [
     bg: 'bg-red-500/10',
   },
   {
-    Icon: Sparkle,
+    Icon: Star,
     title: 'Product reviews',
     desc: 'Customers leave ratings. You approve what shows publicly.',
     color: 'text-amber-500',

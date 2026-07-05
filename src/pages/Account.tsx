@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Bell, BellSlash, SignOut, User as UserIcon, EnvelopeSimple, CheckCircle, Sparkle, Storefront, ArrowSquareOut, Package } from '@phosphor-icons/react'
+import { Bell, BellSlash, SignOut, User as UserIcon, EnvelopeSimple, CheckCircle, Storefront, ArrowSquareOut, Package } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
@@ -83,7 +83,7 @@ export default function Account() {
   return (
     <main className="w-full flex-1 max-w-3xl mx-auto px-4 py-10 pb-28 lg:pb-10">
       <div className="flex items-center gap-2 mb-2">
-        <Sparkle size={14} weight="fill" className="text-brand-400" />
+        <span className="w-1.5 h-1.5 rounded-full bg-brand-400" />
         <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Your account</span>
       </div>
       <h1 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white mb-8">Account</h1>

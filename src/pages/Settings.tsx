@@ -8,7 +8,6 @@ import {
   SignOut,
   UserCircle,
   EnvelopeSimple,
-  Sparkle,
   SlidersHorizontal,
   CaretRight,
 } from '@phosphor-icons/react'
@@ -113,7 +112,7 @@ export default function Settings() {
   return (
     <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-10 pb-28 lg:pb-10">
       <div className="flex items-center gap-2 mb-2">
-        <Sparkle size={14} weight="fill" className="text-brand-400" />
+        <span className="w-1.5 h-1.5 rounded-full bg-brand-400" />
         <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Preferences</span>
       </div>
       <h1 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white mb-8 flex items-center gap-3">

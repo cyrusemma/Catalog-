@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Sparkle, X, ArrowRight } from '@phosphor-icons/react'
+import { Megaphone, X, ArrowRight } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
 
@@ -68,7 +68,7 @@ export default function AnnouncementBanner() {
         >
           <div className="p-4 pr-10 flex items-start gap-3">
             <span className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
-              <Sparkle size={16} weight="fill" />
+              <Megaphone size={16} weight="fill" />
             </span>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-amber-500 uppercase tracking-wider">Special Announcement</p>

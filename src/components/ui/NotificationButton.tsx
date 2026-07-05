@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bell, X, BellRinging, BellSlash, Sparkle, ArrowRight } from '@phosphor-icons/react'
+import { Bell, X, BellRinging, BellSlash, Megaphone, ArrowRight } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
@@ -206,7 +206,7 @@ export default function NotificationButton() {
               <div className="rounded-xl bg-gradient-to-br from-amber-500/10 to-brand-500/5 border border-brand-400/20 p-3">
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-sm">
-                    <Sparkle size={15} weight="fill" className="text-white" />
+                    <Megaphone size={15} weight="fill" className="text-white" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold text-dark-800 dark:text-white uppercase tracking-wider">Announcement</p>

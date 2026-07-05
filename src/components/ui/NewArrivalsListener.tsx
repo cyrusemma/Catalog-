@@ -25,7 +25,7 @@ export default function NewArrivalsListener() {
           // Only show notification if the product is published
           if (newProduct.is_published) {
             addToast({
-              title: '✨ New Arrival!',
+              title: 'New Arrival!',
               message: `Just added: ${newProduct.title}`,
               type: 'info',
               duration: 8000,

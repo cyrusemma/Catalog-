@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { ShoppingCart, Star, Sparkle, Lightning, Heart, Clock } from '@phosphor-icons/react'
+import { ShoppingCart, Star, Lightning, Heart, Clock } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
@@ -121,13 +121,14 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
                 </span>
               )}
               {isNew && !onFlashSale && (
-                <span className="bg-brand-50 text-brand-600 dark:bg-brand-950/30 dark:text-brand-400 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-brand-200 dark:border-brand-800/30">
-                  <Sparkle size={10} weight="fill" /> NEW
+                <span className="bg-brand-50 text-brand-600 dark:bg-brand-950/30 dark:text-brand-400 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 border border-brand-200 dark:border-brand-800/30">
+                  <span className="w-1 h-1 rounded-full bg-brand-500 dark:bg-brand-400 animate-pulse" />
+                  <span>NEW</span>
                 </span>
               )}
               {product.is_featured && (
                 <span className="text-amber-500 dark:text-amber-400 animate-pulse flex items-center justify-center px-1 py-0.5" title="Featured">
-                  <Sparkle size={12} weight="fill" />
+                  <Star size={12} weight="fill" />
                 </span>
               )}
             </div>

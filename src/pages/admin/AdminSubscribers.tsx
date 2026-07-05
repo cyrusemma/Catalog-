@@ -16,7 +16,6 @@ import {
   AlertCircle,
   Phone,
   Mail,
-  Sparkles,
   ShoppingBag as CartIcon
 } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
@@ -466,7 +465,7 @@ export default function AdminSubscribers() {
                                   {/* Device Endpoint Info */}
                                   <div className="pt-4 space-y-3">
                                     <h4 className="font-bold text-xs uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                                      <Sparkles size={14} className="text-green-500" />
+                                      <Smartphone size={14} className="text-green-500" />
                                       Subscribed Devices
                                     </h4>
                                     {user.pushSubscriptions.length === 0 ? (
