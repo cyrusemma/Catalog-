@@ -732,3 +732,20 @@ html.theme-aurora-dark .dark\:bg-dark-900\/90 {
   backdrop-filter: blur(16px) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
+
+@keyframes star-live {
+  0%, 100% {
+    color: #f59e0b;
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    color: #22c55e;
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+}
+
+.animate-star-live {
+  animation: star-live 2s ease-in-out infinite;
+}

@@ -127,7 +127,7 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
                 </span>
               )}
               {product.is_featured && (
-                <span className="text-amber-500 dark:text-amber-400 animate-pulse flex items-center justify-center px-1 py-0.5" title="Featured">
+                <span className="animate-star-live flex items-center justify-center px-1 py-0.5" title="Featured">
                   <Star size={12} weight="fill" />
                 </span>
               )}
