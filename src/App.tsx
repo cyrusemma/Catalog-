@@ -45,7 +45,7 @@ const Privacy = lazy(() => import('./pages/Privacy'))
 const Terms = lazy(() => import('./pages/Terms'))
 const StoreFront = lazy(() => import('./pages/store/StoreFront'))
 const BecomeMerchant = lazy(() => import('./pages/BecomeMerchant'))
-const OfflineGame = lazy(() => import('./pages/OfflineGame'))
+import OfflineGame from './pages/OfflineGame'
 const MerchantDashboard = lazy(() => import('./pages/merchant/MerchantDashboard'))
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
