@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useAdminContext } from '../../hooks/useAdminContext'
 import { Package, Eye, ShoppingBag, TrendingUp, Plus, ArrowRight, Settings, MessageSquareQuote, Users, BarChart3, Star, Store } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts'
 import AdminLayout from '../../components/admin/AdminLayout'
@@ -7,33 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils'
 
 export default function AdminDashboard() {
-  const { data: context } = useQuery({
-    queryKey: ['admin-user-context'],
-    queryFn: async () => {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const user = sessionData.session?.user
-      const isAdmin = user?.app_metadata?.role === 'admin'
-      let storeId: string | null = null
-      let approvalStatus: string | null = null
-
-      if (user && !isAdmin) {
-        const { data: store } = await supabase
-          .from('stores')
-          .select('id, approval_status')
-          .eq('owner_id', user.id)
-          .maybeSingle()
-        if (store) {
-          storeId = store.id
-          approvalStatus = store.approval_status
-        }
-      }
-
-      const { data: settings } = await supabase.from('store_settings').select('whatsapp_number').single()
-      const adminWhatsapp = settings?.whatsapp_number || '233000000000'
-
-      return { isAdmin, storeId, approvalStatus, adminWhatsapp }
-    }
-  })
+  const { data: context } = useAdminContext()
 
   const { data: stats } = useQuery({
     queryKey: ['admin-stats', context?.storeId, context?.isAdmin],
@@ -251,12 +225,12 @@ export default function AdminDashboard() {
               {stats?.revenueData && stats.revenueData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={stats.revenueData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--admin-border)" />
                     <XAxis 
                       dataKey="date" 
                       axisLine={false} 
                       tickLine={false} 
-                      tick={{ fill: '#9ca3af', fontSize: 12 }} 
+                      tick={{ fill: 'var(--admin-text-soft)', fontSize: 12 }} 
                       dy={10}
                       tickFormatter={(val) => {
                         const d = new Date(val)
@@ -266,16 +240,24 @@ export default function AdminDashboard() {
                     <YAxis 
                       axisLine={false} 
                       tickLine={false} 
-                      tick={{ fill: '#9ca3af', fontSize: 12 }} 
+                      tick={{ fill: 'var(--admin-text-soft)', fontSize: 12 }} 
                       dx={-10}
                       tickFormatter={(val) => `GH₵${val}`}
                     />
                     <RechartsTooltip 
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      contentStyle={{
+                        borderRadius: '12px',
+                        border: '1px solid var(--admin-border)',
+                        backgroundColor: 'var(--admin-panel-soft)',
+                        color: 'var(--admin-text)',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      }}
+                      itemStyle={{ color: 'var(--admin-text)' }}
+                      labelStyle={{ color: 'var(--admin-text-muted)' }}
                       formatter={(value: number) => [`GH₵${value.toLocaleString()}`, 'Revenue']}
                       labelFormatter={(label) => `Date: ${label}`}
                     />
-                    <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#3b82f6' }} />
+                    <Line type="monotone" dataKey="revenue" stroke="var(--brand-400, #d4820a)" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: 'var(--brand-400, #d4820a)' }} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (

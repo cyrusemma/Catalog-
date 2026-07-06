@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAdminContext } from '../../hooks/useAdminContext'
 import { ArrowLeft, Loader2, Plus, X, ImagePlus, Upload } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase, supabaseUrl } from '../../lib/supabase'
@@ -90,25 +91,7 @@ export default function AdminProductForm() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [form])
 
-  const { data: context } = useQuery({
-    queryKey: ['admin-user-context'],
-    queryFn: async () => {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const user = sessionData.session?.user
-      const isAdmin = user?.app_metadata?.role === 'admin'
-      let storeId: string | null = null
-
-      if (user && !isAdmin) {
-        const { data: store } = await supabase
-          .from('stores')
-          .select('id')
-          .eq('owner_id', user.id)
-          .maybeSingle()
-        if (store) storeId = store.id
-      }
-      return { isAdmin, storeId }
-    }
-  })
+  const { data: context } = useAdminContext()
   const [newFeature, setNewFeature] = useState('')
   const [newSize, setNewSize] = useState('')
   const [newColor, setNewColor] = useState('')

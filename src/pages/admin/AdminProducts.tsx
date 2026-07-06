@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useAdminContext } from '../../hooks/useAdminContext'
 import { Plus, Search, Star, Eye, EyeOff, Pencil, Trash2, Copy, Zap, X, Check, ArrowDownUp } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import AdminLayout from '../../components/admin/AdminLayout'
@@ -16,25 +17,7 @@ export default function AdminProducts() {
   const [quickEditStock, setQuickEditStock] = useState<string>('')
   const qc = useQueryClient()
 
-  const { data: context } = useQuery({
-    queryKey: ['admin-user-context'],
-    queryFn: async () => {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const user = sessionData.session?.user
-      const isAdmin = user?.app_metadata?.role === 'admin'
-      let storeId: string | null = null
-
-      if (user && !isAdmin) {
-        const { data: store } = await supabase
-          .from('stores')
-          .select('id')
-          .eq('owner_id', user.id)
-          .maybeSingle()
-        if (store) storeId = store.id
-      }
-      return { isAdmin, storeId }
-    }
-  })
+  const { data: context } = useAdminContext()
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['admin-products', context?.storeId],

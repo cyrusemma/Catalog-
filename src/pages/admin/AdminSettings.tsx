@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useAdminContext } from "../../hooks/useAdminContext"
 import { Save, CheckCircle, Upload, X, Image as ImageIcon, Loader2, AlertTriangle, Store, Palette, MessageCircle, ShoppingBag, Sliders, Settings2, Trash } from "lucide-react"
 import AdminLayout from "../../components/admin/AdminLayout"
 import { supabase } from "../../lib/supabase"
@@ -150,20 +151,7 @@ export default function AdminSettings() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
   }, [isDirty])
 
-  const { data: context, isLoading: contextLoading } = useQuery({
-    queryKey: ["admin-user-context"],
-    queryFn: async () => {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const user = sessionData.session?.user
-      const isAdmin = user?.app_metadata?.role === "admin"
-      let storeId: string | null = null
-      if (user && !isAdmin) {
-        const { data: store } = await supabase.from("stores").select("id").eq("owner_id", user.id).maybeSingle()
-        if (store) storeId = store.id
-      }
-      return { isAdmin, storeId }
-    }
-  })
+  const { data: context } = useAdminContext()
 
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ["store-settings", context?.storeId, context?.isAdmin],
