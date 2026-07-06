@@ -23,8 +23,23 @@ export default function Cart() {
   const settings = useStoreSettings()
   const { user } = useCustomerSession()
 
-  const storeIds = useMemo(() => Array.from(new Set(items.map(i => i.product.store_id).filter(Boolean))), [items])
-  const merchantStoreId = storeIds.length === 1 ? storeIds[0] : null
+  const uniqueStoreIds = useMemo(() => Array.from(new Set(items.map(i => i.product.store_id || 'platform'))), [items])
+  const isMultiMerchantCart = uniqueStoreIds.length > 1
+  const merchantStoreId = uniqueStoreIds.length === 1 && uniqueStoreIds[0] !== 'platform' ? uniqueStoreIds[0] : null
+
+  const { data: storesInfo } = useQuery({
+    queryKey: ['cart-stores-info', uniqueStoreIds],
+    queryFn: async () => {
+      const realStoreIds = uniqueStoreIds.filter(id => id !== 'platform')
+      if (realStoreIds.length === 0) return []
+      const { data } = await supabase
+        .from('stores')
+        .select('id, name')
+        .in('id', realStoreIds)
+      return data || []
+    },
+    enabled: uniqueStoreIds.length > 0,
+  })
 
   const { data: merchantStore } = useQuery({
     queryKey: ['cart-merchant-store', merchantStoreId],
@@ -270,7 +285,14 @@ export default function Cart() {
                       {item.product.title}
                     </h3>
                   </Link>
-                  <p className="text-brand-400 font-bold mt-1">{formatPrice(effectivePrice(item.product))}</p>
+                  <div className="flex items-center flex-wrap gap-2 mt-1">
+                    <p className="text-brand-400 font-bold">{formatPrice(effectivePrice(item.product))}</p>
+                    <span className="text-[10px] bg-cream-100 dark:bg-dark-700 text-dark-800/60 dark:text-white/60 font-semibold px-2 py-0.5 rounded">
+                      {item.product.store_id
+                        ? (storesInfo?.find((s: any) => s.id === item.product.store_id)?.name || 'Merchant Store')
+                        : 'Platform Store'}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between mt-3">
                     <div className="flex items-center gap-2">
                       <button
@@ -338,7 +360,17 @@ export default function Cart() {
                 <span className="text-brand-400 font-bold text-2xl">{formatPrice(grandTotal)}</span>
               </div>
             </div>
-            {isCheckingOut ? (
+            {isMultiMerchantCart && (
+              <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 rounded-2xl p-4 mb-4 text-xs text-red-600 dark:text-red-400">
+                <p className="font-bold mb-1">Multi-Store Checkout Blocked</p>
+                <p>Your cart contains items from multiple stores. Please check out from one store at a time to ensure correct order routing.</p>
+              </div>
+            )}
+            {isMultiMerchantCart ? (
+              <button disabled className="btn-primary w-full justify-center py-4 text-base opacity-50 cursor-not-allowed">
+                Checkout Blocked
+              </button>
+            ) : isCheckingOut ? (
               <button disabled className="btn-primary w-full justify-center py-4 text-base opacity-50 cursor-not-allowed">
                 Fill details to complete
               </button>
