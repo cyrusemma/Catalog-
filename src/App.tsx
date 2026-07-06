@@ -303,9 +303,20 @@ export default function App() {
     return () => window.removeEventListener('online', handleOnline)
   }, [])
 
+  const [toasterPosition, setToasterPosition] = useState<'top-center' | 'top-right'>('top-center')
+
+  useEffect(() => {
+    const updatePosition = () => {
+      setToasterPosition(window.innerWidth >= 768 ? 'top-right' : 'top-center')
+    }
+    updatePosition()
+    window.addEventListener('resize', updatePosition)
+    return () => window.removeEventListener('resize', updatePosition)
+  }, [])
+
   return (
     <QueryClientProvider client={qc}>
-      <Toaster position="top-center" richColors />
+      <Toaster position={toasterPosition} richColors />
       <BrowserRouter>
         <NewArrivalsListener />
         <CartSync />
