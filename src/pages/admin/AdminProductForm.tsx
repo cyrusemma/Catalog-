@@ -420,8 +420,8 @@ export default function AdminProductForm() {
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Images</h2>
               <div className="grid grid-cols-2 gap-2 mb-3">
                 {form.images.map((img, i) => (
-                  <div key={i} className="relative group">
-                    <img src={img} alt="" className="w-full aspect-square object-cover rounded-xl" />
+                  <div key={i} className="relative group aspect-square">
+                    <img src={img} alt="" className="w-full h-full object-cover rounded-xl" />
                     <button
                       onClick={() => set('images', form.images.filter((_, j) => j !== i))}
                       aria-label={`Remove image ${i + 1}`}
@@ -432,8 +432,13 @@ export default function AdminProductForm() {
                     </button>
                   </div>
                 ))}
-                {form.images.length === 0 && (
-                  <div className="col-span-2 aspect-video bg-gray-50 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-200">
+                {uploading && (
+                  <div className="relative aspect-square bg-gray-50 dark:bg-dark-700/50 rounded-xl flex items-center justify-center border border-dashed border-gray-200 dark:border-brand-400/20 animate-pulse">
+                    <Loader2 className="w-6 h-6 text-brand-400 animate-spin" />
+                  </div>
+                )}
+                {form.images.length === 0 && !uploading && (
+                  <div className="col-span-2 aspect-[2/1] bg-gray-50 dark:bg-dark-700/30 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-brand-400/10">
                     <div className="text-center">
                       <ImagePlus size={24} className="text-gray-300 mx-auto mb-1" />
                       <p className="text-gray-400 text-xs">No images yet</p>
@@ -656,105 +661,107 @@ export default function AdminProductForm() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Available Sizes</h2>
-              <p className="text-gray-400 text-[11px] mb-3">
-                Add any sizes/variants the customer can pick from — e.g. S, M, L or shoe sizes like 38, 39, 40. Leave empty if not applicable.
-              </p>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {form.sizes.map((s, i) => (
-                  <span key={i} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 text-sm rounded-full pl-3 pr-1 py-1">
-                    {s}
-                    <button
-                      type="button"
-                      onClick={() => set('sizes', form.sizes.filter((_, j) => j !== i))}
-                      aria-label={`Remove size ${s}`}
-                      className="w-5 h-5 rounded-full hover:bg-gray-200 text-gray-500 flex items-center justify-center"
-                    >
-                      <X size={12} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  value={newSize}
-                  onChange={e => setNewSize(e.target.value)}
-                  placeholder="e.g. M or 42"
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && newSize.trim()) {
-                      e.preventDefault()
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Available Sizes</h2>
+                <p className="text-gray-400 text-[11px] mb-3">
+                  Add any sizes/variants the customer can pick from — e.g. S, M, L or shoe sizes like 38, 39, 40. Leave empty if not applicable.
+                </p>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {form.sizes.map((s, i) => (
+                    <span key={i} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 text-sm rounded-full pl-3 pr-1 py-1">
+                      {s}
+                      <button
+                        type="button"
+                        onClick={() => set('sizes', form.sizes.filter((_, j) => j !== i))}
+                        aria-label={`Remove size ${s}`}
+                        className="w-5 h-5 rounded-full hover:bg-gray-200 text-gray-500 flex items-center justify-center"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={newSize}
+                    onChange={e => setNewSize(e.target.value)}
+                    placeholder="e.g. M or 42"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && newSize.trim()) {
+                        e.preventDefault()
+                        const val = newSize.trim()
+                        if (!form.sizes.includes(val)) set('sizes', [...form.sizes, val])
+                        setNewSize('')
+                      }
+                    }}
+                    className="flex-1 border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-gray-50 focus:bg-white outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
                       const val = newSize.trim()
-                      if (!form.sizes.includes(val)) set('sizes', [...form.sizes, val])
+                      if (val && !form.sizes.includes(val)) set('sizes', [...form.sizes, val])
                       setNewSize('')
-                    }
-                  }}
-                  className="flex-1 border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-gray-50 focus:bg-white outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const val = newSize.trim()
-                    if (val && !form.sizes.includes(val)) set('sizes', [...form.sizes, val])
-                    setNewSize('')
-                  }}
-                  aria-label="Add size"
-                  title="Add size"
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-xl transition-colors"
-                >
-                  <Plus size={14} />
-                </button>
+                    }}
+                    aria-label="Add size"
+                    title="Add size"
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-xl transition-colors"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Available Colors</h2>
-              <p className="text-gray-400 text-[11px] mb-3">
-                Add any colors/variants the customer can pick from — e.g. Red, Black, White or custom names. Leave empty if not applicable.
-              </p>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {form.colors.map((c, i) => (
-                  <span key={i} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 text-sm rounded-full pl-3 pr-1 py-1">
-                    {c}
-                    <button
-                      type="button"
-                      onClick={() => set('colors', form.colors.filter((_, j) => j !== i))}
-                      aria-label={`Remove color ${c}`}
-                      className="w-5 h-5 rounded-full hover:bg-gray-200 text-gray-500 flex items-center justify-center"
-                    >
-                      <X size={12} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  value={newColor}
-                  onChange={e => setNewColor(e.target.value)}
-                  placeholder="e.g. Red or Black"
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && newColor.trim()) {
-                      e.preventDefault()
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Available Colors</h2>
+                <p className="text-gray-400 text-[11px] mb-3">
+                  Add any colors/variants the customer can pick from — e.g. Red, Black, White or custom names. Leave empty if not applicable.
+                </p>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {form.colors.map((c, i) => (
+                    <span key={i} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 text-sm rounded-full pl-3 pr-1 py-1">
+                      {c}
+                      <button
+                        type="button"
+                        onClick={() => set('colors', form.colors.filter((_, j) => j !== i))}
+                        aria-label={`Remove color ${c}`}
+                        className="w-5 h-5 rounded-full hover:bg-gray-200 text-gray-500 flex items-center justify-center"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={newColor}
+                    onChange={e => setNewColor(e.target.value)}
+                    placeholder="e.g. Red or Black"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && newColor.trim()) {
+                        e.preventDefault()
+                        const val = newColor.trim()
+                        if (!form.colors.includes(val)) set('colors', [...form.colors, val])
+                        setNewColor('')
+                      }
+                    }}
+                    className="flex-1 border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-gray-50 focus:bg-white outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
                       const val = newColor.trim()
-                      if (!form.colors.includes(val)) set('colors', [...form.colors, val])
+                      if (val && !form.colors.includes(val)) set('colors', [...form.colors, val])
                       setNewColor('')
-                    }
-                  }}
-                  className="flex-1 border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 bg-gray-50 focus:bg-white outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const val = newColor.trim()
-                    if (val && !form.colors.includes(val)) set('colors', [...form.colors, val])
-                    setNewColor('')
-                  }}
-                  aria-label="Add color"
-                  title="Add color"
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-xl transition-colors"
-                >
-                  <Plus size={14} />
-                </button>
+                    }}
+                    aria-label="Add color"
+                    title="Add color"
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-xl transition-colors"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
