@@ -57,10 +57,23 @@ export default function Cart() {
 
   const subtotal = totalPrice()
   // Per-product delivery: take the highest fee across all cart items (one delivery trip)
-  const deliveryFee = items.reduce(
+  const baseDeliveryFee = items.reduce(
     (max, item) => Math.max(max, Number(item.product.delivery_fee) || 0),
     0
   )
+
+  const [deliveryMethod, setDeliveryMethod] = useState<'local' | 'standard' | 'shipping'>('standard')
+
+  const deliveryFee = useMemo(() => {
+    if (deliveryMethod === 'local') {
+      return baseDeliveryFee > 0 ? 5 : 0
+    }
+    if (deliveryMethod === 'shipping') {
+      return baseDeliveryFee + 25
+    }
+    return baseDeliveryFee
+  }, [deliveryMethod, baseDeliveryFee])
+
   const grandTotal = subtotal + deliveryFee
 
   const [isCheckingOut, setIsCheckingOut] = useState(false)
@@ -81,6 +94,10 @@ export default function Cart() {
     setSubmitError('')
 
     const orderId = crypto.randomUUID()
+    const selectedOptionText = 
+      deliveryMethod === 'local' ? 'Local Walk (KNUST environs)' :
+      deliveryMethod === 'shipping' ? 'Intercity Shipping' :
+      'Standard Delivery'
     
     const orderPayload = {
       id: orderId,
@@ -88,7 +105,7 @@ export default function Cart() {
       customer_id: user?.id || null,
       customer_name: customerName,
       customer_phone: customerPhone,
-      customer_address: customerAddress,
+      customer_address: `${customerAddress}\n\n[Delivery Option: ${selectedOptionText}]`,
       items: items.map(i => ({
         product_id: i.product.id,
         product_title: i.product.title,
@@ -153,7 +170,7 @@ export default function Cart() {
       targetTemplate
     )
     
-    const finalMessage = `*Order ID: #${orderIdShort}*\n\n${baseMessage}`
+    const finalMessage = `*Order ID: #${orderIdShort}*\n\n${baseMessage}\n\n*Delivery Method:* ${selectedOptionText}\n*Delivery Address:* ${customerAddress}`
 
     const url = buildWhatsAppUrl(targetNumber, finalMessage)
     
@@ -241,6 +258,58 @@ export default function Cart() {
                     className="input w-full"
                     placeholder="+233 20 000 0000"
                   />
+                </div>
+                <div>
+                  <label className="block text-dark-800/60 dark:text-white/60 text-sm font-medium mb-2">Delivery Option</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod('local')}
+                      className={`p-3 rounded-2xl border text-center transition-all ${
+                        deliveryMethod === 'local'
+                          ? 'border-brand-400 bg-brand-400/10 text-brand-400'
+                          : 'border-cream-200 dark:border-white/10 text-dark-800/70 dark:text-white/60 hover:bg-cream-50 dark:hover:bg-dark-700/30'
+                      }`}
+                    >
+                      <p className="text-xs font-bold">Local KNUST</p>
+                      <p className="text-[10px] opacity-80 mt-1">
+                        {baseDeliveryFee > 0 ? 'GHS 5.00' : 'Free'}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod('standard')}
+                      className={`p-3 rounded-2xl border text-center transition-all ${
+                        deliveryMethod === 'standard'
+                          ? 'border-brand-400 bg-brand-400/10 text-brand-400'
+                          : 'border-cream-200 dark:border-white/10 text-dark-800/70 dark:text-white/60 hover:bg-cream-50 dark:hover:bg-dark-700/30'
+                      }`}
+                    >
+                      <p className="text-xs font-bold">Standard City</p>
+                      <p className="text-[10px] opacity-80 mt-1">
+                        {baseDeliveryFee > 0 ? `GHS ${baseDeliveryFee.toFixed(2)}` : 'Free'}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod('shipping')}
+                      className={`p-3 rounded-2xl border text-center transition-all ${
+                        deliveryMethod === 'shipping'
+                          ? 'border-brand-400 bg-brand-400/10 text-brand-400'
+                          : 'border-cream-200 dark:border-white/10 text-dark-800/70 dark:text-white/60 hover:bg-cream-50 dark:hover:bg-dark-700/30'
+                      }`}
+                    >
+                      <p className="text-xs font-bold">Intercity</p>
+                      <p className="text-[10px] opacity-80 mt-1">
+                        GHS {(baseDeliveryFee + 25).toFixed(2)}
+                      </p>
+                    </button>
+                  </div>
+                  <p className="text-gray-400 text-[10px] mt-1.5 leading-snug">
+                    {deliveryMethod === 'local' && "Walk-to-customer delivery within KNUST campus environs."}
+                    {deliveryMethod === 'standard' && "Courier delivery within Kumasi city environs."}
+                    {deliveryMethod === 'shipping' && "Nationwide parcel shipping service across other regions."}
+                  </p>
                 </div>
                 <div>
                   <label className="block text-dark-800/60 dark:text-white/60 text-sm font-medium mb-1">Delivery Address</label>
