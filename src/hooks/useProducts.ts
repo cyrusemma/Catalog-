@@ -2,10 +2,28 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import type { Category, Product } from '../types'
 
+let globalMarkupPromise: Promise<number> | null = null
+
 async function getGlobalMarkup() {
-  const { data } = await supabase.from('store_settings').select('markup_percentage').single()
-  return data?.markup_percentage || 0
+  if (globalMarkupPromise) return globalMarkupPromise
+
+  globalMarkupPromise = (async () => {
+    try {
+      const { data } = await supabase.from('store_settings').select('markup_percentage').single()
+      return data?.markup_percentage || 0
+    } catch {
+      return 0
+    }
+  })()
+
+  // Clear cache after 60 seconds
+  setTimeout(() => {
+    globalMarkupPromise = null
+  }, 60000)
+
+  return globalMarkupPromise
 }
+
 
 function applyMarkup(product: any, globalMarkup: number): Product {
   let finalPrice = product.selling_price
