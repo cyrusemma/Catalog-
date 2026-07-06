@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAdminContext } from '../../hooks/useAdminContext'
@@ -9,7 +9,16 @@ import { supabase } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils'
 
 export default function AdminProducts() {
+  const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput)
+    }, 200)
+    return () => clearTimeout(timer)
+  }, [searchInput])
+
   const [sortBy, setSortBy] = useState('newest')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [quickEditId, setQuickEditId] = useState<string | null>(null)
@@ -140,8 +149,8 @@ export default function AdminProducts() {
             <input
               type="text"
               placeholder="Search products..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
               className="w-full border border-gray-200 focus:border-brand-400 rounded-xl pl-9 pr-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none bg-white text-sm"
             />
           </div>

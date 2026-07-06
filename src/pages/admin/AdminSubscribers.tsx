@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { 
   Users, 
@@ -46,7 +46,15 @@ function getBrowserName(ua: string | null) {
 }
 
 export default function AdminSubscribers() {
+  const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput)
+    }, 200)
+    return () => clearTimeout(timer)
+  }, [searchInput])
   const [subscriptionFilter, setSubscriptionFilter] = useState<'all' | 'subscribed' | 'unsubscribed'>('all')
   const [cartFilter, setCartFilter] = useState<'all' | 'has_items'>('all')
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
@@ -282,8 +290,8 @@ export default function AdminSubscribers() {
             <input
               type="text"
               placeholder="Search by name, email, or phone..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
               className="w-full border border-gray-200 focus:border-brand-400 rounded-xl pl-9 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none bg-gray-50 focus:bg-white transition-colors"
             />
           </div>
