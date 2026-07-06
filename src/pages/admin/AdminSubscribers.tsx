@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { 
   Users, 
@@ -219,6 +219,22 @@ export default function AdminSubscribers() {
     return matchesSearch && matchesSub && matchesCart
   })
 
+  const [page, setPage] = useState(0)
+  const pageSize = 15
+
+  // Reset page when search or filter changes
+  useEffect(() => {
+    setPage(0)
+  }, [searchQuery, subscriptionFilter, cartFilter])
+
+  const paginatedSubscribers = useMemo(() => {
+    const from = page * pageSize
+    const to = from + pageSize
+    return filteredSubscribers.slice(from, to)
+  }, [filteredSubscribers, page])
+
+  const totalPages = Math.ceil(filteredSubscribers.length / pageSize)
+
   // Statistics summaries
   const totalCustomersCount = enrichedSubscribers.length
   const activeSubscribersCount = enrichedSubscribers.filter(u => u.notify_new_arrivals).length
@@ -342,7 +358,7 @@ export default function AdminSubscribers() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filteredSubscribers.map(user => {
+                  {paginatedSubscribers.map(user => {
                     const isExpanded = expandedUserId === user.id
                     return (
                       <>
@@ -601,6 +617,36 @@ export default function AdminSubscribers() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 bg-gray-50/30 border-t border-gray-100 text-sm select-none">
+                <div className="text-gray-500 text-xs">
+                  Showing {page * pageSize + 1} to {Math.min((page + 1) * pageSize, filteredSubscribers.length)} of {filteredSubscribers.length} subscribers
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={page === 0}
+                    onClick={() => setPage(p => p - 1)}
+                    className="px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors disabled:pointer-events-none"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-gray-600 text-xs font-medium px-2">
+                    Page {page + 1} of {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={page >= totalPages - 1}
+                    onClick={() => setPage(p => p + 1)}
+                    className="px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors disabled:pointer-events-none"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAdminContext } from '../../hooks/useAdminContext'
@@ -113,6 +113,23 @@ export default function AdminProducts() {
     return 0 // default is newest, already sorted by DB
   })
 
+  const [page, setPage] = useState(0)
+  const pageSize = 15
+
+  // Reset page when search or sort changes
+  useEffect(() => {
+    setPage(0)
+  }, [search, sortBy])
+
+  const paginatedProducts = useMemo(() => {
+    if (!filtered) return []
+    const from = page * pageSize
+    const to = from + pageSize
+    return filtered.slice(from, to)
+  }, [filtered, page])
+
+  const totalPages = filtered ? Math.ceil(filtered.length / pageSize) : 0
+
   const allFilteredSelected = filtered && filtered.length > 0 && filtered.every(p => selectedIds.includes(p.id))
   const someFilteredSelected = filtered && filtered.length > 0 && filtered.some(p => selectedIds.includes(p.id)) && !allFilteredSelected
 
@@ -198,7 +215,7 @@ export default function AdminProducts() {
               </div>
 
               <div className="divide-y divide-gray-50">
-                {filtered?.map(product => {
+                {paginatedProducts.map(product => {
                   const isChecked = selectedIds.includes(product.id)
                   return (
                     <div key={product.id} className="flex flex-wrap sm:flex-nowrap items-center gap-3 p-4 hover:bg-gray-50/50 transition-colors">
@@ -328,6 +345,36 @@ export default function AdminProducts() {
                   )
                 })}
               </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 bg-gray-50/30 border-t border-gray-100 text-sm select-none">
+                  <div className="text-gray-500 text-xs">
+                    Showing {page * pageSize + 1} to {Math.min((page + 1) * pageSize, filtered?.length || 0)} of {filtered?.length || 0} products
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={page === 0}
+                      onClick={() => setPage(p => p - 1)}
+                      className="px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors disabled:pointer-events-none"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-gray-600 text-xs font-medium px-2">
+                      Page {page + 1} of {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={page >= totalPages - 1}
+                      onClick={() => setPage(p => p + 1)}
+                      className="px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors disabled:pointer-events-none"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
