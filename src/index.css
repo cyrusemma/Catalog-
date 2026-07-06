@@ -749,3 +749,35 @@ html.theme-aurora-dark .dark\:bg-dark-900\/90 {
 .animate-star-live {
   animation: star-live 2s ease-in-out infinite;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Admin Theme Scrollbar, Overlay & Transition Refinements
+   ───────────────────────────────────────────────────────────────────────── */
+.admin-shell ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.admin-shell ::-webkit-scrollbar-track {
+  background: var(--admin-bg);
+}
+.admin-shell ::-webkit-scrollbar-thumb {
+  background: var(--admin-border-strong);
+  border-radius: 9999px;
+  border: 2px solid var(--admin-bg);
+}
+.admin-shell ::-webkit-scrollbar-thumb:hover {
+  background: #d4820a;
+}
+.admin-theme-amoled ::-webkit-scrollbar-track {
+  background: #000000;
+}
+.admin-theme-gold ::-webkit-scrollbar-track {
+  background: #160d04;
+}
+.admin-shell {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+.admin-drawer-overlay {
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}

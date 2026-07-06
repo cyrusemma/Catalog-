@@ -175,7 +175,7 @@ export default function AdminDashboard() {
             {statCards.map(card => (
               <div
                 key={card.label}
-                className="bg-white rounded-2xl p-3 sm:p-4 border border-gray-100 flex flex-col gap-2"
+                className="bg-white rounded-2xl p-3 sm:p-4 border border-gray-100 hover:border-brand-400/20 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 flex flex-col gap-2 cursor-default"
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-gray-500 text-[11px] sm:text-xs font-medium truncate">{card.label}</p>

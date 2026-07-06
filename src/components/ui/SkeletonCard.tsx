@@ -1,6 +1,6 @@
 export default function SkeletonCard({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`card h-full flex flex-col min-w-0 ${compact ? 'w-44 sm:w-48' : ''}`}>
+    <div className={`card h-full flex flex-col min-w-0 ${compact ? 'w-44 sm:w-48 rounded-2xl' : ''}`}>
       <div className={`relative overflow-hidden shrink-0 ${compact ? 'aspect-[4/5] sm:aspect-square' : 'aspect-square'}`}>
         <div className="absolute inset-0 bg-gradient-to-r from-slate-200/80 via-slate-200/60 to-slate-200/80 animate-shimmer" />
       </div>

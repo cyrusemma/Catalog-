@@ -229,7 +229,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={() => setDrawerOpen(false)}
-              className="lg:hidden fixed inset-0 bg-black/40 z-40"
+              className="lg:hidden fixed inset-0 bg-black/40 z-40 admin-drawer-overlay"
             />
             <motion.aside
               key="drawer"

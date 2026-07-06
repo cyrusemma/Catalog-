@@ -890,11 +890,21 @@ export default function AdminProductForm() {
               {saveError && (
                 <p className="text-red-500 text-xs bg-red-50 border border-red-100 rounded-xl px-3 py-2">{saveError}</p>
               )}
-              <button onClick={() => handleSave(true)} disabled={saving || !form.title || !form.selling_price} className="w-full bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors text-sm">
-                {saving ? 'Saving...' : 'Save & Publish'}
+              <button onClick={() => handleSave(true)} disabled={saving || !form.title || !form.selling_price} className="w-full bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2">
+                {saving ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : 'Save & Publish'}
               </button>
-              <button onClick={() => handleSave(false)} disabled={saving || !form.title} className="w-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-semibold py-3 rounded-xl transition-colors text-sm">
-                Save as Draft
+              <button onClick={() => handleSave(false)} disabled={saving || !form.title} className="w-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-semibold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2">
+                {saving ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : 'Save as Draft'}
               </button>
 
               {/* Push fan-out. Only meaningful for products that already exist
