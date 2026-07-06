@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ShoppingCart, Storefront, UserCircle, Gear } from '@phosphor-icons/react'
 import { useCartStore } from '../../store/cartStore'
@@ -14,6 +15,26 @@ export default function Navbar() {
   const settings = useStoreSettings()
   const { isLoggedIn, profile } = useCustomerSession()
   const openSignIn = useSignInStore(s => s.openModal)
+
+  // Show navbar when scrolling DOWN (user exploring), hide when scrolling UP.
+  // Always visible when at/near the top of the page.
+  const [hidden, setHidden] = useState(false)
+  const lastY = useRef(0)
+  useEffect(() => {
+    const onScroll = () => {
+      const currentY = window.scrollY
+      if (currentY < 60) {
+        setHidden(false)                          // Always show near top
+      } else if (currentY > lastY.current + 4) {
+        setHidden(false)                          // Scrolling DOWN → show
+      } else if (currentY < lastY.current - 4) {
+        setHidden(true)                           // Scrolling UP → hide
+      }
+      lastY.current = currentY
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   // Two-letter initials for the avatar fallback when there's no avatar_url.
   const initials = profile
@@ -40,7 +61,7 @@ export default function Navbar() {
   }
 
   return (
-    <div className="sticky top-0 z-50 pointer-events-none transition-all duration-300">
+    <div className={`fixed top-0 left-0 right-0 z-50 pointer-events-none transition-transform duration-300 ease-in-out ${hidden ? '-translate-y-full' : 'translate-y-0'}`}>
       <div className="max-w-5xl mx-auto pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pointer-events-auto">
         <nav className="
           flex items-center justify-between px-4 h-14 rounded-2xl
