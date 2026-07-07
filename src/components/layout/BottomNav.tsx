@@ -32,9 +32,8 @@ export default function BottomNav() {
             <Link
               key={label}
               to={to}
-              className={`relative flex items-center justify-center transition-all duration-300 ${
-                active ? 'px-4 py-2.5' : 'w-10 h-10'
-              }`}
+              className={`relative flex items-center justify-center transition-all duration-300 ${active ? 'px-4 py-2.5' : 'w-10 h-10'
+                }`}
             >
               {active && (
                 <motion.div
@@ -43,14 +42,14 @@ export default function BottomNav() {
                   transition={{ type: "spring", stiffness: 180, damping: 15, mass: 1.5 }}
                 />
               )}
-              
+
               <div className="relative z-10 flex items-center gap-1.5">
                 <Icon
                   size={20}
                   weight={active ? 'fill' : 'duotone'}
                   className={active ? 'text-brand-500 dark:text-brand-400' : 'text-dark-800/40 dark:text-white/40 hover:text-dark-800 dark:hover:text-white transition-colors'}
                 />
-                
+
                 {badgeValue > 0 && !active && (
                   <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-[3px] bg-brand-400 text-white text-[8px] font-bold rounded-full flex items-center justify-center shadow-sm">
                     {badgeValue > 9 ? '9+' : badgeValue}
@@ -58,7 +57,7 @@ export default function BottomNav() {
                 )}
 
                 {active && (
-                  <motion.span 
+                  <motion.span
                     initial={{ opacity: 0, width: 0 }}
                     animate={{ opacity: 1, width: 'auto' }}
                     className="text-[11px] font-bold text-brand-500 dark:text-brand-400 overflow-hidden whitespace-nowrap"

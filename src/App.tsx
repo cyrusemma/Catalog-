@@ -222,45 +222,45 @@ function AnimatedRoutes() {
   const location = useLocation()
   return (
     <>
-    <ScrollToTop />
-    <Routes location={location}>
-      {/* Storefront */}
-      <Route path="/" element={<StorefrontLayout><Home /></StorefrontLayout>} />
-      <Route path="/shop" element={<StorefrontLayout><Shop /></StorefrontLayout>} />
-      <Route path="/shop/:parentSlug" element={<StorefrontLayout><Shop /></StorefrontLayout>} />
-      <Route path="/shop/:parentSlug/:subSlug" element={<StorefrontLayout><Shop /></StorefrontLayout>} />
-      <Route path="/gallery" element={<StorefrontLayout><Gallery /></StorefrontLayout>} />
-      <Route path="/product/:id" element={<StorefrontLayout><ProductDetail /></StorefrontLayout>} />
-      <Route path="/cart" element={<StorefrontLayout><Cart /></StorefrontLayout>} />
-      <Route path="/wishlist" element={<StorefrontLayout><Wishlist /></StorefrontLayout>} />
-      <Route path="/account" element={<StorefrontLayout><Account /></StorefrontLayout>} />
-      <Route path="/account/orders" element={<StorefrontLayout><CustomerOrders /></StorefrontLayout>} />
-      <Route path="/settings" element={<StorefrontLayout><Settings /></StorefrontLayout>} />
-      <Route path="/privacy" element={<StorefrontLayout><Privacy /></StorefrontLayout>} />
-      <Route path="/terms" element={<StorefrontLayout><Terms /></StorefrontLayout>} />
-      {/* Merchant storefronts — fully isolated tenant surface, no global nav */}
-      <Route path="/s/:storeSlug" element={<MerchantStorefrontLayout><StoreFront /></MerchantStorefrontLayout>} />
-      <Route path="/sell" element={<StorefrontLayout><BecomeMerchant /></StorefrontLayout>} />
-      <Route path="/offline-game" element={<OfflineGame />} />
+      <ScrollToTop />
+      <Routes location={location}>
+        {/* Storefront */}
+        <Route path="/" element={<StorefrontLayout><Home /></StorefrontLayout>} />
+        <Route path="/shop" element={<StorefrontLayout><Shop /></StorefrontLayout>} />
+        <Route path="/shop/:parentSlug" element={<StorefrontLayout><Shop /></StorefrontLayout>} />
+        <Route path="/shop/:parentSlug/:subSlug" element={<StorefrontLayout><Shop /></StorefrontLayout>} />
+        <Route path="/gallery" element={<StorefrontLayout><Gallery /></StorefrontLayout>} />
+        <Route path="/product/:id" element={<StorefrontLayout><ProductDetail /></StorefrontLayout>} />
+        <Route path="/cart" element={<StorefrontLayout><Cart /></StorefrontLayout>} />
+        <Route path="/wishlist" element={<StorefrontLayout><Wishlist /></StorefrontLayout>} />
+        <Route path="/account" element={<StorefrontLayout><Account /></StorefrontLayout>} />
+        <Route path="/account/orders" element={<StorefrontLayout><CustomerOrders /></StorefrontLayout>} />
+        <Route path="/settings" element={<StorefrontLayout><Settings /></StorefrontLayout>} />
+        <Route path="/privacy" element={<StorefrontLayout><Privacy /></StorefrontLayout>} />
+        <Route path="/terms" element={<StorefrontLayout><Terms /></StorefrontLayout>} />
+        {/* Merchant storefronts — fully isolated tenant surface, no global nav */}
+        <Route path="/s/:storeSlug" element={<MerchantStorefrontLayout><StoreFront /></MerchantStorefrontLayout>} />
+        <Route path="/sell" element={<StorefrontLayout><BecomeMerchant /></StorefrontLayout>} />
+        <Route path="/offline-game" element={<OfflineGame />} />
 
-      {/* Merchant dashboard — scoped to store owner, not platform admin */}
-      <Route path="/merchant" element={<MerchantProtectedRoute><MerchantDashboard /></MerchantProtectedRoute>} />
+        {/* Merchant dashboard — scoped to store owner, not platform admin */}
+        <Route path="/merchant" element={<MerchantProtectedRoute><MerchantDashboard /></MerchantProtectedRoute>} />
 
-      {/* Admin */}
-      <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-      <Route path="/admin/products" element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
-      <Route path="/admin/products/new" element={<AdminProtectedRoute><AdminProductForm /></AdminProtectedRoute>} />
-      <Route path="/admin/products/:id/edit" element={<AdminProtectedRoute><AdminProductForm /></AdminProtectedRoute>} />
-      <Route path="/admin/approvals" element={<AdminProtectedRoute><AdminApprovals /></AdminProtectedRoute>} />
-      <Route path="/admin/orders" element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
-      <Route path="/admin/reviews" element={<AdminProtectedRoute><AdminReviews /></AdminProtectedRoute>} />
-      <Route path="/admin/settings" element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
-      <Route path="/admin/subscribers" element={<AdminProtectedRoute><AdminSubscribers /></AdminProtectedRoute>} />
+        {/* Admin */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+        <Route path="/admin/products" element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
+        <Route path="/admin/products/new" element={<AdminProtectedRoute><AdminProductForm /></AdminProtectedRoute>} />
+        <Route path="/admin/products/:id/edit" element={<AdminProtectedRoute><AdminProductForm /></AdminProtectedRoute>} />
+        <Route path="/admin/approvals" element={<AdminProtectedRoute><AdminApprovals /></AdminProtectedRoute>} />
+        <Route path="/admin/orders" element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
+        <Route path="/admin/reviews" element={<AdminProtectedRoute><AdminReviews /></AdminProtectedRoute>} />
+        <Route path="/admin/settings" element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
+        <Route path="/admin/subscribers" element={<AdminProtectedRoute><AdminSubscribers /></AdminProtectedRoute>} />
 
-      {/* Catch all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </>
   )
 }
@@ -269,7 +269,7 @@ export default function App() {
   useEffect(() => {
     // Only run on the browser side (avoid double tracking in strict mode if possible, but fine for now)
     trackSession()
-    
+
     let mounted = true
     let removeChannel: (() => void) | undefined
 
