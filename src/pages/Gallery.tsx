@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MagnifyingGlass, X, SquaresFour, GridNine, Rows } from '@phosphor-icons/react'
+import { MagnifyingGlass, X, SquaresFour, GridNine, Rows, ShoppingCart } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProducts } from '../hooks/useProducts'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
+import { useCartStore } from '../store/cartStore'
+import { effectivePrice } from '../lib/utils'
 import SkeletonCard from '../components/ui/SkeletonCard'
-// Note: Product type uses `images: string[]` (not `image_url`).
 
 const PRODUCT_CHUNK_SIZE = 20
 
@@ -20,18 +21,34 @@ const layoutButtons: { mode: LayoutMode; Icon: typeof SquaresFour; label: string
 export default function Gallery() {
   const formatPrice = useCurrencyFormatter()
   const navigate = useNavigate()
+  const addItem = useCartStore(s => s.addItem)
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
   const [visibleCount, setVisibleCount] = useState(PRODUCT_CHUNK_SIZE)
   const [layout, setLayout] = useState<LayoutMode>('grid')
+  const [selectedCategory, setSelectedCategory] = useState('All')
   const observerTarget = useRef<HTMLDivElement>(null)
 
   const { data: products, isLoading, isError, error } = useProducts({
     search: query || undefined,
   })
 
-  const visibleProducts = products?.slice(0, visibleCount) ?? []
-  const hasMoreProducts = Boolean(products && products.length > visibleCount)
+  // Compute categories list from products
+  const categories = useMemo(() => {
+    if (!products) return ['All']
+    const unique = Array.from(new Set(products.map(p => p.category).filter(Boolean)))
+    return ['All', ...unique]
+  }, [products])
+
+  // Filter products by selectedCategory client-side
+  const filteredProducts = useMemo(() => {
+    if (!products) return []
+    if (selectedCategory === 'All') return products
+    return products.filter(p => p.category === selectedCategory)
+  }, [products, selectedCategory])
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount)
+  const hasMoreProducts = Boolean(filteredProducts.length > visibleCount)
 
   // Infinite scroll observer
   useEffect(() => {
@@ -50,6 +67,7 @@ export default function Gallery() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setQuery(search)
+    setSelectedCategory('All') // Reset category on active search query
     setVisibleCount(PRODUCT_CHUNK_SIZE)
   }
 
@@ -59,7 +77,7 @@ export default function Gallery() {
     setVisibleCount(PRODUCT_CHUNK_SIZE)
   }
 
-  // ── Magazine: every 5th item (index % 5 === 0) is a featured 2×2 tile ──
+  // MAGAZINE: every 5th item is featured
   const isFeatured = (index: number) => layout === 'magazine' && index % 5 === 0
 
   const gridClass = {
@@ -123,6 +141,29 @@ export default function Gallery() {
             )}
           </div>
         </form>
+
+        {/* Category Filters Chips */}
+        {categories.length > 1 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-2.5 mt-6 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 select-none">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  setSelectedCategory(cat)
+                  setVisibleCount(PRODUCT_CHUNK_SIZE)
+                }}
+                className={`relative flex-shrink-0 px-4 py-1.5 text-xs font-semibold rounded-full border transition-all duration-300 ${
+                  selectedCategory === cat
+                    ? 'bg-brand-400 border-brand-400 text-white shadow-md shadow-brand-400/25'
+                    : 'bg-white dark:bg-white/5 border-cream-200 dark:border-white/10 text-dark-800/60 dark:text-white/60 hover:text-dark-800 dark:hover:text-white hover:bg-cream-50'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Error State */}
@@ -144,20 +185,20 @@ export default function Gallery() {
       )}
 
       {/* Empty State */}
-      {!isLoading && products && products.length === 0 && (
+      {!isLoading && filteredProducts.length === 0 && (
         <div className="text-center py-20">
           <p className="text-dark-800/60 dark:text-white/60 text-lg">
-            {query ? 'No products found matching your search' : 'No products available'}
+            {query ? 'No products found matching your search' : 'No products available in this category'}
           </p>
         </div>
       )}
 
       {/* Image Grid */}
-      {products && products.length > 0 && (
+      {filteredProducts.length > 0 && (
         <>
           <AnimatePresence mode="wait">
             <motion.div
-              key={layout}
+              key={layout + '-' + selectedCategory}
               className={gridClass}
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -168,8 +209,6 @@ export default function Gallery() {
                 const featured = isFeatured(index)
                 const aspectClass = featured
                   ? 'col-span-2 row-span-2 aspect-square'
-                  : layout === 'compact'
-                  ? 'aspect-square'
                   : 'aspect-square'
 
                 return (
@@ -179,14 +218,14 @@ export default function Gallery() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: Math.min(index * 0.03, 0.3) }}
                     onClick={() => navigate(`/product/${product.id}`)}
-                    className={`group cursor-pointer ${aspectClass}`}
+                    className={`group cursor-pointer relative overflow-hidden rounded-xl ${aspectClass}`}
                   >
                     <div className="relative overflow-hidden rounded-xl bg-cream-100 dark:bg-white/5 w-full h-full">
                       {(product.images?.[0] ?? '') ? (
                         <img
                           src={product.images[0]}
                           alt={product.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                           loading="lazy"
                         />
                       ) : (
@@ -197,25 +236,42 @@ export default function Gallery() {
                         </div>
                       )}
 
-                      {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-
                       {/* Featured badge (magazine only) */}
                       {featured && (
-                        <div className="absolute top-2 left-2">
+                        <div className="absolute top-2 left-2 z-10">
                           <span className="bg-brand-400/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-amber-glow">
                             ✦ Featured
                           </span>
                         </div>
                       )}
 
-                      {/* Price Badge */}
-                      <div className="absolute bottom-2 left-2 right-2 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="bg-brand-400 text-white px-3 py-1 rounded-full shadow-amber-glow border border-white/20">
-                          <p className={`font-bold tracking-wide ${featured ? 'text-base' : layout === 'compact' ? 'text-[11px]' : 'text-sm'}`}>
-                            {formatPrice(product.selling_price)}
+                      {/* Frosted Glass Slide-up Details Drawer */}
+                      <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out flex items-center justify-between p-2.5 sm:p-3.5 bg-gradient-to-t from-dark-950/95 via-dark-950/85 to-dark-950/40 backdrop-blur-md border-t border-white/10 z-10">
+                        <div className="min-w-0 pr-1.5 text-left">
+                          <span className="block text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-brand-400 truncate">
+                            {product.category || 'Collection'}
+                          </span>
+                          <h3 className="text-white font-semibold text-xs leading-tight truncate mt-0.5">
+                            {product.title}
+                          </h3>
+                          <p className="text-white/90 font-bold text-xs mt-1">
+                            {formatPrice(effectivePrice(product))}
                           </p>
                         </div>
+
+                        {product.stock_status !== 'out_of_stock' && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              addItem(product)
+                            }}
+                            aria-label="Add to cart"
+                            className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 bg-brand-400 hover:bg-brand-500 text-white rounded-full flex items-center justify-center transition-all duration-300 shadow-md shadow-brand-500/20 active:scale-90 hover:scale-105"
+                          >
+                            <ShoppingCart size={14} weight="bold" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </motion.div>
