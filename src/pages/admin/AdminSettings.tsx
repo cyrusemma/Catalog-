@@ -799,7 +799,7 @@ function PushSettings() {
 
 function ToggleSwitch({ checked, onChange, ariaLabel }: { checked: boolean; onChange: (v: boolean) => void; ariaLabel?: string }) {
   return (
-    <button type="button" onClick={() => onChange(!checked)} role="switch" aria-checked={checked} aria-label={ariaLabel || "Toggle setting"} className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors ${checked ? "bg-brand-500" : "bg-gray-200"}`}>
+    <button type="button" onClick={() => onChange(!checked)} role="switch" aria-checked={checked ? "true" : "false"} aria-label={ariaLabel || "Toggle setting"} className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors ${checked ? "bg-brand-500" : "bg-gray-200"}`}>
       <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${checked ? "translate-x-[26px]" : "translate-x-0.5"}`} />
     </button>
   )

@@ -173,6 +173,7 @@ export default function AdminProducts() {
           </div>
           <div className="relative w-full sm:w-auto">
             <select
+              title="Sort products"
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
               className="w-full sm:w-48 appearance-none border border-gray-200 focus:border-brand-400 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-900 outline-none bg-white cursor-pointer"
@@ -202,6 +203,7 @@ export default function AdminProducts() {
               <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/50 border-b border-gray-100 text-xs font-semibold text-gray-500 select-none">
                 <input
                   type="checkbox"
+                  title="Select All"
                   checked={allFilteredSelected}
                   ref={el => {
                     if (el) {
@@ -222,6 +224,7 @@ export default function AdminProducts() {
                       <div className="flex items-center gap-3 flex-1 min-w-[200px]">
                         <input
                           type="checkbox"
+                          title="Select product"
                           checked={isChecked}
                           onChange={(e) => {
                             if (e.target.checked) {
