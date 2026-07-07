@@ -40,12 +40,22 @@ export default function Gallery() {
     return ['All', ...unique]
   }, [products])
 
-  // Filter products by selectedCategory client-side
+  const [preorderFilter, setPreorderFilter] = useState<'all' | 'preorder' | 'ready'>('all')
+
+  // Filter products by selectedCategory and preorderFilter client-side
   const filteredProducts = useMemo(() => {
     if (!products) return []
-    if (selectedCategory === 'All') return products
-    return products.filter(p => p.category === selectedCategory)
-  }, [products, selectedCategory])
+    let result = products
+    if (selectedCategory !== 'All') {
+      result = result.filter(p => p.category === selectedCategory)
+    }
+    if (preorderFilter === 'preorder') {
+      result = result.filter(p => p.is_preorder)
+    } else if (preorderFilter === 'ready') {
+      result = result.filter(p => !p.is_preorder)
+    }
+    return result
+  }, [products, selectedCategory, preorderFilter])
 
   const visibleProducts = filteredProducts.slice(0, visibleCount)
   const hasMoreProducts = Boolean(filteredProducts.length > visibleCount)
@@ -117,30 +127,78 @@ export default function Gallery() {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <form onSubmit={handleSearch} className="relative max-w-md">
-          <div className="relative flex items-center">
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full px-4 py-2.5 pl-10 pr-10 rounded-xl border border-cream-300 dark:border-white/10 bg-white dark:bg-white/5 text-dark-800 dark:text-white placeholder:text-dark-800/40 dark:placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-brand-400/50 focus:border-transparent transition-all"
-            />
-            <MagnifyingGlass size={18} className="absolute left-3 text-dark-800/50 dark:text-white/50 pointer-events-none" />
-            {search && (
-              <button
-                type="button"
-                title="Clear search"
-                aria-label="Clear search"
-                onClick={handleClearSearch}
-                className="absolute right-3 text-dark-800/50 dark:text-white/50 hover:text-dark-800 dark:hover:text-white transition-colors"
-              >
-                <X size={18} />
-              </button>
-            )}
+        {/* Search Bar & Preorder Filter */}
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between mt-4">
+          <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full px-4 py-2.5 pl-10 pr-10 rounded-xl border border-cream-300 dark:border-white/10 bg-white dark:bg-white/5 text-dark-800 dark:text-white placeholder:text-dark-800/40 dark:placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-brand-400/50 focus:border-transparent transition-all"
+              />
+              <MagnifyingGlass size={18} className="absolute left-3 text-dark-800/50 dark:text-white/50 pointer-events-none" />
+              {search && (
+                <button
+                  type="button"
+                  title="Clear search"
+                  aria-label="Clear search"
+                  onClick={handleClearSearch}
+                  className="absolute right-3 text-dark-800/50 dark:text-white/50 hover:text-dark-800 dark:hover:text-white transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+          </form>
+
+          {/* Preorder Segmented Toggle */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-cream-100 dark:bg-white/5 border border-cream-200 dark:border-white/10 text-xs font-semibold select-none">
+            <button
+              type="button"
+              onClick={() => {
+                setPreorderFilter('all')
+                setVisibleCount(PRODUCT_CHUNK_SIZE)
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                preorderFilter === 'all'
+                  ? 'bg-white dark:bg-white/10 text-brand-400 shadow-sm'
+                  : 'text-dark-800/50 dark:text-white/50 hover:text-dark-800 dark:hover:text-white'
+              }`}
+            >
+              All Items
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPreorderFilter('preorder')
+                setVisibleCount(PRODUCT_CHUNK_SIZE)
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                preorderFilter === 'preorder'
+                  ? 'bg-white dark:bg-white/10 text-brand-400 shadow-sm'
+                  : 'text-dark-800/50 dark:text-white/50 hover:text-dark-800 dark:hover:text-white'
+              }`}
+            >
+              Preorders
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPreorderFilter('ready')
+                setVisibleCount(PRODUCT_CHUNK_SIZE)
+              }}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                preorderFilter === 'ready'
+                  ? 'bg-white dark:bg-white/10 text-brand-400 shadow-sm'
+                  : 'text-dark-800/50 dark:text-white/50 hover:text-dark-800 dark:hover:text-white'
+              }`}
+            >
+              Ready to Ship
+            </button>
           </div>
-        </form>
+        </div>
 
         {/* Category Filters Chips */}
         {categories.length > 1 && (

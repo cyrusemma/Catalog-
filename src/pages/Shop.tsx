@@ -45,6 +45,8 @@ const defaultFilters = {
   maxPrice: '',
   inStockOnly: false,
   freeDeliveryOnly: false,
+  preorderOnly: false,
+  excludePreorders: false,
 }
 
 export default function Shop() {
@@ -123,7 +125,9 @@ export default function Shop() {
     (filters.minPrice ? 1 : 0) +
     (filters.maxPrice ? 1 : 0) +
     (filters.inStockOnly ? 1 : 0) +
-    (filters.freeDeliveryOnly ? 1 : 0)
+    (filters.freeDeliveryOnly ? 1 : 0) +
+    (filters.preorderOnly ? 1 : 0) +
+    (filters.excludePreorders ? 1 : 0)
 
   const isMainShopView = !activeParent && !query && activeFilterCount === 0
 
@@ -161,6 +165,8 @@ export default function Shop() {
     if (max !== null && !Number.isNaN(max)) result = result.filter(p => p.selling_price <= max)
     if (filters.inStockOnly) result = result.filter(p => p.stock_status !== 'out_of_stock')
     if (filters.freeDeliveryOnly) result = result.filter(p => Number(p.delivery_fee) === 0)
+    if (filters.preorderOnly) result = result.filter(p => p.is_preorder)
+    if (filters.excludePreorders) result = result.filter(p => !p.is_preorder)
     switch (filters.sort) {
       case 'price-asc':
         result = [...result].sort((a, b) => a.selling_price - b.selling_price)
@@ -693,13 +699,24 @@ export default function Shop() {
                   {([
                     { key: 'inStockOnly', label: 'In stock only', desc: 'Hide out-of-stock products' },
                     { key: 'freeDeliveryOnly', label: 'Free delivery only', desc: 'Show only products with no delivery charge' },
+                    { key: 'preorderOnly', label: 'Preorders only', desc: 'Show only products marked as preorder' },
+                    { key: 'excludePreorders', label: 'Exclude preorders', desc: 'Hide preorder items (in-stock only)' },
                   ] as const).map(opt => {
                     const checked = filters[opt.key]
                     return (
                       <button
                         key={opt.key}
                         type="button"
-                        onClick={() => setFilters(f => ({ ...f, [opt.key]: !f[opt.key] }))}
+                        onClick={() => setFilters(f => {
+                          const nextVal = !f[opt.key]
+                          if (opt.key === 'preorderOnly' && nextVal) {
+                            return { ...f, preorderOnly: true, excludePreorders: false }
+                          }
+                          if (opt.key === 'excludePreorders' && nextVal) {
+                            return { ...f, excludePreorders: true, preorderOnly: false }
+                          }
+                          return { ...f, [opt.key]: nextVal }
+                        })}
                         className={`w-full flex items-center justify-between gap-4 px-4 py-3 rounded-2xl text-left transition-all ${
                           checked
                             ? 'bg-brand-400/10 border border-brand-400/30'
