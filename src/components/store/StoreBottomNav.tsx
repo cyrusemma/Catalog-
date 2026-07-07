@@ -5,6 +5,7 @@
  * stay scoped to this merchant's store. The cart (shared session) still works
  * globally. There is no "Shop" link that could accidentally go to the platform shop.
  */
+import { useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { House, ShoppingCart, Heart, Storefront } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
@@ -24,15 +25,29 @@ type NavItem = {
 const items: NavItem[] = [
   { getTo: (slug) => `/s/${slug}`, label: 'Home', Icon: House, exact: true },
   { getTo: (slug) => `/s/${slug}#products`, label: 'Products', Icon: Storefront },
-  { getTo: () => '/wishlist', label: 'Saved', Icon: Heart, badgeKind: 'wishlist' },
-  { getTo: () => '/cart', label: 'Cart', Icon: ShoppingCart, badgeKind: 'cart' },
+  { getTo: (slug) => `/s/${slug}/wishlist`, label: 'Saved', Icon: Heart, badgeKind: 'wishlist' },
+  { getTo: (slug) => `/s/${slug}/cart`, label: 'Cart', Icon: ShoppingCart, badgeKind: 'cart' },
 ]
 
 export default function StoreBottomNav() {
-  const { storeSlug } = useStoreContext()
+  const { storeSlug, storeId } = useStoreContext()
   const location = useLocation()
-  const totalItems = useCartStore(s => s.totalItems())
-  const wishlistCount = useWishlistStore(s => s.count())
+
+  const allCartItems = useCartStore(s => s.items)
+  const totalItems = useMemo(() => {
+    if (storeId) {
+      return allCartItems.filter(i => i.product.store_id === storeId).reduce((sum, i) => sum + i.quantity, 0)
+    }
+    return allCartItems.reduce((sum, i) => sum + i.quantity, 0)
+  }, [allCartItems, storeId])
+
+  const allWishlistItems = useWishlistStore(s => s.items)
+  const wishlistCount = useMemo(() => {
+    if (storeId) {
+      return allWishlistItems.filter(p => p.store_id === storeId).length
+    }
+    return allWishlistItems.length
+  }, [allWishlistItems, storeId])
 
   return (
     <nav className="sm:hidden fixed bottom-2 pb-[env(safe-area-inset-bottom,0px)] left-[calc(1rem+env(safe-area-inset-left,0px))] right-[calc(1rem+env(safe-area-inset-right,0px))] z-50 pointer-events-none">

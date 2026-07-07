@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Link, useParams } from 'react-router-dom'
 
 // Scrolls to the top of the page on every route change.
 function ScrollToTop() {
@@ -7,10 +7,14 @@ function ScrollToTop() {
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [pathname])
   return null
 }
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { supabase } from './lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 import { syncOfflineOrders } from './lib/offlineOrders'
+import { StoreContext } from './contexts/StoreContext'
+import type { StoreContextValue } from './contexts/StoreContext'
+import { useDynamicPWA } from './hooks/useDynamicPWA'
+import { Store } from 'lucide-react'
 
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
@@ -167,6 +171,42 @@ function MerchantProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+/** Guards admin-only routes — user must be logged in and have app_metadata.role === 'admin' */
+function AdminOnlyRoute({ children }: { children: React.ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let mounted = true
+    let unsubscribe: (() => void) | undefined
+
+    const checkAccess = (currentSession: Session | null) => {
+      if (!mounted) return
+      setSession(currentSession)
+      setLoading(false)
+    }
+
+    supabase.auth.getSession().then(({ data }) => checkAccess(data.session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => checkAccess(s))
+    unsubscribe = () => subscription.unsubscribe()
+
+    return () => {
+      mounted = false
+      unsubscribe?.()
+    }
+  }, [])
+
+  if (loading) return <ShopLoader />
+  if (!session) return <Navigate to="/admin/login" replace />
+
+  const isAdmin = session.user.app_metadata?.role === 'admin'
+  if (!isAdmin) {
+    return <Navigate to="/merchant" replace />
+  }
+
+  return <>{children}</>
+}
+
 function StorefrontLayout({ children }: { children: React.ReactNode }) {
   const signInOpen = useSignInStore(s => s.open)
   const closeSignIn = useSignInStore(s => s.closeModal)
@@ -190,6 +230,21 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
   )
 }
 
+interface StoreDetails {
+  id: string
+  name: string
+  slug: string
+  logo_url: string | null
+  hero_images: string[]
+  tagline: string | null
+  social_instagram: string | null
+  social_tiktok: string | null
+  social_facebook: string | null
+  whatsapp_number: string | null
+  owner_id: string | null
+  settings: Record<string, any>
+}
+
 /**
  * MerchantStorefrontLayout — completely isolated tenant surface.
  *
@@ -197,24 +252,100 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
  * equivalents. Nothing here links to /shop or / except the one deliberate
  * "Browse Marketplace" escape hatch in StoreFooter.
  *
- * The StoreContext.Provider lives inside StoreFront.tsx (so it has access to
- * the fetched store data). This layout just provides the chrome.
+ * Now wraps everything in the StoreContext.Provider, carrying the store context
+ * across all merchant subpaths (/s/:storeSlug, /s/:storeSlug/product/:id, /s/:storeSlug/cart, etc.).
  */
 function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
+  const { storeSlug } = useParams<{ storeSlug: string }>()
   const signInOpen = useSignInStore(s => s.open)
   const closeSignIn = useSignInStore(s => s.closeModal)
   const signInReason = useSignInStore(s => s.reason)
-  return (
-    <div className="flex flex-col min-h-dvh overflow-x-hidden">
-      <StoreNavbar />
-      <div className="pt-20 flex flex-col flex-1">
-        {children}
+
+  const { data: store, isLoading, isError } = useQuery<StoreDetails>({
+    queryKey: ['store', storeSlug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('*')
+        .eq('slug', storeSlug)
+        .single()
+      if (error) throw error
+      return data
+    },
+    enabled: !!storeSlug,
+  })
+
+  // Dynamically overwrite PWA manifest for THIS merchant storefront
+  useDynamicPWA(
+    store
+      ? {
+          name: store.name,
+          shortName: store.name,
+          startUrl: `/s/${store.slug}`,
+          iconUrl: store.logo_url || undefined,
+        }
+      : null
+  )
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-400 mx-auto mb-4" />
+          <p className="text-gray-500 text-sm">Opening storefront...</p>
+        </div>
       </div>
-      <StoreFooter />
-      <StoreBottomNav />
-      <SignInModal open={signInOpen} onClose={closeSignIn} reason={signInReason ?? undefined} />
-      <ToastContainer />
-    </div>
+    )
+  }
+
+  if (isError || !store) {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-[60vh] px-4">
+        <div className="text-center max-w-sm">
+          <Store size={48} className="text-gray-300 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Store Not Found</h2>
+          <p className="text-gray-500 text-sm mb-6">
+            The storefront URL you are trying to reach doesn't exist or has been deactivated.
+          </p>
+          <Link
+            to="/"
+            className="inline-block bg-brand-400 hover:bg-brand-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors shadow-sm"
+          >
+            Go to Marketplace
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const ctxValue: StoreContextValue = {
+    storeSlug: store.slug,
+    storeId: store.id,
+    storeName: store.name,
+    logoUrl: store.logo_url,
+    tagline: store.tagline,
+    socialInstagram: store.social_instagram,
+    socialTiktok: store.social_tiktok,
+    socialFacebook: store.social_facebook,
+    whatsappNumber: store.whatsapp_number,
+    ownerId: store.owner_id,
+    heroImages: store.hero_images || [],
+    settings: store.settings || {},
+  }
+
+  return (
+    <StoreContext.Provider value={ctxValue}>
+      <div className="flex flex-col min-h-dvh overflow-x-hidden">
+        <StoreNavbar />
+        <div className="pt-20 flex flex-col flex-1">
+          {children}
+        </div>
+        <StoreFooter />
+        <StoreBottomNav />
+        <SignInModal open={signInOpen} onClose={closeSignIn} reason={signInReason ?? undefined} />
+        <ToastContainer />
+      </div>
+    </StoreContext.Provider>
   )
 }
 
@@ -240,6 +371,9 @@ function AnimatedRoutes() {
         <Route path="/terms" element={<StorefrontLayout><Terms /></StorefrontLayout>} />
         {/* Merchant storefronts — fully isolated tenant surface, no global nav */}
         <Route path="/s/:storeSlug" element={<MerchantStorefrontLayout><StoreFront /></MerchantStorefrontLayout>} />
+        <Route path="/s/:storeSlug/product/:id" element={<MerchantStorefrontLayout><ProductDetail /></MerchantStorefrontLayout>} />
+        <Route path="/s/:storeSlug/cart" element={<MerchantStorefrontLayout><Cart /></MerchantStorefrontLayout>} />
+        <Route path="/s/:storeSlug/wishlist" element={<MerchantStorefrontLayout><Wishlist /></MerchantStorefrontLayout>} />
         <Route path="/sell" element={<StorefrontLayout><BecomeMerchant /></StorefrontLayout>} />
         <Route path="/offline-game" element={<OfflineGame />} />
 
@@ -252,11 +386,11 @@ function AnimatedRoutes() {
         <Route path="/admin/products" element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
         <Route path="/admin/products/new" element={<AdminProtectedRoute><AdminProductForm /></AdminProtectedRoute>} />
         <Route path="/admin/products/:id/edit" element={<AdminProtectedRoute><AdminProductForm /></AdminProtectedRoute>} />
-        <Route path="/admin/approvals" element={<AdminProtectedRoute><AdminApprovals /></AdminProtectedRoute>} />
+        <Route path="/admin/approvals" element={<AdminOnlyRoute><AdminApprovals /></AdminOnlyRoute>} />
         <Route path="/admin/orders" element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
         <Route path="/admin/reviews" element={<AdminProtectedRoute><AdminReviews /></AdminProtectedRoute>} />
         <Route path="/admin/settings" element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
-        <Route path="/admin/subscribers" element={<AdminProtectedRoute><AdminSubscribers /></AdminProtectedRoute>} />
+        <Route path="/admin/subscribers" element={<AdminOnlyRoute><AdminSubscribers /></AdminOnlyRoute>} />
 
         {/* Catch all */}
         <Route path="*" element={<Navigate to="/" replace />} />

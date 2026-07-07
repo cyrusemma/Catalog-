@@ -6,6 +6,8 @@ import { supabase } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils'
 import type { Order } from '../../types'
 
+import { useAdminContext } from '../../hooks/useAdminContext'
+
 const STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] as const
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-50 text-yellow-700 border-yellow-200',
@@ -20,13 +22,19 @@ export default function AdminOrders() {
   const [filter, setFilter] = useState<string>('all')
   const [dateFilter, setDateFilter] = useState<number>(30)
   const qc = useQueryClient()
+  const { data: context } = useAdminContext()
 
   const { data: orders, isLoading } = useQuery({
-    queryKey: ['admin-orders'],
+    queryKey: ['admin-orders', context?.storeId, context?.isAdmin],
     queryFn: async () => {
-      const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false })
+      let query = supabase.from('orders').select('*')
+      if (context && !context.isAdmin && context.storeId) {
+        query = query.eq('store_id', context.storeId)
+      }
+      const { data } = await query.order('created_at', { ascending: false })
       return (data || []) as Order[]
     },
+    enabled: !!context,
   })
 
   const updateStatus = useMutation({

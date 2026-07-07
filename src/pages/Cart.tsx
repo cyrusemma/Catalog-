@@ -15,17 +15,28 @@ import ProductCard from '../components/ui/ProductCard'
 import { saveOfflineOrder } from '../lib/offlineOrders'
 import { trackOrderPlaced } from '../components/ui/AppReviewPrompt'
 import Image from '../components/ui/Image'
+import { useStoreContext } from '../contexts/StoreContext'
 
 export default function Cart() {
   useDocumentTitle('Your Cart')
   const formatPrice = useCurrencyFormatter()
-  const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCartStore()
+  const { items, removeItem, updateQuantity, setItems, clearCart } = useCartStore()
   const settings = useStoreSettings()
   const { user } = useCustomerSession()
+  const storeContext = useStoreContext()
+  const currentStoreId = storeContext.storeId
 
-  const uniqueStoreIds = useMemo(() => Array.from(new Set(items.map(i => i.product.store_id || 'platform'))), [items])
+  // Filter items to show only this store's items if we are in a merchant context
+  const filteredItems = useMemo(() => {
+    if (currentStoreId) {
+      return items.filter(i => i.product.store_id === currentStoreId)
+    }
+    return items
+  }, [items, currentStoreId])
+
+  const uniqueStoreIds = useMemo(() => Array.from(new Set(filteredItems.map(i => i.product.store_id || 'platform'))), [filteredItems])
   const isMultiMerchantCart = uniqueStoreIds.length > 1
-  const merchantStoreId = uniqueStoreIds.length === 1 && uniqueStoreIds[0] !== 'platform' ? uniqueStoreIds[0] : null
+  const merchantStoreId = currentStoreId || (uniqueStoreIds.length === 1 && uniqueStoreIds[0] !== 'platform' ? uniqueStoreIds[0] : null)
 
   const { data: storesInfo } = useQuery({
     queryKey: ['cart-stores-info', uniqueStoreIds],
@@ -44,7 +55,7 @@ export default function Cart() {
   const { data: merchantStore } = useQuery({
     queryKey: ['cart-merchant-store', merchantStoreId],
     queryFn: async () => {
-      if (!merchantStoreId) return null
+      if (!merchantStoreId || currentStoreId) return null
       const { data } = await supabase
         .from('stores')
         .select('whatsapp_number, currency, whatsapp_template, name, owner_id')
@@ -52,15 +63,25 @@ export default function Cart() {
         .maybeSingle()
       return data
     },
-    enabled: !!merchantStoreId,
+    enabled: !!merchantStoreId && !currentStoreId,
   })
 
-  const subtotal = totalPrice()
+  const activeStore = currentStoreId
+    ? {
+        whatsapp_number: storeContext.whatsappNumber,
+        currency: storeContext.settings.currency || 'GHS',
+        whatsapp_template: storeContext.settings.whatsapp_template,
+        name: storeContext.storeName,
+        owner_id: storeContext.ownerId,
+      }
+    : merchantStore
+
+  const subtotal = useMemo(() => filteredItems.reduce((sum, i) => sum + effectivePrice(i.product) * i.quantity, 0), [filteredItems])
   // Per-product delivery: take the highest fee across all cart items (one delivery trip)
-  const baseDeliveryFee = items.reduce(
+  const baseDeliveryFee = useMemo(() => filteredItems.reduce(
     (max, item) => Math.max(max, Number(item.product.delivery_fee) || 0),
     0
-  )
+  ), [filteredItems])
 
   const [deliveryMethod, setDeliveryMethod] = useState<'local' | 'standard' | 'shipping'>('standard')
 
@@ -106,7 +127,7 @@ export default function Cart() {
       customer_name: customerName,
       customer_phone: customerPhone,
       customer_address: `${customerAddress}\n\n[Delivery Option: ${selectedOptionText}]`,
-      items: items.map(i => ({
+      items: filteredItems.map(i => ({
         product_id: i.product.id,
         product_title: i.product.title,
         product_image: i.product.images?.[0] || '',
@@ -138,11 +159,11 @@ export default function Cart() {
           setSubmitError("There was an error recording your order. Please try again.")
           return
         }
-      } else if (merchantStore?.owner_id) {
+      } else if (activeStore?.owner_id) {
         // Trigger push notification to the merchant
         supabase.functions.invoke('notify-new-arrival', {
           body: {
-            user_id: merchantStore.owner_id,
+            user_id: activeStore.owner_id,
             title: `New Order #${orderIdShort}`,
             body: `${customerName} just placed an order for ${formatPrice(grandTotal)}.`,
             click_url: `/admin/orders`
@@ -153,16 +174,18 @@ export default function Cart() {
 
     setIsSubmitting(false)
 
-    const targetCurrency = merchantStore?.currency || settings.currency || 'GHS'
-    const targetTemplate = merchantStore?.whatsapp_template || settings.whatsapp_template
-    const targetNumber = merchantStore?.whatsapp_number || settings.whatsapp_number || '233000000000'
+    const targetCurrency = activeStore?.currency || settings.currency || 'GHS'
+    const targetTemplate = activeStore?.whatsapp_template || settings.whatsapp_template
+    const targetNumber = activeStore?.whatsapp_number || settings.whatsapp_number || '233000000000'
 
     const baseMessage = buildCartWhatsAppMessage(
-      items.map(i => ({ 
+      filteredItems.map(i => ({ 
         title: i.product.title, 
         qty: i.quantity, 
         price: effectivePrice(i.product),
-        url: `${window.location.origin}/product/${i.product.id}`
+        url: currentStoreId 
+          ? `${window.location.origin}/s/${storeContext.storeSlug}/product/${i.product.id}`
+          : `${window.location.origin}/product/${i.product.id}`
       })),
       subtotal,
       deliveryFee,
@@ -175,12 +198,18 @@ export default function Cart() {
     const url = buildWhatsAppUrl(targetNumber, finalMessage)
     
     trackOrderPlaced()
-    clearCart()
+    if (currentStoreId) {
+      setItems(items.filter(i => i.product.store_id !== currentStoreId))
+    } else {
+      clearCart()
+    }
     window.open(url, '_blank')
     setIsCheckingOut(false)
   }
 
-  if (items.length === 0) {
+  const shopPath = storeContext.storeSlug ? `/s/${storeContext.storeSlug}` : '/shop'
+
+  if (filteredItems.length === 0) {
     return (
       <main className="flex-1 flex flex-col items-center justify-center px-4 pt-10 pb-28 lg:pb-10 w-full">
         <motion.div
@@ -202,7 +231,7 @@ export default function Cart() {
           <p className="text-dark-800/50 dark:text-white/40 text-sm max-w-xs mb-6">
             Looks like you haven't added anything yet. Start exploring our collection!
           </p>
-          <Link to="/shop" className="btn-primary inline-flex items-center gap-2">
+          <Link to={shopPath} className="btn-primary inline-flex items-center gap-2">
             <ArrowLeft size={16} /> Start Shopping
           </Link>
         </motion.div>
@@ -216,7 +245,7 @@ export default function Cart() {
     <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-10 pb-28 lg:pb-10">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <Link to="/shop" className="inline-flex items-center gap-2 text-dark-800/60 dark:text-white/50 hover:text-brand-400 text-sm mb-2 transition-colors">
+          <Link to={shopPath} className="inline-flex items-center gap-2 text-dark-800/60 dark:text-white/50 hover:text-brand-400 text-sm mb-2 transition-colors">
             <ArrowLeft size={14} /> Continue Shopping
           </Link>
           <h1 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white">Your Cart</h1>
@@ -333,7 +362,7 @@ export default function Cart() {
               </form>
             </motion.div>
           ) : (
-            items.map((item, idx) => (
+            filteredItems.map((item, idx) => (
               <motion.div
                 key={item.product.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -341,7 +370,7 @@ export default function Cart() {
                 transition={{ duration: 0.3, delay: idx * 0.05 }}
                 className="card p-4 flex gap-4"
               >
-                <Link to={`/product/${item.product.id}`}>
+                <Link to={currentStoreId ? `/s/${storeContext.storeSlug}/product/${item.product.id}` : `/product/${item.product.id}`}>
                   <Image
                     src={item.product.images?.[0] || 'https://placehold.co/80x80/1a1008/d4820a?text=?'}
                     alt={item.product.title}
@@ -349,7 +378,7 @@ export default function Cart() {
                   />
                 </Link>
                 <div className="flex-1 min-w-0">
-                  <Link to={`/product/${item.product.id}`}>
+                  <Link to={currentStoreId ? `/s/${storeContext.storeSlug}/product/${item.product.id}` : `/product/${item.product.id}`}>
                     <h3 className="text-dark-800 dark:text-white text-sm font-medium line-clamp-2 hover:text-brand-400 transition-colors">
                       {item.product.title}
                     </h3>
@@ -402,7 +431,7 @@ export default function Cart() {
           <div className="glass rounded-3xl p-5 sticky top-24 border border-brand-400/20">
             <h2 className="text-dark-800 dark:text-white font-bold text-lg mb-4">Order Summary</h2>
             <div className="space-y-2 mb-4">
-              {items.map(item => (
+              {filteredItems.map(item => (
                 <div key={item.product.id} className="flex justify-between text-sm">
                   <span className="text-dark-800/60 dark:text-white/50 truncate pr-2">
                     {item.product.title.length > 25 ? item.product.title.slice(0, 25) + '…' : item.product.title}

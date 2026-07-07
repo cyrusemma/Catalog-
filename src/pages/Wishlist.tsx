@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Heart, ArrowRight, Trash } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -5,11 +6,24 @@ import ProductCard from '../components/ui/ProductCard'
 import { useWishlistStore } from '../store/wishlistStore'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useProducts } from '../hooks/useProducts'
+import { useStoreContext } from '../contexts/StoreContext'
 
 export default function Wishlist() {
   useDocumentTitle('Your Wishlist')
+  const storeContext = useStoreContext()
+  const currentStoreId = storeContext.storeId
   const items = useWishlistStore(s => s.items)
   const clear = useWishlistStore(s => s.clear)
+  const remove = useWishlistStore(s => s.remove)
+
+  const filteredItems = useMemo(() => {
+    if (currentStoreId) {
+      return items.filter(p => p.store_id === currentStoreId)
+    }
+    return items
+  }, [items, currentStoreId])
+
+  const shopPath = storeContext.storeSlug ? `/s/${storeContext.storeSlug}` : '/shop'
 
   return (
     <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-6 sm:py-10 pb-28 lg:pb-10">
@@ -24,15 +38,21 @@ export default function Wishlist() {
             Wishlist
           </h1>
           <p className="text-dark-800/50 dark:text-white/40 text-sm mt-3">
-            {items.length === 0
+            {filteredItems.length === 0
               ? 'Tap the heart on any product to save it for later'
-              : `${items.length} item${items.length === 1 ? '' : 's'} saved`}
+              : `${filteredItems.length} item${filteredItems.length === 1 ? '' : 's'} saved`}
           </p>
         </div>
-        {items.length > 0 && (
+        {filteredItems.length > 0 && (
           <button
             onClick={() => {
-              if (confirm('Clear your entire wishlist?')) clear()
+              if (confirm('Clear your saved items?')) {
+                if (currentStoreId) {
+                  filteredItems.forEach(item => remove(item.id))
+                } else {
+                  clear()
+                }
+              }
             }}
             className="text-dark-800/50 dark:text-white/40 hover:text-red-500 transition-colors text-xs font-medium flex items-center gap-1.5"
           >
@@ -42,7 +62,7 @@ export default function Wishlist() {
         )}
       </div>
 
-      {items.length === 0 ? (
+      {filteredItems.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -65,7 +85,7 @@ export default function Wishlist() {
             Save your favourite products by tapping the heart icon. They'll be waiting for you here.
           </p>
           <Link
-            to="/shop"
+            to={shopPath}
             className="btn-primary inline-flex items-center gap-2 text-sm mb-6"
           >
             Browse products <ArrowRight size={16} weight="bold" />
@@ -80,7 +100,7 @@ export default function Wishlist() {
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
         >
           <AnimatePresence mode="popLayout">
-            {items.map((p, i) => (
+            {filteredItems.map((p, i) => (
               <motion.div
                 key={p.id}
                 layout

@@ -5,6 +5,8 @@ import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
 import type { ProductReview } from '../../types'
 
+import { useAdminContext } from '../../hooks/useAdminContext'
+
 type StatusFilter = 'all' | 'pending' | 'published' | 'hidden'
 
 function StarDisplay({ rating }: { rating: number }) {
@@ -32,14 +34,20 @@ export default function AdminReviews() {
   const qc = useQueryClient()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('pending')
   const [search, setSearch] = useState('')
+  const { data: context } = useAdminContext()
 
   const { data: reviews, isLoading } = useQuery<(ProductReview & { products?: { title: string } })[]>({
-    queryKey: ['admin-product-reviews', statusFilter],
+    queryKey: ['admin-product-reviews', statusFilter, context?.storeId, context?.isAdmin],
     queryFn: async () => {
       let query = supabase
         .from('product_reviews')
         .select('*, products(title)')
         .order('created_at', { ascending: false })
+      
+      if (context && !context.isAdmin && context.storeId) {
+        query = query.eq('store_id', context.storeId)
+      }
+
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter)
       }
@@ -47,6 +55,7 @@ export default function AdminReviews() {
       if (error) throw error
       return (data || []) as any
     },
+    enabled: !!context,
   })
 
   const updateStatus = useMutation({

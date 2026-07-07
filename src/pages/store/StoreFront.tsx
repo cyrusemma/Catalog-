@@ -20,24 +20,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
-import { StoreContext } from '../../contexts/StoreContext'
-import type { StoreContextValue } from '../../contexts/StoreContext'
-import { useDynamicPWA } from '../../hooks/useDynamicPWA'
-
-interface StoreDetails {
-  id: string
-  name: string
-  slug: string
-  logo_url: string | null
-  hero_images: string[]
-  tagline: string | null
-  social_instagram: string | null
-  social_tiktok: string | null
-  social_facebook: string | null
-  whatsapp_number: string | null
-  owner_id: string | null
-  settings: Record<string, any>
-}
+import { useStoreContext } from '../../contexts/StoreContext'
 
 interface Product {
   id: string
@@ -118,35 +101,36 @@ export default function StoreFront() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [sortBy, setSortBy] = useState<string>('newest')
 
-  // 1. Fetch store info
-  const { data: store, isLoading: isStoreLoading, isError: isStoreError } = useQuery<StoreDetails>({
-    queryKey: ['store', storeSlug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('stores')
-        .select('*')
-        .eq('slug', storeSlug)
-        .single()
-      if (error) throw error
-      return data
-    },
-    enabled: !!storeSlug,
-  })
+  const storeContext = useStoreContext()
+  const store = {
+    id: storeContext.storeId,
+    name: storeContext.storeName,
+    slug: storeContext.storeSlug,
+    logo_url: storeContext.logoUrl,
+    hero_images: storeContext.heroImages,
+    tagline: storeContext.tagline,
+    social_instagram: storeContext.socialInstagram,
+    social_tiktok: storeContext.socialTiktok,
+    social_facebook: storeContext.socialFacebook,
+    whatsapp_number: storeContext.whatsappNumber,
+    owner_id: storeContext.ownerId,
+    settings: storeContext.settings,
+  }
 
   // 2. Fetch products belonging to this store only
   const { data: products, isLoading: isProductsLoading } = useQuery<Product[]>({
-    queryKey: ['store-products', store?.id],
+    queryKey: ['store-products', store.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('store_id', store?.id)
+        .eq('store_id', store.id)
         .eq('is_published', true)
         .order('created_at', { ascending: false })
       if (error) throw error
       return data || []
     },
-    enabled: !!store?.id,
+    enabled: !!store.id,
   })
 
   // 1. Remember the last store so standalone PWA can trap them
@@ -155,64 +139,6 @@ export default function StoreFront() {
       localStorage.setItem('catalog_last_store', storeSlug)
     }
   }, [storeSlug])
-
-  // 2. Dynamically overwrite PWA manifest for THIS merchant so if they click "Add to Homescreen",
-  // it gets added as a standalone app for THIS store, not the platform home.
-  useDynamicPWA(
-    store
-      ? {
-          name: store.name,
-          shortName: store.name,
-          startUrl: `/s/${store.slug}`,
-          iconUrl: store.logo_url || undefined,
-        }
-      : null
-  )
-
-  if (isStoreLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-400 mx-auto mb-4" />
-          <p className="text-gray-500 text-sm">Opening storefront...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (isStoreError || !store) {
-    return (
-      <div className="flex-1 flex items-center justify-center min-h-[60vh] px-4">
-        <div className="text-center max-w-sm">
-          <Store size={48} className="text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Store Not Found</h2>
-          <p className="text-gray-500 text-sm mb-6">
-            The storefront URL you are trying to reach doesn't exist or has been deactivated.
-          </p>
-          <Link
-            to="/"
-            className="inline-block bg-brand-400 hover:bg-brand-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors shadow-sm"
-          >
-            Go to Marketplace
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
-  // Build StoreContext value — this is what makes the entire subtree tenant-isolated
-  const ctxValue: StoreContextValue = {
-    storeSlug: store.slug,
-    storeId: store.id,
-    storeName: store.name,
-    logoUrl: store.logo_url,
-    tagline: store.tagline,
-    socialInstagram: store.social_instagram,
-    socialTiktok: store.social_tiktok,
-    socialFacebook: store.social_facebook,
-    whatsappNumber: store.whatsapp_number,
-    ownerId: store.owner_id,
-  }
 
   const isOwner = !!session?.user?.id && session.user.id === store.owner_id
 
@@ -237,8 +163,7 @@ export default function StoreFront() {
   }
 
   return (
-    <StoreContext.Provider value={ctxValue}>
-      <PullToRefresh onRefresh={handleRefresh}>
+    <PullToRefresh onRefresh={handleRefresh}>
         <div id="store-top" className="flex-1 bg-cream-50 dark:bg-dark-900 min-h-screen">
         {/* Cover image */}
         {store.hero_images?.[0] && (
@@ -364,7 +289,7 @@ export default function StoreFront() {
                   {featuredProducts.map(product => (
                     <Link
                       key={product.id}
-                      to={`/product/${product.id}?store=${store.slug}`}
+                      to={`/s/${store.slug}/product/${product.id}`}
                       className="snap-start shrink-0 w-64 group bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 rounded-3xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
                     >
                       <div className="aspect-square w-full overflow-hidden bg-gray-50 relative">
@@ -490,7 +415,7 @@ export default function StoreFront() {
               {filtered?.map(product => (
                 <Link
                   key={product.id}
-                  to={`/product/${product.id}?store=${store.slug}`}
+                  to={`/s/${store.slug}/product/${product.id}`}
                   className="group bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 hover:border-brand-400/30 dark:hover:border-brand-400/30 rounded-3xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full"
                 >
                   <div className="aspect-square w-full overflow-hidden bg-gray-50 relative">
@@ -534,8 +459,7 @@ export default function StoreFront() {
           </div>
         )}
       </main>
-      </div>
-      </PullToRefresh>
-    </StoreContext.Provider>
+    </div>
+  </PullToRefresh>
   )
 }

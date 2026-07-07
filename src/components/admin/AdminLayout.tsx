@@ -94,12 +94,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isActive = (path: string, exact?: boolean) =>
     exact ? location.pathname === path : location.pathname.startsWith(path)
 
-  const filteredNavItems = navItems.filter(item => {
-    if (item.path === '/admin/approvals') {
-      return isAdmin
-    }
-    return true
-  })
+  const filteredNavItems = navItems
+    .filter(item => {
+      if (item.path === '/admin/approvals' || item.path === '/admin/subscribers') {
+        return isAdmin
+      }
+      return true
+    })
+    .map(item => {
+      if (item.path === '/admin') {
+        return { ...item, path: isAdmin ? '/admin' : '/merchant' }
+      }
+      return item
+    })
 
   const currentLabel =
     filteredNavItems.find(item => isActive(item.path, item.exact))?.label ?? storeName

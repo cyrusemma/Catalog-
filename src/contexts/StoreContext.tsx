@@ -22,6 +22,8 @@ export interface StoreContextValue {
   socialFacebook: string | null
   whatsappNumber: string | null
   ownerId: string | null
+  heroImages: string[]
+  settings: Record<string, any>
 }
 
 const defaultValue: StoreContextValue = {
@@ -35,6 +37,8 @@ const defaultValue: StoreContextValue = {
   socialFacebook: null,
   whatsappNumber: null,
   ownerId: null,
+  heroImages: [],
+  settings: {},
 }
 
 export const StoreContext = createContext<StoreContextValue>(defaultValue)

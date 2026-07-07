@@ -4,6 +4,7 @@
  * Fully isolated from the platform Navbar. All links stay within the merchant's
  * /s/:storeSlug context. The store logo + name replace the platform brand mark.
  */
+import { useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { ShoppingCart, Storefront, UserCircle } from '@phosphor-icons/react'
@@ -15,9 +16,15 @@ import ThemeToggle from '../ui/ThemeToggle'
 import { motion } from 'framer-motion'
 
 export default function StoreNavbar() {
-  const { storeSlug, storeName, logoUrl } = useStoreContext()
+  const { storeSlug, storeName, logoUrl, storeId } = useStoreContext()
   const location = useLocation()
-  const totalItems = useCartStore(s => s.totalItems())
+  const allItems = useCartStore(s => s.items)
+  const totalItems = useMemo(() => {
+    if (storeId) {
+      return allItems.filter(i => i.product.store_id === storeId).reduce((sum, i) => sum + i.quantity, 0)
+    }
+    return allItems.reduce((sum, i) => sum + i.quantity, 0)
+  }, [allItems, storeId])
   const { isLoggedIn, profile } = useCustomerSession()
   const openSignIn = useSignInStore(s => s.openModal)
 
@@ -90,7 +97,7 @@ export default function StoreNavbar() {
             <ThemeToggle />
 
             {/* Cart — shared across all shops */}
-            <Link to="/cart" className="relative w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors pointer-events-auto">
+            <Link to={`/s/${storeSlug}/cart`} className="relative w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors pointer-events-auto">
               <ShoppingCart size={18} weight="duotone" className="text-dark-800 dark:text-white" />
               {totalItems > 0 && (
                 <motion.span 

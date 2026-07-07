@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link, useLocation } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ShoppingCart, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck, Lightning, Clock, Heart } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
@@ -16,13 +16,13 @@ import { useSignInStore } from '../store/signInStore'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { trackProductView, trackCartInteraction } from '../components/ui/AppReviewPrompt'
+import { useStoreContext } from '../contexts/StoreContext'
 
 export default function ProductDetail() {
   const formatPrice = useCurrencyFormatter()
-  const { id } = useParams<{ id: string }>()
-  const location = useLocation()
-  const searchParams = new URLSearchParams(location.search)
-  const isMarketplaceView = !searchParams.get('store')
+  const { id, storeSlug } = useParams<{ id: string; storeSlug?: string }>()
+  const isMarketplaceView = !storeSlug
+  const { storeId } = useStoreContext()
   const { data: product, isLoading } = useProduct(id!, isMarketplaceView)
   useDocumentTitle(product?.title || 'Product')
 
@@ -116,13 +116,17 @@ export default function ProductDetail() {
     )
   }
 
-  if (!product) {
+  const backPath = storeSlug ? `/s/${storeSlug}` : '/shop'
+  const backLabel = storeSlug ? 'Back to Storefront' : 'Back to Shop'
+  const isUnauthorized = !isMarketplaceView && storeId && product && product.store_id !== storeId
+
+  if (!product || isUnauthorized) {
     return (
       <main className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <SmileySad size={56} weight="duotone" className="text-brand-400 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-dark-800 dark:text-white mb-2">Product not found</h2>
-          <Link to="/shop" className="btn-primary inline-flex mt-4">Back to Shop</Link>
+          <Link to={backPath} className="btn-primary inline-flex mt-4">{backLabel}</Link>
         </div>
       </main>
     )
@@ -139,8 +143,8 @@ export default function ProductDetail() {
 
   return (
     <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-10 pb-28 lg:pb-10">
-      <Link to="/shop" className="inline-flex items-center gap-2 text-dark-800/60 dark:text-white/50 hover:text-brand-400 text-sm mb-8 transition-colors">
-        <ArrowLeft size={16} /> Back to Shop
+      <Link to={backPath} className="inline-flex items-center gap-2 text-dark-800/60 dark:text-white/50 hover:text-brand-400 text-sm mb-8 transition-colors">
+        <ArrowLeft size={16} /> {backLabel}
       </Link>
 
       <div className="grid md:grid-cols-2 gap-8 lg:gap-14">
