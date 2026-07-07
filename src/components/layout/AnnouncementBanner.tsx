@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Megaphone, X, ArrowRight } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
@@ -7,6 +7,14 @@ export default function AnnouncementBanner() {
   const settings = useStoreSettings()
   const [showPopup, setShowPopup] = useState(false)
   const [progress, setProgress] = useState(100)
+  
+  const progressRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (progressRef.current) {
+      progressRef.current.style.width = `${progress}%`
+    }
+  }, [progress])
 
   const activeText = settings.announcement_text?.trim() || ''
   const seenKey = activeText ? `announcement-seen-${btoa(activeText)}` : ''
@@ -62,9 +70,8 @@ export default function AnnouncementBanner() {
           initial={{ opacity: 0, y: -50, x: '-50%', scale: 0.95 }}
           animate={{ opacity: 1, y: 0, x: '-50%', scale: 1 }}
           exit={{ opacity: 0, y: -20, x: '-50%', scale: 0.95 }}
-          style={{ left: '50%' }}
           transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-          className="fixed top-4 z-[100] w-[calc(100%-2rem)] max-w-md bg-white/75 dark:bg-dark-900/80 backdrop-blur-md border border-cream-200/50 dark:border-white/10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] rounded-2xl overflow-hidden"
+          className="fixed top-4 left-1/2 z-[100] w-[calc(100%-2rem)] max-w-md bg-white/75 dark:bg-dark-900/80 backdrop-blur-md border border-cream-200/50 dark:border-white/10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] rounded-2xl overflow-hidden"
         >
           <div className="p-4 pr-10 flex items-start gap-3">
             <span className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
@@ -100,8 +107,8 @@ export default function AnnouncementBanner() {
           {/* Shrinking progress line at bottom */}
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-cream-100 dark:bg-white/5">
             <div
-              className="h-full bg-brand-400 transition-all ease-linear"
-              style={{ width: `${progress}%`, transitionDuration: '50ms' }}
+              ref={progressRef}
+              className="h-full bg-brand-400 transition-all duration-[50ms] ease-linear"
             />
           </div>
         </motion.div>

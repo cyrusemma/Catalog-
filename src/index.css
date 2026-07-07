@@ -561,7 +561,11 @@ html.theme-turquoise-dark .card {
 @layer utilities {
   .hide-scrollbar {
     -ms-overflow-style: none;
-    scrollbar-width: none;
+  }
+  @supports (scrollbar-width: none) {
+    .hide-scrollbar {
+      scrollbar-width: none;
+    }
   }
 
   .hide-scrollbar::-webkit-scrollbar {
@@ -780,4 +784,11 @@ html.theme-aurora-dark .dark\:bg-dark-900\/90 {
 .admin-drawer-overlay {
   -webkit-backdrop-filter: blur(4px) !important;
   backdrop-filter: blur(4px) !important;
+}
+
+.hero-fallback-gradient {
+  background-image:
+    radial-gradient(120% 120% at 80% 0%, var(--hero-glow-a), transparent 55%),
+    radial-gradient(100% 100% at 0% 100%, var(--hero-glow-b), transparent 50%),
+    linear-gradient(160deg, var(--hero-bg-from), var(--hero-bg-via) 55%, var(--hero-bg-to));
 }

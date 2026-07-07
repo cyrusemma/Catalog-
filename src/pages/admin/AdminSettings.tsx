@@ -151,7 +151,7 @@ export default function AdminSettings() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload)
   }, [isDirty])
 
-  const { data: context } = useAdminContext()
+  const { data: context, isLoading: contextLoading } = useAdminContext()
 
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ["store-settings", context?.storeId, context?.isAdmin],
@@ -799,8 +799,15 @@ function PushSettings() {
 
 function ToggleSwitch({ checked, onChange, ariaLabel }: { checked: boolean; onChange: (v: boolean) => void; ariaLabel?: string }) {
   return (
-    <button type="button" onClick={() => onChange(!checked)} role="switch" aria-checked={checked ? "true" : "false"} aria-label={ariaLabel || "Toggle setting"} className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors ${checked ? "bg-brand-500" : "bg-gray-200"}`}>
+    <label className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors cursor-pointer ${checked ? "bg-brand-500" : "bg-gray-200"}`}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={e => onChange(e.target.checked)}
+        className="sr-only"
+        aria-label={ariaLabel || "Toggle setting"}
+      />
       <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${checked ? "translate-x-[26px]" : "translate-x-0.5"}`} />
-    </button>
+    </label>
   )
 }

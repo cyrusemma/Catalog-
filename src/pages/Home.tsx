@@ -102,15 +102,7 @@ export default function Home() {
               />
             ))
           ) : (
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage:
-                  'radial-gradient(120% 120% at 80% 0%, var(--hero-glow-a), transparent 55%),' +
-                  'radial-gradient(100% 100% at 0% 100%, var(--hero-glow-b), transparent 50%),' +
-                  'linear-gradient(160deg, var(--hero-bg-from), var(--hero-bg-via) 55%, var(--hero-bg-to))',
-              }}
-            />
+            <div className="absolute inset-0 hero-fallback-gradient" />
           )}
         </div>
 

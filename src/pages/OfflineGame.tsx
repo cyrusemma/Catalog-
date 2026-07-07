@@ -16,6 +16,52 @@ interface FallingItem {
 const GOOD_ICONS = [TShirt, DeviceMobile, Sneaker, Handbag]
 const BAD_ICONS = [XCircle]
 
+interface FallingItemComponentProps {
+  x: number
+  y: number
+  type: ItemType
+  icon: typeof TShirt
+}
+
+function FallingItemComponent({ x, y, type, icon: Icon }: FallingItemComponentProps) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.style.left = `${x}%`
+      ref.current.style.top = `${y}%`
+    }
+  }, [x, y])
+
+  return (
+    <div
+      ref={ref}
+      className={`absolute w-12 h-12 -ml-6 -mt-6 flex items-center justify-center rounded-2xl shadow-lg ${
+        type === 'good' ? 'bg-white text-brand-500' : 'bg-red-500 text-white'
+      }`}
+    >
+      <Icon size={28} weight={type === 'bad' ? 'fill' : 'duotone'} />
+    </div>
+  )
+}
+
+function PlayerCart({ cartX }: { cartX: number }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.style.left = `${cartX}%`
+    }
+  }, [cartX])
+
+  return (
+    <div
+      ref={ref}
+      className="absolute bottom-[10%] w-20 h-20 -ml-10 bg-white rounded-full shadow-2xl flex items-center justify-center border-4 border-brand-100 z-10 transition-transform"
+    >
+      <ShoppingCart size={36} weight="duotone" className="text-gray-800" />
+    </div>
+  )
+}
+
 export default function OfflineGame() {
   const navigate = useNavigate()
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -305,31 +351,18 @@ export default function OfflineGame() {
         )}
 
         {/* Falling Items */}
-        {items.map(item => {
-          const Icon = item.icon
-          return (
-            <div 
-              key={item.id}
-              className={`absolute w-12 h-12 -ml-6 -mt-6 flex items-center justify-center rounded-2xl shadow-lg ${
-                item.type === 'good' ? 'bg-white text-brand-500' : 'bg-red-500 text-white'
-              }`}
-              style={{
-                left: `${item.x}%`,
-                top: `${item.y}%`,
-              }}
-            >
-              <Icon size={28} weight={item.type === 'bad' ? 'fill' : 'duotone'} />
-            </div>
-          )
-        })}
+        {items.map(item => (
+          <FallingItemComponent
+            key={item.id}
+            x={item.x}
+            y={item.y}
+            type={item.type}
+            icon={item.icon}
+          />
+        ))}
 
         {/* Player Cart */}
-        <div 
-          className="absolute bottom-[10%] w-20 h-20 -ml-10 bg-white rounded-full shadow-2xl flex items-center justify-center border-4 border-brand-100 z-10 transition-transform"
-          style={{ left: `${cartX}%` }}
-        >
-          <ShoppingCart size={36} weight="duotone" className="text-gray-800" />
-        </div>
+        <PlayerCart cartX={cartX} />
         
         {/* Floor */}
         <div className="absolute bottom-0 left-0 right-0 h-[10%] bg-white/30 backdrop-blur-md border-t border-white/40" />

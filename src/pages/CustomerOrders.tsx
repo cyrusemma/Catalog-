@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 const sectionMotion = {
   initial: { opacity: 0, y: 12 },
@@ -14,6 +14,21 @@ const sectionMotion = {
 }
 
 const STATUS_STEPS = ['pending', 'confirmed', 'processing', 'shipped', 'delivered']
+
+function OrderStatusProgress({ currentStepIndex }: { currentStepIndex: number }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.style.width = `${Math.max(0, (currentStepIndex / (STATUS_STEPS.length - 1)) * 100)}%`
+    }
+  }, [currentStepIndex])
+  return (
+    <div
+      ref={ref}
+      className="absolute top-1/2 left-6 h-1 bg-brand-400 -translate-y-1/2 rounded-full transition-all duration-1000 hidden sm:block"
+    />
+  )
+}
 
 export default function CustomerOrders() {
   const { user, isLoggedIn, loading } = useCustomerSession()
@@ -117,10 +132,7 @@ export default function CustomerOrders() {
                 {!isCancelled && (
                   <div className="relative mb-8 mt-2 px-2 sm:px-6">
                     <div className="absolute top-1/2 left-6 right-6 h-1 bg-cream-100 dark:bg-dark-700 -translate-y-1/2 rounded-full hidden sm:block" />
-                    <div 
-                      className="absolute top-1/2 left-6 h-1 bg-brand-400 -translate-y-1/2 rounded-full transition-all duration-1000 hidden sm:block"
-                      style={{ width: `${Math.max(0, (currentStepIndex / (STATUS_STEPS.length - 1)) * 100)}%` }}
-                    />
+                    <OrderStatusProgress currentStepIndex={currentStepIndex} />
                     
                     <div className="flex flex-col sm:flex-row justify-between relative gap-4 sm:gap-0">
                       {STATUS_STEPS.map((step, i) => {
