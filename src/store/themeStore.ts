@@ -7,7 +7,7 @@ export const COLOR_THEMES: { value: ColorTheme; label: string; swatchClass: stri
   { value: 'golden', label: 'Golden Brown', swatchClass: 'bg-gradient-to-br from-[#f4d48e] to-[#b86d08]', subtitle: 'Warm amber' },
   { value: 'rose', label: 'Rose', swatchClass: 'bg-gradient-to-br from-[#f7c3d0] to-[#b54a73]', subtitle: 'Dusty rose' },
   { value: 'turquoise', label: 'Turquoise', swatchClass: 'bg-gradient-to-br from-[#9fe8df] to-[#0c8577]', subtitle: 'Cool aqua' },
-  { value: 'aurora', label: 'Pastel Pasture', swatchClass: 'bg-gradient-to-b from-[#8bcdec] via-[#f0cbe1] to-[#a9e29a]', subtitle: 'Snapchat vibes' },
+  { value: 'aurora', label: 'Pastel Pasture', swatchClass: 'bg-gradient-to-b from-[#8bcdec] via-[#f0cbe1] to-[#a9e29a]', subtitle: 'Pastel gradient' },
 ]
 
 const COLOR_KEY = 'catalog-color'

@@ -195,7 +195,7 @@ export default function Gallery() {
                   : 'text-dark-800/50 dark:text-white/50 hover:text-dark-800 dark:hover:text-white'
               }`}
             >
-              Ready to Ship
+              Currently Available
             </button>
           </div>
         </div>
