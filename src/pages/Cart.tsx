@@ -7,7 +7,7 @@ import { useCartStore } from '../store/cartStore'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
-import { buildWhatsAppUrl, buildCartWhatsAppMessage, effectivePrice, formatPhoneNumber } from '../lib/utils'
+import { buildWhatsAppUrl, buildCartWhatsAppMessage, effectivePrice, formatPhoneNumber, detectGhanaNetwork, validateGhanaPhoneNumber } from '../lib/utils'
 import { supabase } from '../lib/supabase'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useProducts } from '../hooks/useProducts'
@@ -104,10 +104,17 @@ export default function Cart() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
 
+  const detectedNetwork = detectGhanaNetwork(customerPhone)
+
   const submitOrder = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     if (!customerName || !customerPhone) {
       setSubmitError('Please provide your name and phone number.')
+      return
+    }
+
+    if (!validateGhanaPhoneNumber(customerPhone)) {
+      setSubmitError('Please enter a valid 10-digit Ghanaian phone number (e.g. 024XXXXXXX).')
       return
     }
 
@@ -278,15 +285,34 @@ export default function Cart() {
                   />
                 </div>
                 <div>
-                  <label className="block text-dark-800/60 dark:text-white/60 text-sm font-medium mb-1">Phone Number</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-dark-800/60 dark:text-white/60 text-sm font-medium">Phone Number</label>
+                    {detectedNetwork && (
+                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase transition-all tracking-wider shadow-sm ${
+                        detectedNetwork === 'MTN' ? 'bg-[#FFCC00] text-black border border-[#e5b800]' :
+                        detectedNetwork === 'Telecel' ? 'bg-[#E60000] text-white border border-[#cc0000]' :
+                        detectedNetwork === 'AT' ? 'bg-[#0070b8] text-white border border-[#005a94]' :
+                        ''
+                      }`}>
+                        {detectedNetwork}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="tel"
                     required
                     value={customerPhone}
                     onChange={e => setCustomerPhone(formatPhoneNumber(e.target.value))}
-                    className="input w-full"
-                    placeholder="+233 20 000 0000"
+                    className={`input w-full transition-all ${
+                      customerPhone && !validateGhanaPhoneNumber(customerPhone)
+                        ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
+                        : ''
+                    }`}
+                    placeholder="e.g. 024XXXXXXX"
                   />
+                  {customerPhone && !validateGhanaPhoneNumber(customerPhone) && (
+                    <p className="text-red-500 text-[10px] mt-1 font-medium">Please enter a valid 10-digit number</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-dark-800/60 dark:text-white/60 text-sm font-medium mb-2">Delivery Option</label>

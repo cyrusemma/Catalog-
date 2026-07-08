@@ -123,3 +123,46 @@ export function formatPhoneNumber(val: string): string {
   
   return cleaned
 }
+
+export function detectGhanaNetwork(number: string): 'MTN' | 'Telecel' | 'AT' | null {
+  if (!number) return null
+  const cleaned = number.replace(/\D/g, '')
+  
+  let national = cleaned
+  if (cleaned.startsWith('233')) {
+    national = cleaned.substring(3)
+  } else if (cleaned.startsWith('0')) {
+    national = cleaned.substring(1)
+  }
+
+  if (national.length < 2) return null
+  const prefix = national.substring(0, 2)
+
+  const mtnPrefixes = ['24', '54', '55', '59', '25', '53']
+  const telecelPrefixes = ['20', '50']
+  const atPrefixes = ['26', '56', '27', '57']
+
+  if (mtnPrefixes.includes(prefix)) return 'MTN'
+  if (telecelPrefixes.includes(prefix)) return 'Telecel'
+  if (atPrefixes.includes(prefix)) return 'AT'
+
+  return null
+}
+
+export function validateGhanaPhoneNumber(number: string): boolean {
+  if (!number) return false
+  const cleaned = number.replace(/\D/g, '')
+  
+  let national = cleaned
+  if (cleaned.startsWith('233')) {
+    national = cleaned.substring(3)
+  } else if (cleaned.startsWith('0')) {
+    national = cleaned.substring(1)
+  }
+
+  if (national.length !== 9) return false
+
+  const prefix = national.substring(0, 2)
+  const validPrefixes = ['24', '54', '55', '59', '25', '53', '20', '50', '26', '56', '27', '57']
+  return validPrefixes.includes(prefix)
+}
