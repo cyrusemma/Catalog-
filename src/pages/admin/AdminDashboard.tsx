@@ -1,17 +1,47 @@
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAdminContext } from '../../hooks/useAdminContext'
-import { Package, Eye, ShoppingBag, TrendingUp, Plus, ArrowRight, Settings, MessageSquareQuote, Users, BarChart3, Star, Store } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts'
+import { 
+  Package, 
+  Eye, 
+  ShoppingBag, 
+  TrendingUp, 
+  Plus, 
+  ArrowRight, 
+  Settings, 
+  MessageSquareQuote, 
+  Users, 
+  BarChart3, 
+  Star, 
+  Store, 
+  Calendar, 
+  ChevronDown 
+} from 'lucide-react'
+import { 
+  LineChart, 
+  Line, 
+  AreaChart, 
+  Area, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip as RechartsTooltip, 
+  ResponsiveContainer 
+} from 'recharts'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils'
 
 export default function AdminDashboard() {
   const { data: context } = useAdminContext()
+  const [timeframe, setTimeframe] = useState<number>(30)
+  const [chartType, setChartType] = useState<'area' | 'line' | 'bar'>('area')
 
-  const { data: stats } = useQuery({
-    queryKey: ['admin-stats', context?.storeId, context?.isAdmin],
+  const { data: rawStats } = useQuery({
+    queryKey: ['admin-stats-raw', context?.storeId, context?.isAdmin],
     queryFn: async () => {
       const storeId = context?.storeId
       const isAdmin = context?.isAdmin
@@ -31,7 +61,7 @@ export default function AdminDashboard() {
 
       if (isAdmin) {
         promises.push(supabase.from('site_reviews').select('id, rating'))
-        promises.push(supabase.from('visits').select('session_id'))
+        promises.push(supabase.from('visits').select('session_id, created_at'))
       }
 
       const results = await Promise.all(promises)
@@ -40,53 +70,11 @@ export default function AdminDashboard() {
       const reviewsData = isAdmin ? results[2].data || [] : []
       const visitsData = isAdmin ? results[3].data || [] : []
 
-      const revenue = ordersData.filter((o: any) => o.status !== 'cancelled').reduce((s: number, o: any) => s + o.total, 0)
-      const uniqueVisitors = new Set(visitsData.map((v: any) => v.session_id)).size
-
-      // Revenue over time (last 30 days, grouped by day)
-      const revenueByDateMap = new Map<string, number>()
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-      
-      const topProductsMap = new Map<string, { title: string, count: number, revenue: number }>()
-
-      ordersData.forEach((o: any) => {
-        if (o.status !== 'cancelled') {
-          const date = new Date(o.created_at)
-          if (date >= thirtyDaysAgo) {
-            const dateString = date.toISOString().split('T')[0]
-            revenueByDateMap.set(dateString, (revenueByDateMap.get(dateString) || 0) + o.total)
-          }
-
-          if (o.items && Array.isArray(o.items)) {
-            o.items.forEach((item: any) => {
-              const current = topProductsMap.get(item.product_id) || { title: item.title || 'Unknown Product', count: 0, revenue: 0 }
-              current.count += item.quantity || 1
-              current.revenue += (item.price || 0) * (item.quantity || 1)
-              topProductsMap.set(item.product_id, current)
-            })
-          }
-        }
-      })
-
-      const revenueData = Array.from(revenueByDateMap.entries())
-        .map(([date, revenue]) => ({ date, revenue }))
-        .sort((a, b) => a.date.localeCompare(b.date))
-        
-      const topProducts = Array.from(topProductsMap.values())
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5)
-
       return {
-        total: productsData.length,
-        published: productsData.filter((p: any) => p.is_published).length,
-        orders: ordersData.length,
-        reviews: reviewsData.length,
-        revenue,
-        visits: visitsData.length,
-        uniqueVisitors,
-        revenueData,
-        topProducts
+        productsData,
+        ordersData,
+        reviewsData,
+        visitsData
       }
     },
     enabled: !!context,
@@ -105,6 +93,95 @@ export default function AdminDashboard() {
     enabled: !!context,
   })
 
+  // Dynamic calculations based on timeframe
+  const stats = useMemo(() => {
+    if (!rawStats) return null
+
+    const { productsData, ordersData, reviewsData, visitsData } = rawStats
+
+    const now = new Date()
+    const limitDate = new Date()
+    if (timeframe !== 0) {
+      limitDate.setDate(now.getDate() - timeframe)
+    }
+
+    const filteredOrders = ordersData.filter((o: any) => {
+      if (timeframe === 0) return true
+      return new Date(o.created_at) >= limitDate
+    })
+
+    const filteredVisits = visitsData.filter((v: any) => {
+      if (timeframe === 0) return true
+      return new Date(v.created_at) >= limitDate
+    })
+
+    const revenue = filteredOrders
+      .filter((o: any) => o.status !== 'cancelled')
+      .reduce((sum: number, o: any) => sum + (o.total || 0), 0)
+
+    const uniqueVisitors = new Set(filteredVisits.map((v: any) => v.session_id)).size
+
+    // Top products
+    const topProductsMap = new Map<string, { title: string, count: number, revenue: number }>()
+    filteredOrders.forEach((o: any) => {
+      if (o.status !== 'cancelled' && o.items && Array.isArray(o.items)) {
+        o.items.forEach((item: any) => {
+          const productTitle = item.product_title || item.title || 'Unknown Product'
+          const current = topProductsMap.get(item.product_id) || { title: productTitle, count: 0, revenue: 0 }
+          current.count += item.quantity || 1
+          current.revenue += (item.price || 0) * (item.quantity || 1)
+          topProductsMap.set(item.product_id, current)
+        })
+      }
+    })
+
+    const topProducts = Array.from(topProductsMap.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+
+    // Daily revenue grouping
+    const revenueByDateMap = new Map<string, number>()
+    
+    if (timeframe !== 0) {
+      for (let i = timeframe - 1; i >= 0; i--) {
+        const d = new Date()
+        d.setDate(now.getDate() - i)
+        const dateStr = d.toISOString().split('T')[0]
+        revenueByDateMap.set(dateStr, 0)
+      }
+    }
+
+    filteredOrders.forEach((o: any) => {
+      if (o.status !== 'cancelled') {
+        const dateString = new Date(o.created_at).toISOString().split('T')[0]
+        if (timeframe === 0 || revenueByDateMap.has(dateString)) {
+          revenueByDateMap.set(dateString, (revenueByDateMap.get(dateString) || 0) + o.total)
+        }
+      }
+    })
+
+    const revenueData = Array.from(revenueByDateMap.entries())
+      .map(([date, revenue]) => ({ date, revenue }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+
+    return {
+      totalProducts: productsData.length,
+      publishedProducts: productsData.filter((p: any) => p.is_published).length,
+      ordersCount: filteredOrders.length,
+      reviewsCount: reviewsData.length,
+      revenue,
+      visitsCount: filteredVisits.length,
+      uniqueVisitors,
+      revenueData,
+      topProducts
+    }
+  }, [rawStats, timeframe])
+
+  const maxProductRevenue = useMemo(() => {
+    if (!stats?.topProducts || stats.topProducts.length === 0) return 0
+    return Math.max(...stats.topProducts.map(p => p.revenue))
+  }, [stats?.topProducts])
+
   const quickActions = [
     { label: 'Add Product', desc: 'Create a new product manually', icon: Package, color: 'bg-brand-400', to: '/admin/products/new' },
     { label: 'View Orders', desc: 'Manage customer orders', icon: ShoppingBag, color: 'bg-blue-500', to: '/admin/orders' },
@@ -113,15 +190,15 @@ export default function AdminDashboard() {
   ]
 
   const statCards = [
-    { label: 'Total Products', value: stats?.total ?? '—', icon: Package, color: 'bg-brand-400' },
-    { label: 'Published', value: stats?.published ?? '—', icon: Eye, color: 'bg-green-500' },
-    { label: 'Orders', value: stats?.orders ?? '—', icon: ShoppingBag, color: 'bg-blue-500' },
+    { label: 'Total Products', value: stats?.totalProducts ?? '—', icon: Package, color: 'bg-brand-400' },
+    { label: 'Published', value: stats?.publishedProducts ?? '—', icon: Eye, color: 'bg-green-500' },
+    { label: 'Orders', value: stats?.ordersCount ?? '—', icon: ShoppingBag, color: 'bg-blue-500' },
     ...(context?.isAdmin ? [
-      { label: 'Reviews', value: stats?.reviews ?? '—', icon: MessageSquareQuote, color: 'bg-emerald-500' },
+      { label: 'Reviews', value: stats?.reviewsCount ?? '—', icon: MessageSquareQuote, color: 'bg-emerald-500' },
       { label: 'Revenue', value: stats ? formatPrice(stats.revenue) : '—', icon: TrendingUp, color: 'bg-purple-500' },
       {
         label: 'Visits',
-        value: stats ? `${stats.visits.toLocaleString()} · ${stats.uniqueVisitors.toLocaleString()} unique` : '—',
+        value: stats ? `${stats.visitsCount.toLocaleString()} · ${stats.uniqueVisitors.toLocaleString()} unique` : '—',
         icon: Users,
         color: 'bg-amber-500',
       },
@@ -155,21 +232,40 @@ export default function AdminDashboard() {
     <AdminLayout>
       <div className="p-4 sm:p-6 lg:p-8 pb-28 lg:pb-8">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 mb-5 sm:mb-7">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div className="min-w-0">
             <p className="text-gray-400 text-xs sm:text-sm mb-0.5">Dashboard</p>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Overview</h1>
           </div>
-          <Link
-            to="/admin/products/new"
-            className="flex items-center gap-1.5 bg-brand-400 hover:bg-brand-500 text-white font-semibold px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-colors text-xs sm:text-sm flex-shrink-0"
-          >
-            <Plus size={14} />
-            Add Product
-          </Link>
+          
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <select
+                title="Select timeframe"
+                value={timeframe}
+                onChange={(e) => setTimeframe(Number(e.target.value))}
+                className="bg-white border border-gray-200 text-gray-900 text-sm font-semibold rounded-xl pl-10 pr-8 py-2 outline-none focus:border-brand-400 appearance-none cursor-pointer shadow-sm"
+              >
+                <option value={7}>Last 7 Days</option>
+                <option value={30}>Last 30 Days</option>
+                <option value={90}>Last 90 Days</option>
+                <option value={0}>All Time</option>
+              </select>
+              <Calendar size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            <Link
+              to="/admin/products/new"
+              className="flex items-center gap-1.5 bg-brand-400 hover:bg-brand-500 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-xs sm:text-sm flex-shrink-0 shadow-sm shadow-brand-400/20"
+            >
+              <Plus size={14} />
+              Add Product
+            </Link>
+          </div>
         </div>
 
-        {/* Stats — at the top on mobile so the most-glanced numbers are above the fold. */}
+        {/* Stats */}
         <section className="mb-6">
           <h2 className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-2.5 px-1">At a glance</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
@@ -217,75 +313,193 @@ export default function AdminDashboard() {
 
         {/* Charts & Analytics */}
         <section className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 flex flex-col min-h-[300px]">
-            <div className="flex items-center gap-2 mb-4">
-              <BarChart3 size={18} className="text-gray-400" />
-              <h2 className="font-semibold text-gray-900 text-sm sm:text-base">Revenue (Last 30 Days)</h2>
+          <div className="lg:col-span-2 bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 flex flex-col min-h-[350px]">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-2">
+                <BarChart3 size={18} className="text-gray-400" />
+                <h2 className="font-semibold text-gray-900 text-sm sm:text-base">
+                  Revenue ({timeframe === 0 ? 'All Time' : `Last ${timeframe} Days`})
+                </h2>
+              </div>
+              
+              <div className="flex items-center rounded-lg bg-gray-100 p-1 border border-gray-200">
+                {(['area', 'line', 'bar'] as const).map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setChartType(type)}
+                    className={`rounded-md px-2.5 py-1 text-xs font-bold transition-all capitalize ${
+                      chartType === type
+                        ? 'bg-brand-400 text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex-1 w-full h-full min-h-[200px]">
+
+            <div className="flex-1 w-full h-full min-h-[220px]">
               {stats?.revenueData && stats.revenueData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={stats.revenueData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--admin-border)" />
-                    <XAxis 
-                      dataKey="date" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: 'var(--admin-text-soft)', fontSize: 12 }} 
-                      dy={10}
-                      tickFormatter={(val) => {
-                        const d = new Date(val)
-                        return `${d.getMonth()+1}/${d.getDate()}`
-                      }}
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: 'var(--admin-text-soft)', fontSize: 12 }} 
-                      dx={-10}
-                      tickFormatter={(val) => `GH₵${val}`}
-                    />
-                    <RechartsTooltip 
-                      contentStyle={{
-                        borderRadius: '12px',
-                        border: '1px solid var(--admin-border)',
-                        backgroundColor: 'var(--admin-panel-soft)',
-                        color: 'var(--admin-text)',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                      }}
-                      itemStyle={{ color: 'var(--admin-text)' }}
-                      labelStyle={{ color: 'var(--admin-text-muted)' }}
-                      formatter={(value: number) => [`GH₵${value.toLocaleString()}`, 'Revenue']}
-                      labelFormatter={(label) => `Date: ${label}`}
-                    />
-                    <Line type="monotone" dataKey="revenue" stroke="var(--brand-400, #d4820a)" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: 'var(--brand-400, #d4820a)' }} />
-                  </LineChart>
+                  {chartType === 'area' ? (
+                    <AreaChart data={stats.revenueData}>
+                      <defs>
+                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--brand-400, #d4820a)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="var(--brand-400, #d4820a)" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--admin-border)" />
+                      <XAxis 
+                        dataKey="date" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: 'var(--admin-text-soft)', fontSize: 11 }} 
+                        dy={10}
+                        tickFormatter={(val) => {
+                          const d = new Date(val)
+                          return `${d.getMonth()+1}/${d.getDate()}`
+                        }}
+                      />
+                      <YAxis 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: 'var(--admin-text-soft)', fontSize: 11 }} 
+                        dx={-10}
+                        tickFormatter={(val) => `GH₵${val}`}
+                      />
+                      <RechartsTooltip 
+                        contentStyle={{
+                          borderRadius: '12px',
+                          border: '1px solid var(--admin-border)',
+                          backgroundColor: 'var(--admin-panel-soft)',
+                          color: 'var(--admin-text)',
+                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                          backdropFilter: 'blur(8px)'
+                        }}
+                        itemStyle={{ color: 'var(--admin-text)' }}
+                        labelStyle={{ color: 'var(--admin-text-muted)' }}
+                        formatter={(value: number) => [`GH₵${value.toLocaleString()}`, 'Revenue']}
+                        labelFormatter={(label) => `Date: ${label}`}
+                      />
+                      <Area type="monotone" dataKey="revenue" stroke="var(--brand-400, #d4820a)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRevenue)" activeDot={{ r: 6, fill: 'var(--brand-400, #d4820a)' }} />
+                    </AreaChart>
+                  ) : chartType === 'bar' ? (
+                    <BarChart data={stats.revenueData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--admin-border)" />
+                      <XAxis 
+                        dataKey="date" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: 'var(--admin-text-soft)', fontSize: 11 }} 
+                        dy={10}
+                        tickFormatter={(val) => {
+                          const d = new Date(val)
+                          return `${d.getMonth()+1}/${d.getDate()}`
+                        }}
+                      />
+                      <YAxis 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: 'var(--admin-text-soft)', fontSize: 11 }} 
+                        dx={-10}
+                        tickFormatter={(val) => `GH₵${val}`}
+                      />
+                      <RechartsTooltip 
+                        contentStyle={{
+                          borderRadius: '12px',
+                          border: '1px solid var(--admin-border)',
+                          backgroundColor: 'var(--admin-panel-soft)',
+                          color: 'var(--admin-text)',
+                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                          backdropFilter: 'blur(8px)'
+                        }}
+                        itemStyle={{ color: 'var(--admin-text)' }}
+                        labelStyle={{ color: 'var(--admin-text-muted)' }}
+                        formatter={(value: number) => [`GH₵${value.toLocaleString()}`, 'Revenue']}
+                        labelFormatter={(label) => `Date: ${label}`}
+                      />
+                      <Bar dataKey="revenue" fill="var(--brand-400, #d4820a)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    </BarChart>
+                  ) : (
+                    <LineChart data={stats.revenueData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--admin-border)" />
+                      <XAxis 
+                        dataKey="date" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: 'var(--admin-text-soft)', fontSize: 11 }} 
+                        dy={10}
+                        tickFormatter={(val) => {
+                          const d = new Date(val)
+                          return `${d.getMonth()+1}/${d.getDate()}`
+                        }}
+                      />
+                      <YAxis 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: 'var(--admin-text-soft)', fontSize: 11 }} 
+                        dx={-10}
+                        tickFormatter={(val) => `GH₵${val}`}
+                      />
+                      <RechartsTooltip 
+                        contentStyle={{
+                          borderRadius: '12px',
+                          border: '1px solid var(--admin-border)',
+                          backgroundColor: 'var(--admin-panel-soft)',
+                          color: 'var(--admin-text)',
+                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                          backdropFilter: 'blur(8px)'
+                        }}
+                        itemStyle={{ color: 'var(--admin-text)' }}
+                        labelStyle={{ color: 'var(--admin-text-muted)' }}
+                        formatter={(value: number) => [`GH₵${value.toLocaleString()}`, 'Revenue']}
+                        labelFormatter={(label) => `Date: ${label}`}
+                      />
+                      <Line type="monotone" dataKey="revenue" stroke="var(--brand-400, #d4820a)" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: 'var(--brand-400, #d4820a)' }} />
+                    </LineChart>
+                  )}
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-400 text-sm">No revenue data for the last 30 days.</div>
+                <div className="flex items-center justify-center h-full text-gray-400 text-sm">No revenue data available.</div>
               )}
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100">
-            <div className="flex items-center gap-2 mb-4">
-              <Star size={18} className="text-yellow-500" />
-              <h2 className="font-semibold text-gray-900 text-sm sm:text-base">Top Selling Products</h2>
-            </div>
-            <div className="divide-y divide-gray-50">
-              {stats?.topProducts && stats.topProducts.length > 0 ? (
-                stats.topProducts.map((p: any, idx: number) => (
-                  <div key={idx} className="py-3 flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 truncate">{p.title}</p>
-                      <p className="text-xs text-gray-400">{p.count} sold</p>
-                    </div>
-                    <p className="text-sm font-semibold text-gray-900">{formatPrice(p.revenue)}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-400 text-sm py-4">No sales data available yet.</p>
-              )}
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Star size={18} className="text-yellow-500" />
+                <h2 className="font-semibold text-gray-900 text-sm sm:text-base">Top Selling Products</h2>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {stats?.topProducts && stats.topProducts.length > 0 ? (
+                  stats.topProducts.map((p: any, idx: number) => {
+                    const pct = maxProductRevenue > 0 ? (p.revenue / maxProductRevenue) * 100 : 0
+                    return (
+                      <div key={idx} className="py-3 flex flex-col gap-1.5 hover:bg-gray-50/20 transition-all px-1 rounded-lg">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{p.title}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{p.count} sold</p>
+                          </div>
+                          <p className="text-sm font-bold text-gray-900">{formatPrice(p.revenue)}</p>
+                        </div>
+                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            style={{ width: `${pct}%` }}
+                            className="h-full bg-brand-400 transition-all duration-500" 
+                          />
+                        </div>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <p className="text-gray-400 text-sm py-4">No sales data available yet.</p>
+                )}
+              </div>
             </div>
           </div>
         </section>
