@@ -1,14 +1,20 @@
 import { useEffect, useState, useRef } from 'react'
 import { Megaphone, X, ArrowRight } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
 
 export default function AnnouncementBanner() {
   const settings = useStoreSettings()
+  const navigate = useNavigate()
   const [showPopup, setShowPopup] = useState(false)
   const [progress, setProgress] = useState(100)
+  const [isPaused, setIsPaused] = useState(false)
   
   const progressRef = useRef<HTMLDivElement>(null)
+
+  const activeText = settings.announcement_text?.trim() || ''
+  const seenKey = activeText ? `announcement-seen-${btoa(activeText)}` : ''
 
   useEffect(() => {
     if (progressRef.current) {
@@ -16,9 +22,17 @@ export default function AnnouncementBanner() {
     }
   }, [progress])
 
-  const activeText = settings.announcement_text?.trim() || ''
-  const seenKey = activeText ? `announcement-seen-${btoa(activeText)}` : ''
+  // Reset progress when announcement changes
+  useEffect(() => {
+    if (settings.announcement_active && activeText) {
+      const isSeen = localStorage.getItem(seenKey)
+      if (!isSeen) {
+        setProgress(100)
+      }
+    }
+  }, [activeText, seenKey, settings.announcement_active])
 
+  // Timer logic with pause support
   useEffect(() => {
     if (!settings.announcement_active || !activeText) {
       setShowPopup(false)
@@ -32,7 +46,9 @@ export default function AnnouncementBanner() {
     }
 
     setShowPopup(true)
-    setProgress(100)
+
+    // Pause countdown on hover
+    if (isPaused) return
 
     const duration = 8000 // 8 seconds
     const intervalTime = 50
@@ -50,7 +66,7 @@ export default function AnnouncementBanner() {
     }, intervalTime)
 
     return () => clearInterval(timer)
-  }, [settings.announcement_active, activeText])
+  }, [settings.announcement_active, activeText, isPaused, seenKey])
 
   const handleDismiss = () => {
     setShowPopup(false)
@@ -61,7 +77,35 @@ export default function AnnouncementBanner() {
     }
   }
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // If clicking close button, do nothing
+    if ((e.target as HTMLElement).closest('.dismiss-button')) {
+      return
+    }
+
+    if (settings.announcement_link) {
+      if (settings.announcement_link.startsWith('http')) {
+        window.open(settings.announcement_link, '_blank', 'noopener,noreferrer')
+      } else {
+        navigate(settings.announcement_link)
+      }
+    }
+  }
+
   if (!settings.announcement_active || !activeText) return null
+
+  const megaphoneVariants = {
+    animate: {
+      rotate: [0, -10, 10, -10, 10, 0],
+      transition: {
+        delay: 0.5,
+        duration: 0.6,
+        ease: 'easeInOut' as any,
+        repeat: Infinity,
+        repeatDelay: 5
+      }
+    }
+  }
 
   return (
     <AnimatePresence>
@@ -71,35 +115,46 @@ export default function AnnouncementBanner() {
           animate={{ opacity: 1, y: 0, x: '-50%', scale: 1 }}
           exit={{ opacity: 0, y: -20, x: '-50%', scale: 0.95 }}
           transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-          className="fixed top-4 left-1/2 z-[100] w-[calc(100%-2rem)] max-w-md bg-white/75 dark:bg-dark-900/80 backdrop-blur-md border border-cream-200/50 dark:border-white/10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] rounded-2xl overflow-hidden"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onClick={handleCardClick}
+          className={`fixed top-4 left-1/2 z-[100] w-[calc(100%-2rem)] max-w-md bg-white/80 dark:bg-dark-900/90 backdrop-blur-md border border-cream-200/50 dark:border-white/10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] rounded-2xl overflow-hidden group transition-all duration-300 ${
+            settings.announcement_link 
+              ? 'cursor-pointer hover:border-brand-400/40 hover:shadow-[0_20px_40px_-10px_rgba(212,130,10,0.15)] dark:hover:shadow-[0_20px_40px_-10px_rgba(212,130,10,0.3)] hover:scale-[1.01] active:scale-[0.99]' 
+              : ''
+          }`}
         >
           <div className="p-4 pr-10 flex items-start gap-3">
-            <span className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
+            <motion.span 
+              variants={megaphoneVariants}
+              animate="animate"
+              className="w-8 h-8 rounded-lg bg-brand-400/10 text-brand-400 flex items-center justify-center flex-shrink-0"
+            >
               <Megaphone size={16} weight="fill" />
-            </span>
+            </motion.span>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-amber-500 uppercase tracking-wider">Special Announcement</p>
+              <p className="text-xs font-bold text-brand-400 uppercase tracking-wider">Special Announcement</p>
               <p className="text-sm font-semibold text-dark-800 dark:text-white mt-1 leading-snug">
                 {activeText}
               </p>
               {settings.announcement_link && (
-                <a
-                  href={settings.announcement_link}
-                  target={settings.announcement_link.startsWith('http') ? '_blank' : undefined}
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-brand-400 hover:text-brand-500 mt-2 transition-colors"
+                <div
+                  className="inline-flex items-center gap-1 text-xs font-bold text-brand-400 group-hover:text-brand-500 mt-2 transition-colors"
                 >
-                  View Details <ArrowRight size={12} weight="bold" />
-                </a>
+                  View Details <ArrowRight size={12} weight="bold" className="group-hover:translate-x-0.5 transition-transform" />
+                </div>
               )}
             </div>
           </div>
 
           <button
             type="button"
-            onClick={handleDismiss}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleDismiss()
+            }}
             aria-label="Dismiss announcement"
-            className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center text-dark-800/40 dark:text-white/40 hover:text-dark-800 dark:hover:text-white hover:bg-dark-800/5 dark:hover:bg-white/10 transition-colors"
+            className="dismiss-button absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center text-dark-800/40 dark:text-white/40 hover:text-dark-800 dark:hover:text-white hover:bg-dark-800/5 dark:hover:bg-white/10 transition-colors"
           >
             <X size={12} weight="bold" />
           </button>
