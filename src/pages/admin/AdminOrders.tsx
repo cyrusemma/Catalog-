@@ -22,21 +22,21 @@ import { useAdminContext } from '../../hooks/useAdminContext'
 
 const STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] as const
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/30',
-  confirmed: 'bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900/30',
-  processing: 'bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-900/30',
-  shipped: 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-900/30',
-  delivered: 'bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/30',
-  cancelled: 'bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/30',
+  pending: 'bg-amber-50 text-amber-700 border-amber-200',
+  confirmed: 'bg-blue-50 text-blue-700 border-blue-200',
+  processing: 'bg-purple-50 text-purple-700 border-purple-200',
+  shipped: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  delivered: 'bg-green-50 text-green-700 border-green-200',
+  cancelled: 'bg-red-50 text-red-700 border-red-200',
 }
 
 const BORDER_COLORS: Record<string, string> = {
-  pending: 'border-l-amber-500 dark:border-l-amber-500',
-  confirmed: 'border-l-blue-500 dark:border-l-blue-500',
-  processing: 'border-l-purple-500 dark:border-l-purple-500',
-  shipped: 'border-l-indigo-500 dark:border-l-indigo-500',
-  delivered: 'border-l-green-500 dark:border-l-green-500',
-  cancelled: 'border-l-red-500 dark:border-l-red-500',
+  pending: 'border-l-amber-500',
+  confirmed: 'border-l-blue-500',
+  processing: 'border-l-purple-500',
+  shipped: 'border-l-indigo-500',
+  delivered: 'border-l-green-500',
+  cancelled: 'border-l-red-500',
 }
 
 export default function AdminOrders() {
@@ -178,58 +178,56 @@ export default function AdminOrders() {
   return (
     <AdminLayout>
       <div className="p-4 sm:p-8">
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <p className="text-dark-800/40 dark:text-white/40 text-sm font-bold uppercase tracking-wider mb-1">Store Management</p>
-            <h1 className="text-2xl sm:text-3xl font-display font-bold text-dark-800 dark:text-white">Orders</h1>
-          </div>
+        <div className="mb-8">
+          <p className="text-gray-400 text-sm font-bold uppercase tracking-wider mb-1">Store Management</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-gray-900">Orders</h1>
         </div>
 
         {/* KPI Cards */}
         {!isLoading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white dark:bg-dark-800 p-5 rounded-2xl border border-cream-200 dark:border-brand-400/15 shadow-sm">
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-dark-800/40 dark:text-white/40 uppercase tracking-wider">Total Sales</span>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Sales</span>
                 <span className="w-8 h-8 rounded-lg bg-green-500/10 text-green-500 flex items-center justify-center">
                   <TrendUp size={16} weight="bold" />
                 </span>
               </div>
-              <p className="text-2xl font-bold text-dark-800 dark:text-white">{formatPrice(totalRevenue)}</p>
-              <p className="text-[10px] text-dark-800/40 dark:text-white/40 mt-1">Excludes cancelled orders</p>
+              <p className="text-2xl font-bold text-gray-900">{formatPrice(totalRevenue)}</p>
+              <p className="text-[10px] text-gray-400 mt-1">Excludes cancelled orders</p>
             </div>
 
-            <div className="bg-white dark:bg-dark-800 p-5 rounded-2xl border border-cream-200 dark:border-brand-400/15 shadow-sm">
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-dark-800/40 dark:text-white/40 uppercase tracking-wider">Pending Action</span>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pending Action</span>
                 <span className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
                   <Clock size={16} weight="fill" />
                 </span>
               </div>
-              <p className="text-2xl font-bold text-dark-800 dark:text-white">{pendingCount}</p>
-              <p className="text-[10px] text-dark-800/40 dark:text-white/40 mt-1">Awaiting confirmation</p>
+              <p className="text-2xl font-bold text-gray-900">{pendingCount}</p>
+              <p className="text-[10px] text-gray-400 mt-1">Awaiting confirmation</p>
             </div>
 
-            <div className="bg-white dark:bg-dark-800 p-5 rounded-2xl border border-cream-200 dark:border-brand-400/15 shadow-sm">
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-dark-800/40 dark:text-white/40 uppercase tracking-wider">In Preparation</span>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">In Preparation</span>
                 <span className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center">
                   <Timer size={16} weight="fill" />
                 </span>
               </div>
-              <p className="text-2xl font-bold text-dark-800 dark:text-white">{activeCount}</p>
-              <p className="text-[10px] text-dark-800/40 dark:text-white/40 mt-1">Confirmed / Prep / Shipped</p>
+              <p className="text-2xl font-bold text-gray-900">{activeCount}</p>
+              <p className="text-[10px] text-gray-400 mt-1">Confirmed / Prep / Shipped</p>
             </div>
 
-            <div className="bg-white dark:bg-dark-800 p-5 rounded-2xl border border-cream-200 dark:border-brand-400/15 shadow-sm">
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-dark-800/40 dark:text-white/40 uppercase tracking-wider">Completed</span>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Completed</span>
                 <span className="w-8 h-8 rounded-lg bg-green-500/10 text-green-500 flex items-center justify-center">
                   <CheckCircle size={16} weight="fill" />
                 </span>
               </div>
-              <p className="text-2xl font-bold text-dark-800 dark:text-white">{completedCount}</p>
-              <p className="text-[10px] text-dark-800/40 dark:text-white/40 mt-1">Delivered to customers</p>
+              <p className="text-2xl font-bold text-gray-900">{completedCount}</p>
+              <p className="text-[10px] text-gray-400 mt-1">Delivered to customers</p>
             </div>
           </div>
         )}
@@ -244,9 +242,9 @@ export default function AdminOrders() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search orders by customer name, phone, ID..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-cream-200 dark:border-brand-400/15 bg-white dark:bg-dark-800 text-dark-800 dark:text-white text-sm outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 shadow-sm transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 shadow-sm transition-all"
               />
-              <MagnifyingGlass size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 pointer-events-none" />
+              <MagnifyingGlass size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -255,21 +253,21 @@ export default function AdminOrders() {
                   title="Filter by date range"
                   value={dateFilter}
                   onChange={(e) => setDateFilter(Number(e.target.value))}
-                  className="bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 text-dark-800 dark:text-white text-sm font-semibold rounded-xl pl-10 pr-8 py-2.5 outline-none focus:border-brand-400 appearance-none cursor-pointer shadow-sm"
+                  className="bg-white border border-gray-200 text-gray-900 text-sm font-semibold rounded-xl pl-10 pr-8 py-2.5 outline-none focus:border-brand-400 appearance-none cursor-pointer shadow-sm"
                 >
                   <option value={7}>Last 7 Days</option>
                   <option value={30}>Last 30 Days</option>
                   <option value={90}>Last 90 Days</option>
                   <option value={0}>All Time</option>
                 </select>
-                <Calendar size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 pointer-events-none" />
-                <CaretDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 pointer-events-none" />
+                <Calendar size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <CaretDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
               
               <button
                 onClick={exportToCSV}
                 disabled={!filtered?.length}
-                className="flex items-center gap-1.5 bg-cream-100 dark:bg-white/5 hover:bg-cream-200 dark:hover:bg-white/10 text-dark-800 dark:text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-transparent dark:border-white/5 shadow-sm"
+                className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200 shadow-sm"
               >
                 <Download size={16} /> Export CSV
               </button>
@@ -277,7 +275,7 @@ export default function AdminOrders() {
           </div>
 
           {/* Filter tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-2.5 hide-scrollbar select-none border-b border-cream-200/50 dark:border-white/5">
+          <div className="flex gap-2 overflow-x-auto pb-2.5 hide-scrollbar select-none border-b border-gray-200/50">
             {[
               { id: 'all', label: 'All Orders', count: dateFiltered.length },
               { id: 'pending', label: 'Pending', count: statusCounts.pending || 0 },
@@ -293,14 +291,14 @@ export default function AdminOrders() {
                 className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 border ${
                   filter === tab.id 
                     ? 'bg-brand-400 border-brand-400 text-white shadow-sm shadow-brand-400/20' 
-                    : 'bg-white dark:bg-dark-800 text-dark-800/60 dark:text-white/60 border-cream-200 dark:border-brand-400/15 hover:border-brand-400/40'
+                    : 'bg-white text-gray-600 border-gray-100 hover:border-brand-400/40'
                 }`}
               >
                 <span>{tab.label}</span>
                 <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-extrabold ${
                   filter === tab.id 
                     ? 'bg-white/20 text-white' 
-                    : 'bg-cream-100 dark:bg-white/5 text-dark-800/50 dark:text-white/40'
+                    : 'bg-gray-100 text-gray-500'
                 }`}>
                   {tab.count}
                 </span>
@@ -310,11 +308,11 @@ export default function AdminOrders() {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-20 text-dark-800/40 dark:text-white/40 font-medium">Loading orders...</div>
+          <div className="text-center py-20 text-gray-400 font-medium">Loading orders...</div>
         ) : !filtered?.length ? (
-          <div className="bg-white dark:bg-dark-800 rounded-3xl border border-cream-200 dark:border-brand-400/15 py-20 text-center shadow-sm">
+          <div className="bg-white rounded-3xl border border-gray-100 py-20 text-center shadow-sm">
             <ShoppingBag size={48} className="text-brand-400/50 mx-auto mb-4" />
-            <p className="text-dark-800/50 dark:text-white/50 font-semibold">No orders found.</p>
+            <p className="text-gray-500 font-semibold">No orders found.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -325,16 +323,16 @@ export default function AdminOrders() {
               const visibleItems = isExpanded ? (order.items || []) : (order.items || []).slice(0, maxVisibleItems)
 
               return (
-                <div key={order.id} className={`bg-white dark:bg-dark-800 rounded-3xl border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 shadow-sm border-l-4 ${BORDER_COLORS[order.status]} flex flex-col lg:flex-row gap-6 hover:shadow-md transition-all duration-200`}>
+                <div key={order.id} className={`bg-white rounded-3xl border border-gray-100 p-5 sm:p-6 shadow-sm border-l-4 ${BORDER_COLORS[order.status]} flex flex-col lg:flex-row gap-6 hover:shadow-md transition-all duration-200`}>
                   
                   {/* Left side: Order Info & Items */}
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-3 mb-5">
-                      <span className="font-mono font-bold text-dark-800 dark:text-white text-lg">#{order.id.slice(-6).toUpperCase()}</span>
+                      <span className="font-mono font-bold text-gray-900 text-lg">#{order.id.slice(-6).toUpperCase()}</span>
                       <span className={`text-xs font-bold px-3 py-1 rounded-lg border uppercase tracking-wider ${STATUS_COLORS[order.status]}`}>
                         {order.status}
                       </span>
-                      <span className="text-dark-800/40 dark:text-white/40 font-medium text-sm ml-auto">
+                      <span className="text-gray-400 font-medium text-sm ml-auto">
                         {new Date(order.created_at).toLocaleString('en-GH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -342,14 +340,14 @@ export default function AdminOrders() {
                     {/* Items List */}
                     <div className="space-y-2 mb-5">
                       {visibleItems.map((item, i) => (
-                        <div key={i} className="flex items-center gap-3 bg-cream-50 dark:bg-dark-700/50 p-2.5 rounded-2xl border border-cream-100 dark:border-white/5">
-                          <img src={item.product_image || 'https://placehold.co/100x100/f3f4f6/9ca3af?text=?'} alt="" className="w-12 h-12 rounded-xl object-cover bg-white dark:bg-dark-800 flex-shrink-0" />
+                        <div key={i} className="flex items-center gap-3 bg-gray-50 p-2.5 rounded-2xl border border-gray-100">
+                          <img src={item.product_image || 'https://placehold.co/100x100/f3f4f6/9ca3af?text=?'} alt="" className="w-12 h-12 rounded-xl object-cover bg-white flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-dark-800 dark:text-white text-sm font-semibold truncate">{item.product_title}</p>
-                            <p className="text-brand-400 text-xs font-bold mt-0.5">{formatPrice(item.price)} <span className="text-dark-800/40 dark:text-white/40 font-medium ml-1">x {item.quantity}</span></p>
+                            <p className="text-gray-900 text-sm font-semibold truncate">{item.product_title}</p>
+                            <p className="text-brand-400 text-xs font-bold mt-0.5">{formatPrice(item.price)} <span className="text-gray-400 font-medium ml-1">x {item.quantity}</span></p>
                           </div>
                           <div className="text-right pl-2">
-                            <span className="text-dark-800 dark:text-white text-sm font-bold">{formatPrice(item.price * item.quantity)}</span>
+                            <span className="text-gray-900 text-sm font-bold">{formatPrice(item.price * item.quantity)}</span>
                           </div>
                         </div>
                       ))}
@@ -366,22 +364,22 @@ export default function AdminOrders() {
                     </div>
 
                     {/* Customer Info */}
-                    <div className="bg-cream-100/50 dark:bg-white/5 rounded-2xl p-4 text-sm border border-cream-200 dark:border-white/10">
+                    <div className="bg-gray-50 rounded-2xl p-4 text-sm border border-gray-100">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 mb-1">Customer</p>
-                          <p className="font-semibold text-dark-800 dark:text-white">{order.customer_name}</p>
-                          <p className="text-dark-800/60 dark:text-white/60 font-medium">{order.customer_phone}</p>
+                          <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Customer</p>
+                          <p className="font-semibold text-gray-900">{order.customer_name}</p>
+                          <p className="text-gray-600 font-medium">{order.customer_phone}</p>
                         </div>
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 mb-1">Delivery Address</p>
-                          <p className="text-dark-800/60 dark:text-white/60 font-medium leading-relaxed">{order.customer_address || 'No address provided'}</p>
+                          <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Delivery Address</p>
+                          <p className="text-gray-600 font-medium leading-relaxed">{order.customer_address || 'No address provided'}</p>
                         </div>
                       </div>
                       {order.notes && (
-                        <div className="mt-3 pt-3 border-t border-cream-200 dark:border-white/10">
-                          <p className="text-xs font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 mb-1">Order Notes</p>
-                          <p className="text-dark-800/80 dark:text-white/80 italic">"{order.notes}"</p>
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Order Notes</p>
+                          <p className="text-gray-700 italic">"{order.notes}"</p>
                         </div>
                       )}
                     </div>
@@ -389,18 +387,18 @@ export default function AdminOrders() {
 
                   {/* Right side: Financials & Actions */}
                   <div className="w-full lg:w-72 flex flex-col">
-                    <div className="bg-cream-50 dark:bg-dark-700/30 rounded-2xl p-5 border border-cream-200 dark:border-brand-400/15 flex-1">
-                      <h3 className="text-dark-800 dark:text-white font-bold mb-4 flex items-center gap-2">
+                    <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100 flex-1">
+                      <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2">
                         <ShoppingBag size={18} className="text-brand-400" /> 
                         Order Summary
                       </h3>
                       
                       <div className="space-y-2.5 mb-4 text-sm">
-                        <div className="flex justify-between text-dark-800/60 dark:text-white/60 font-medium">
+                        <div className="flex justify-between text-gray-600 font-medium">
                           <span>Subtotal</span>
                           <span>{formatPrice(order.subtotal)}</span>
                         </div>
-                        <div className="flex justify-between text-dark-800/60 dark:text-white/60 font-medium">
+                        <div className="flex justify-between text-gray-600 font-medium">
                           <span>Delivery Fee</span>
                           <span>{formatPrice(order.delivery_fee)}</span>
                         </div>
@@ -410,14 +408,14 @@ export default function AdminOrders() {
                             <span>-{formatPrice(order.discount_amount)}</span>
                           </div>
                         )}
-                        <div className="pt-2.5 mt-2.5 border-t border-cream-200 dark:border-white/10 flex justify-between items-center">
-                          <span className="font-bold text-dark-800 dark:text-white">Total</span>
+                        <div className="pt-2.5 mt-2.5 border-t border-gray-100 flex justify-between items-center">
+                          <span className="font-bold text-gray-900">Total</span>
                           <span className="text-lg font-bold text-brand-400">{formatPrice(order.total)}</span>
                         </div>
                       </div>
 
                       <div className="mt-6">
-                        <label className="block text-xs font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 mb-2">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
                           Update Status
                         </label>
                         <div className="relative">
@@ -425,11 +423,11 @@ export default function AdminOrders() {
                             title="Order Status"
                             value={order.status}
                             onChange={e => updateStatus.mutate({ id: order.id, status: e.target.value })}
-                            className="w-full appearance-none bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 text-dark-800 dark:text-white text-sm font-bold rounded-xl pl-4 pr-10 py-3 outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 cursor-pointer shadow-sm transition-all"
+                            className="w-full appearance-none bg-white border border-gray-200 text-gray-900 text-sm font-bold rounded-xl pl-4 pr-10 py-3 outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 cursor-pointer shadow-sm transition-all"
                           >
                             {STATUSES.map(s => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                           </select>
-                          <CaretDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 pointer-events-none" />
+                          <CaretDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                         </div>
                         {order.customer_phone && (
                           <button
