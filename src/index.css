@@ -36,7 +36,7 @@
 
   /* Glassmorphism */
   .glass {
-    @apply bg-white/60 dark:bg-white/5 backdrop-blur-md border border-cream-200 dark:border-white/10;
+    @apply bg-white/60 dark:bg-dark-900/60 backdrop-blur-md border border-cream-200 dark:border-white/10;
   }
 
   .glass-amber {

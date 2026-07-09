@@ -107,7 +107,7 @@ export default function Navbar() {
           border transition-all duration-300
           ${scrolled 
             ? 'bg-white/60 dark:bg-dark-900/60 backdrop-blur-2xl backdrop-saturate-150 border-white/50 dark:border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_8px_32px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_32px_rgba(0,0,0,0.4)]'
-            : 'bg-transparent border-transparent shadow-none dark:shadow-none'
+            : 'bg-white/10 dark:bg-dark-900/25 backdrop-blur-sm border-cream-200/10 dark:border-white/5 shadow-sm dark:shadow-none'
           }
         `}>
           <Link to="/" className="flex items-center gap-2.5 group min-w-0 flex-1 sm:flex-none">

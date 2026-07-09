@@ -101,7 +101,7 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
   }
 
   return (
-    <div className="relative w-full overflow-hidden bg-cream-50 dark:bg-dark-950 min-h-[92dvh] flex items-center pt-20 -mt-16 transition-colors duration-300">
+    <div className="relative w-full overflow-hidden bg-transparent min-h-[92dvh] flex items-center pt-20 -mt-16 transition-colors duration-300">
       {/* Background Layer: Animated backdrop halos */}
       <div className="absolute inset-0 z-0 select-none pointer-events-none overflow-hidden">
         <AnimatePresence mode="popLayout">
@@ -126,8 +126,8 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
         </AnimatePresence>
 
         {/* Cinematic Scrims */}
-        <div className="absolute inset-0 bg-gradient-to-t from-cream-50 via-cream-50/45 to-cream-50/20 dark:from-dark-950 dark:via-dark-950/40 dark:to-dark-950/20 transition-colors duration-300" />
-        <div className="absolute inset-0 bg-gradient-to-r from-cream-50/75 via-transparent to-transparent dark:from-dark-950/75 dark:via-transparent dark:to-transparent hidden lg:block transition-colors duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-white/10 dark:from-black/45 dark:via-transparent dark:to-black/20 transition-all duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/45 via-transparent to-transparent dark:from-black/50 dark:via-transparent dark:to-transparent hidden lg:block transition-all duration-300" />
       </div>
 
       {/* Main Grid Wrapper */}
