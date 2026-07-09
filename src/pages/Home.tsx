@@ -37,11 +37,6 @@ export default function Home() {
       }
     }
   }, [navigate])
-
-  if (featuredLoading || newProductsLoading) {
-    return <ShopLoader />
-  }
-
   // Hero product showcase — featured first, topped up with new arrivals, deduped.
   const heroShowcase = useMemo(() => {
     const seen = new Set<string>()
@@ -54,6 +49,10 @@ export default function Home() {
     }
     return out.slice(0, 6)
   }, [featured, newProducts])
+
+  if (featuredLoading || newProductsLoading) {
+    return <ShopLoader />
+  }
 
   return (
     <main className="flex-1">
