@@ -13,11 +13,12 @@ import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useNavigate } from 'react-router-dom'
 import type { Product } from '../types'
+import ShopLoader from '../components/ui/ShopLoader'
 
 export default function Home() {
   useDocumentTitle('Home')
-  const { data: featured, isError: featuredIsError, error: featuredError } = useProducts({ featured: true })
-  const { data: newProducts, isError: newProductsIsError, error: newProductsError } = useNewProducts(7)
+  const { data: featured, isError: featuredIsError, error: featuredError, isLoading: featuredLoading } = useProducts({ featured: true })
+  const { data: newProducts, isError: newProductsIsError, error: newProductsError, isLoading: newProductsLoading } = useNewProducts(7)
   const { isError: allProductsIsError, error: allProductsError } = useProducts()
   const productsError = allProductsError ?? featuredError ?? newProductsError
   const productsLoadFailed = allProductsIsError || featuredIsError || newProductsIsError
@@ -36,6 +37,10 @@ export default function Home() {
       }
     }
   }, [navigate])
+
+  if (featuredLoading || newProductsLoading) {
+    return <ShopLoader />
+  }
 
   // Hero product showcase — featured first, topped up with new arrivals, deduped.
   const heroShowcase = useMemo(() => {
