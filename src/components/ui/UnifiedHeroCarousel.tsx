@@ -101,7 +101,7 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
   }
 
   return (
-    <div className="relative w-full overflow-hidden bg-dark-950 min-h-[92dvh] flex items-center pt-20 -mt-16">
+    <div className="relative w-full overflow-hidden bg-cream-50 dark:bg-dark-950 min-h-[92dvh] flex items-center pt-20 -mt-16 transition-colors duration-300">
       {/* Background Layer: Animated backdrop halos */}
       <div className="absolute inset-0 z-0 select-none pointer-events-none overflow-hidden">
         <AnimatePresence mode="popLayout">
@@ -126,8 +126,8 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
         </AnimatePresence>
 
         {/* Cinematic Scrims */}
-        <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-dark-950/40 to-dark-950/20" />
-        <div className="absolute inset-0 bg-gradient-to-r from-dark-950/75 via-transparent to-transparent hidden lg:block" />
+        <div className="absolute inset-0 bg-gradient-to-t from-cream-50 via-cream-50/45 to-cream-50/20 dark:from-dark-950 dark:via-dark-950/40 dark:to-dark-950/20 transition-colors duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-r from-cream-50/75 via-transparent to-transparent dark:from-dark-950/75 dark:via-transparent dark:to-transparent hidden lg:block transition-colors duration-300" />
       </div>
 
       {/* Main Grid Wrapper */}
@@ -158,17 +158,17 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
 
                 <motion.h1 
                   variants={textItemVariants}
-                  className="font-display font-semibold tracking-[-0.02em] text-white text-3xl sm:text-5xl lg:text-6xl leading-[1.05] mb-4 text-balance"
+                  className="font-display font-semibold tracking-[-0.02em] text-dark-900 dark:text-white text-3xl sm:text-5xl lg:text-6xl leading-[1.05] mb-4 text-balance"
                 >
                   {activeProduct.title}
                 </motion.h1>
 
                 <motion.div variants={textItemVariants} className="flex items-baseline gap-3 mb-5">
-                  <span className="text-2xl sm:text-3xl font-display font-bold text-white">
+                  <span className="text-2xl sm:text-3xl font-display font-bold text-dark-900 dark:text-white">
                     {formatPrice(effectivePrice(activeProduct))}
                   </span>
                   {activeProduct.original_price && activeProduct.original_price > activeProduct.selling_price && (
-                    <span className="text-sm sm:text-base text-white/40 line-through">
+                    <span className="text-sm sm:text-base text-dark-800/40 dark:text-white/40 line-through">
                       {formatPrice(activeProduct.original_price)}
                     </span>
                   )}
@@ -176,7 +176,7 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
 
                 <motion.p 
                   variants={textItemVariants}
-                  className="text-white/70 text-sm sm:text-base mb-8 leading-relaxed line-clamp-3"
+                  className="text-dark-800/70 dark:text-white/70 text-sm sm:text-base mb-8 leading-relaxed line-clamp-3"
                 >
                   {activeProduct.description || 'Discover a hand-picked favorite from our curated collection. Combining quality materials with a timeless design aesthetic, made to fit seamlessly into your lifestyle.'}
                 </motion.p>
@@ -191,7 +191,7 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
                   {activeProduct.stock_status !== 'out_of_stock' && (
                     <button 
                       onClick={() => addItem(activeProduct)}
-                      className="inline-flex items-center gap-2 px-5 py-3 text-sm border border-white/20 hover:border-brand-400 text-white hover:text-brand-400 bg-white/5 hover:bg-brand-400/5 transition-all duration-300 rounded-2xl font-semibold backdrop-blur"
+                      className="inline-flex items-center gap-2 px-5 py-3 text-sm border border-dark-800/10 dark:border-white/20 hover:border-brand-400 dark:hover:border-brand-400 text-dark-800 dark:text-white hover:text-brand-400 dark:hover:text-brand-400 bg-dark-800/5 dark:bg-white/5 hover:bg-brand-400/5 transition-all duration-300 rounded-2xl font-semibold backdrop-blur"
                     >
                       <ShoppingCart size={16} /> Quick Add
                     </button>
@@ -223,7 +223,7 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
                 >
                   <Link 
                     to={`/product/${activeProduct.id}`}
-                    className="group relative block w-full h-full rounded-[2.25rem] overflow-hidden border border-white/10 shadow-2xl bg-dark-900"
+                    className="group relative block w-full h-full rounded-[2.25rem] overflow-hidden border border-cream-200 dark:border-white/10 shadow-2xl bg-white dark:bg-dark-900"
                   >
                     <Image
                       src={activeProduct.images?.[0] || 'https://placehold.co/600x750/1a1008/d4820a?text=No+Image'}
@@ -262,14 +262,14 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
       <button
         onClick={handlePrev}
         aria-label="Previous Slide"
-        className="hidden md:flex absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-12 h-12 rounded-full border border-white/10 hover:border-brand-400 text-white/50 hover:text-brand-400 bg-dark-950/30 hover:bg-brand-400/5 backdrop-blur transition-all duration-300 hover:scale-105 pointer-events-auto"
+        className="hidden md:flex absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-12 h-12 rounded-full border border-dark-800/10 dark:border-white/10 hover:border-brand-400 text-dark-800/50 dark:text-white/50 hover:text-brand-400 bg-dark-800/5 dark:bg-dark-950/30 hover:bg-brand-400/5 backdrop-blur transition-all duration-300 hover:scale-105 pointer-events-auto"
       >
         <CaretLeft size={24} weight="bold" />
       </button>
       <button
         onClick={handleNext}
         aria-label="Next Slide"
-        className="hidden md:flex absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-12 h-12 rounded-full border border-white/10 hover:border-brand-400 text-white/50 hover:text-brand-400 bg-dark-950/30 hover:bg-brand-400/5 backdrop-blur transition-all duration-300 hover:scale-105 pointer-events-auto"
+        className="hidden md:flex absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-12 h-12 rounded-full border border-dark-800/10 dark:border-white/10 hover:border-brand-400 text-dark-800/50 dark:text-white/50 hover:text-brand-400 bg-dark-800/5 dark:bg-dark-950/30 hover:bg-brand-400/5 backdrop-blur transition-all duration-300 hover:scale-105 pointer-events-auto"
       >
         <CaretRight size={24} weight="bold" />
       </button>
@@ -287,7 +287,7 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
               }}
               aria-label={`Go to slide ${i + 1}`}
               className={`h-2 rounded-full transition-all duration-300 pointer-events-auto ${
-                i === idx ? 'w-8 bg-brand-400' : 'w-2 bg-white/30 hover:bg-white/50'
+                i === idx ? 'w-8 bg-brand-400' : 'w-2 bg-dark-800/20 dark:bg-white/30 hover:bg-dark-800/40 dark:hover:bg-white/50'
               }`}
             />
           ))}
