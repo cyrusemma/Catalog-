@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { 
   Search, 
@@ -103,13 +103,13 @@ export default function AdminApprovals() {
     },
   })
 
-  // Fetch stores with owner join details
+  // Fetch stores
   const { data: stores, isLoading: storesLoading } = useQuery<Store[]>( {
     queryKey: ['admin-approvals', 'stores'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stores')
-        .select('*, owner:owner_id(id, email, display_name)')
+        .select('*')
         .order('created_at', { ascending: false })
       
       if (error) throw error
@@ -247,7 +247,18 @@ export default function AdminApprovals() {
     return matchesTab && matchesSearch
   })
 
-  const filteredStores = stores?.filter(store => {
+  const enrichedStores = useMemo(() => {
+    if (!stores) return []
+    return stores.map(store => {
+      const owner = profiles?.find((p: any) => p.id === store.owner_id) || null
+      return {
+        ...store,
+        owner
+      }
+    })
+  }, [stores, profiles])
+
+  const filteredStores = enrichedStores?.filter(store => {
     const matchesTab = store.approval_status === activeTab
     const matchesSearch = store.name?.toLowerCase().includes(search.toLowerCase()) || 
                           store.whatsapp_number?.includes(search) ||
