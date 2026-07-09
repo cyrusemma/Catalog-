@@ -3,6 +3,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, Store, ExternalLink, Menu, X, MessageSquareQuote, Palette, ClipboardCheck, Users } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
+import { useAdminContext } from '../../hooks/useAdminContext'
+import { formatPrice, playNotificationSound } from '../../lib/utils'
+import { toast } from 'sonner'
 
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -33,11 +36,60 @@ function getInitialAdminTheme(): AdminTheme {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const { data: context } = useAdminContext()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [adminTheme, setAdminTheme] = useState<AdminTheme>(getInitialAdminTheme)
   const [isAdmin, setIsAdmin] = useState(false)
   const [storeName, setStoreName] = useState('Admin')
   const [storeSlug, setStoreSlug] = useState('')
+
+  // Real-time sound notification listener for new orders
+  useEffect(() => {
+    if (!context) return
+
+    let mounted = true
+    const channel = supabase
+      .channel('new-orders-realtime-alert')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'orders' },
+        (payload) => {
+          if (!mounted) return
+          const newOrder = payload.new
+
+          // Check if this order belongs to the current merchant's store or if the user is a platform admin
+          const isOwnStore = !context.isAdmin && context.storeId && newOrder.store_id === context.storeId
+          const isPlatformAdmin = context.isAdmin
+
+          if (isOwnStore || isPlatformAdmin) {
+            // Play synthesized order alert sound
+            playNotificationSound()
+
+            // Trigger visual toaster alert with action link
+            const orderIdShort = newOrder.id.slice(-6).toUpperCase()
+            const customer = newOrder.customer_name || 'Customer'
+            const totalFormatted = formatPrice(newOrder.total)
+            
+            toast.success(
+              `🔔 New Order #${orderIdShort} from ${customer} (${totalFormatted})!`,
+              {
+                duration: 12000,
+                action: {
+                  label: 'View Orders',
+                  onClick: () => navigate('/admin/orders')
+                }
+              }
+            )
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      mounted = false
+      supabase.removeChannel(channel)
+    }
+  }, [context, navigate])
 
   useEffect(() => {
     localStorage.setItem(ADMIN_THEME_KEY, adminTheme)

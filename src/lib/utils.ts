@@ -166,3 +166,47 @@ export function validateGhanaPhoneNumber(number: string): boolean {
   const validPrefixes = ['24', '54', '55', '59', '25', '53', '20', '50', '26', '56', '27', '57']
   return validPrefixes.includes(prefix)
 }
+
+export function playNotificationSound() {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioContextClass) return
+    const ctx = new AudioContextClass()
+    
+    // First high note (coin chime)
+    const osc1 = ctx.createOscillator()
+    const gain1 = ctx.createGain()
+    osc1.type = 'triangle'
+    osc1.frequency.setValueAtTime(880, ctx.currentTime) // A5
+    gain1.gain.setValueAtTime(0, ctx.currentTime)
+    gain1.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.02)
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
+    
+    osc1.connect(gain1)
+    gain1.connect(ctx.destination)
+    osc1.start()
+    osc1.stop(ctx.currentTime + 0.3)
+
+    // Second higher note (bell chime)
+    setTimeout(() => {
+      try {
+        const osc2 = ctx.createOscillator()
+        const gain2 = ctx.createGain()
+        osc2.type = 'sine'
+        osc2.frequency.setValueAtTime(1320, ctx.currentTime) // E6
+        gain2.gain.setValueAtTime(0, ctx.currentTime)
+        gain2.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02)
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4)
+        
+        osc2.connect(gain2)
+        gain2.connect(ctx.destination)
+        osc2.start()
+        osc2.stop(ctx.currentTime + 0.4)
+      } catch (e) {
+        console.error('Audio synthesizer note 2 error:', e)
+      }
+    }, 80)
+  } catch (e) {
+    console.error('Audio synthesizer failed to play:', e)
+  }
+}
