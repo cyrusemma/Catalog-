@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-quer
 import { supabase } from './lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 import { syncOfflineOrders } from './lib/offlineOrders'
+import { motion, AnimatePresence } from 'framer-motion'
 import { StoreContext } from './contexts/StoreContext'
 import type { StoreContextValue } from './contexts/StoreContext'
 import { useDynamicPWA } from './hooks/useDynamicPWA'
@@ -208,6 +209,7 @@ function AdminOnlyRoute({ children }: { children: React.ReactNode }) {
 }
 
 function StorefrontLayout({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
   const signInOpen = useSignInStore(s => s.open)
   const closeSignIn = useSignInStore(s => s.closeModal)
   const signInReason = useSignInStore(s => s.reason)
@@ -215,8 +217,19 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col min-h-dvh overflow-x-hidden">
       <AnnouncementBanner />
       <Navbar />
-      <div className="pt-20 flex flex-col flex-1">
-        {children}
+      <div className="pt-20 flex flex-col flex-1 relative overflow-x-hidden">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-col flex-1 w-full"
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
       </div>
       <Footer />
       <BottomNav />
@@ -333,12 +346,25 @@ function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
     settings: store.settings || {},
   }
 
+  const location = useLocation()
+
   return (
     <StoreContext.Provider value={ctxValue}>
       <div className="flex flex-col min-h-dvh overflow-x-hidden">
         <StoreNavbar />
-        <div className="pt-20 flex flex-col flex-1">
-          {children}
+        <div className="pt-20 flex flex-col flex-1 relative overflow-x-hidden">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              className="flex flex-col flex-1 w-full"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </div>
         <StoreFooter />
         <StoreBottomNav />

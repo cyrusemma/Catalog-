@@ -136,7 +136,7 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
           
           {/* Left Column: Glassmorphic Editorial Typography */}
           <div className="lg:col-span-7 flex flex-col justify-center text-left max-w-xl">
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               <motion.div
                 key={idx}
                 custom={direction}
@@ -206,7 +206,7 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
             <div className="absolute inset-0 bg-gradient-radial from-brand-500/10 to-transparent blur-3xl rounded-full scale-75 select-none pointer-events-none" />
             
             <div className="relative w-full max-w-[280px] sm:max-w-[340px] aspect-[4/5]">
-              <AnimatePresence mode="wait">
+              <AnimatePresence>
                 <motion.div
                   key={idx}
                   custom={direction}
