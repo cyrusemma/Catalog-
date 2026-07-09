@@ -256,6 +256,10 @@ html.theme-turquoise-dark {
    accents stay so the overall identity holds. */
 html.theme-rose-light body {
   background-color: #fdf2f5 !important;
+  background-image: linear-gradient(rgba(253, 242, 245, 0.96), rgba(253, 242, 245, 0.96)), url('/rose-pattern.png') !important;
+  background-repeat: repeat !important;
+  background-size: auto, 180px 180px !important;
+  background-attachment: fixed !important;
 }
 
 html.theme-rose-light .bg-cream-50 {
@@ -286,6 +290,10 @@ html.theme-rose-light .bg-cream-50\/90 {
 /* Rose-dark — deep wine background with rose-gold accents. */
 html.theme-rose-dark body {
   background-color: #1c0a12 !important;
+  background-image: linear-gradient(rgba(28, 10, 18, 0.96), rgba(28, 10, 18, 0.96)), url('/rose-pattern.png') !important;
+  background-repeat: repeat !important;
+  background-size: auto, 180px 180px !important;
+  background-attachment: fixed !important;
 }
 
 html.theme-rose-dark .dark\:bg-dark-900 {
@@ -791,4 +799,90 @@ html.theme-aurora-dark .dark\:bg-dark-900\/90 {
     radial-gradient(120% 120% at 80% 0%, var(--hero-glow-a), transparent 55%),
     radial-gradient(100% 100% at 0% 100%, var(--hero-glow-b), transparent 50%),
     linear-gradient(160deg, var(--hero-bg-from), var(--hero-bg-via) 55%, var(--hero-bg-to));
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Theme accent re-coloring overrides (Rose & Turquoise)
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Rose Accent Overrides */
+html.theme-rose-light .btn-primary,
+html.theme-rose-dark .btn-primary {
+  background: #c45680 !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(196, 86, 128, 0.25) !important;
+}
+html.theme-rose-light .btn-primary:hover,
+html.theme-rose-dark .btn-primary:hover {
+  background: #b54a73 !important;
+  box-shadow: 0 4px 20px rgba(181, 74, 115, 0.4) !important;
+}
+html.theme-rose-light .text-brand-400,
+html.theme-rose-dark .text-brand-400,
+html.theme-rose-light .hover\:text-brand-400:hover,
+html.theme-rose-dark .hover\:text-brand-400:hover {
+  color: #c45680 !important;
+}
+html.theme-rose-light .bg-brand-400,
+html.theme-rose-dark .bg-brand-400,
+html.theme-rose-light .hover\:bg-brand-400:hover,
+html.theme-rose-dark .hover\:bg-brand-400:hover {
+  background-color: #c45680 !important;
+}
+html.theme-rose-light .border-brand-400,
+html.theme-rose-dark .border-brand-400,
+html.theme-rose-light .hover\:border-brand-400:hover,
+html.theme-rose-dark .hover\:border-brand-400:hover {
+  border-color: #c45680 !important;
+}
+html.theme-rose-light .bg-brand-400\/10 {
+  background-color: rgba(196, 86, 128, 0.1) !important;
+}
+html.theme-rose-dark .bg-brand-400\/20 {
+  background-color: rgba(232, 116, 156, 0.2) !important;
+}
+html.theme-rose-light .fill-brand-400,
+html.theme-rose-dark .fill-brand-400 {
+  fill: #c45680 !important;
+}
+
+/* Turquoise Accent Overrides */
+html.theme-turquoise-light .btn-primary,
+html.theme-turquoise-dark .btn-primary {
+  background: #0c8577 !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(12, 133, 119, 0.25) !important;
+}
+html.theme-turquoise-light .btn-primary:hover,
+html.theme-turquoise-dark .btn-primary:hover {
+  background: #0a7367 !important;
+  box-shadow: 0 4px 20px rgba(10, 115, 103, 0.4) !important;
+}
+html.theme-turquoise-light .text-brand-400,
+html.theme-turquoise-dark .text-brand-400,
+html.theme-turquoise-light .hover\:text-brand-400:hover,
+html.theme-turquoise-dark .hover\:text-brand-400:hover {
+  color: #0c8577 !important;
+}
+html.theme-turquoise-light .bg-brand-400,
+html.theme-turquoise-dark .bg-brand-400,
+html.theme-turquoise-light .hover\:bg-brand-400:hover,
+html.theme-turquoise-dark .hover\:bg-brand-400:hover {
+  background-color: #0c8577 !important;
+}
+html.theme-turquoise-light .border-brand-400,
+html.theme-turquoise-dark .border-brand-400,
+html.theme-turquoise-light .hover\:border-brand-400:hover,
+html.theme-turquoise-dark .hover\:border-brand-400:hover {
+  border-color: #0c8577 !important;
+}
+html.theme-turquoise-light .bg-brand-400\/10 {
+  background-color: rgba(12, 133, 119, 0.1) !important;
+}
+html.theme-turquoise-dark .bg-brand-400\/20 {
+  background-color: rgba(94, 234, 212, 0.2) !important;
+}
+html.theme-turquoise-light .fill-brand-400,
+html.theme-turquoise-dark .fill-brand-400 {
+  fill: #0c8577 !important;
 }
