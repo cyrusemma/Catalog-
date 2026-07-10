@@ -256,9 +256,9 @@ html.theme-turquoise-dark {
    accents stay so the overall identity holds. */
 html.theme-rose-light body {
   background-color: #fdf2f5 !important;
-  background-image: linear-gradient(rgba(253, 242, 245, 0.96), rgba(253, 242, 245, 0.96)), url('/rose-pattern.png') !important;
+  background-image: linear-gradient(rgba(253, 242, 245, 0.85), rgba(253, 242, 245, 0.85)), url('/rose-pattern.png') !important;
   background-repeat: repeat !important;
-  background-size: auto, 180px 180px !important;
+  background-size: auto, 450px 450px !important;
   background-attachment: fixed !important;
 }
 
@@ -290,9 +290,9 @@ html.theme-rose-light .bg-cream-50\/90 {
 /* Rose-dark — deep wine background with rose-gold accents. */
 html.theme-rose-dark body {
   background-color: #1c0a12 !important;
-  background-image: linear-gradient(rgba(28, 10, 18, 0.96), rgba(28, 10, 18, 0.96)), url('/rose-pattern.png') !important;
+  background-image: linear-gradient(rgba(28, 10, 18, 0.85), rgba(28, 10, 18, 0.85)), url('/rose-pattern.png') !important;
   background-repeat: repeat !important;
-  background-size: auto, 180px 180px !important;
+  background-size: auto, 450px 450px !important;
   background-attachment: fixed !important;
 }
 
