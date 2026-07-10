@@ -37,6 +37,7 @@ import CartSync from './components/ui/CartSync'
 import WishlistSync from './components/ui/WishlistSync'
 import { useSignInStore } from './store/signInStore'
 import { useCustomerSession } from './hooks/useCustomerSession'
+import { applyTheme, initialColor, useThemeStore, type ColorTheme } from './store/themeStore'
 
 const Home = lazy(() => import('./pages/Home'))
 const Shop = lazy(() => import('./pages/Shop'))
@@ -262,6 +263,7 @@ interface StoreDetails {
   maintenance_mode?: boolean
   maintenance_message?: string | null
   operating_hours?: string | null
+  theme_color?: string
 }
 
 /**
@@ -360,6 +362,18 @@ function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
   }
 
   const location = useLocation()
+
+  const mode = useThemeStore(s => s.mode)
+  const merchantThemeColor = (store?.theme_color as ColorTheme) || 'golden'
+
+  useEffect(() => {
+    if (store?.theme_color) {
+      applyTheme(merchantThemeColor, mode)
+    }
+    return () => {
+      applyTheme(initialColor(), mode)
+    }
+  }, [merchantThemeColor, mode])
 
   if (store.maintenance_mode && !isOwner) {
     return (
