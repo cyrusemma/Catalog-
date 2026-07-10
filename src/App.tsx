@@ -36,6 +36,7 @@ import NewArrivalsListener from './components/ui/NewArrivalsListener'
 import CartSync from './components/ui/CartSync'
 import WishlistSync from './components/ui/WishlistSync'
 import { useSignInStore } from './store/signInStore'
+import { useCustomerSession } from './hooks/useCustomerSession'
 
 const Home = lazy(() => import('./pages/Home'))
 const Shop = lazy(() => import('./pages/Shop'))
@@ -257,6 +258,10 @@ interface StoreDetails {
   whatsapp_number: string | null
   owner_id: string | null
   settings: Record<string, any>
+  minimum_order_amount?: number
+  maintenance_mode?: boolean
+  maintenance_message?: string | null
+  operating_hours?: string | null
 }
 
 /**
@@ -332,6 +337,9 @@ function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
+  const { user } = useCustomerSession()
+  const isOwner = !!user?.id && user.id === store.owner_id
+
   const ctxValue: StoreContextValue = {
     storeSlug: store.slug,
     storeId: store.id,
@@ -345,6 +353,94 @@ function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
     ownerId: store.owner_id,
     heroImages: store.hero_images || [],
     settings: store.settings || {},
+    minimumOrderAmount: Number(store.minimum_order_amount) || 0,
+    maintenanceMode: !!store.maintenance_mode,
+    maintenanceMessage: store.maintenance_message || null,
+    operatingHours: store.operating_hours || null,
+  }
+
+  const location = useLocation()
+
+  if (store.maintenance_mode && !isOwner) {
+    return (
+      <StoreContext.Provider value={ctxValue}>
+        <div className="flex flex-col min-h-dvh bg-gradient-to-br from-[#100609] via-[#0f0a05] to-[#000] text-white overflow-hidden relative font-sans">
+          {/* Decorative glowing ambient backdrops */}
+          <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-brand-400/5 blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-brand-400/5 blur-[120px] pointer-events-none" />
+          
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-16 relative z-10">
+            <div className="max-w-md w-full text-center space-y-8 glass border border-brand-400/10 p-8 sm:p-10 rounded-3xl shadow-2xl backdrop-blur-md">
+              {/* Logo / Icon */}
+              <div className="flex justify-center">
+                {store.logo_url ? (
+                  <div className="relative group">
+                    <img 
+                      src={store.logo_url} 
+                      alt={store.name} 
+                      className="w-24 h-24 rounded-3xl object-cover border-2 border-brand-400/20 shadow-lg group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 rounded-3xl bg-brand-400/10 animate-pulse pointer-events-none" />
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 rounded-3xl bg-brand-400/10 border border-brand-400/20 flex items-center justify-center text-brand-400">
+                    <Store size={38} weight="duotone" />
+                  </div>
+                )}
+              </div>
+
+              {/* Title & Badge */}
+              <div className="space-y-3">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-brand-400/10 text-brand-400 border border-brand-400/25">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-ping" />
+                  Under Maintenance
+                </span>
+                <h1 className="text-3xl font-display font-bold tracking-tight text-white">
+                  {store.name}
+                </h1>
+                {store.tagline && (
+                  <p className="text-white/40 text-xs tracking-wide">
+                    {store.tagline}
+                  </p>
+                )}
+              </div>
+
+              {/* Message */}
+              <div className="py-4 px-5 bg-white/[0.02] border border-white/[0.04] rounded-2xl">
+                <p className="text-white/70 text-sm leading-relaxed font-light">
+                  {store.maintenance_message || "We're currently polishing our storefront to serve you better. Please check back soon!"}
+                </p>
+              </div>
+
+              {/* Actions & Escapes */}
+              <div className="space-y-4 pt-2">
+                {store.whatsapp_number && (
+                  <a
+                    href={`https://wa.me/${store.whatsapp_number.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-primary w-full justify-center py-3.5 text-sm flex items-center gap-2 rounded-xl"
+                  >
+                    Contact Vendor on WhatsApp
+                  </a>
+                )}
+                <Link
+                  to="/"
+                  className="btn-ghost w-full justify-center py-3 text-xs text-white/50 hover:text-white flex items-center gap-1.5 rounded-xl border border-white/5 hover:border-white/10 transition-all"
+                >
+                  Return to Marketplace
+                </Link>
+              </div>
+            </div>
+          </div>
+          
+          {/* Minimal footer */}
+          <div className="py-6 text-center text-[10px] text-white/20 border-t border-white/[0.03] relative z-10">
+            &copy; {new Date().getFullYear()} {store.name}. Powered by Catalog.
+          </div>
+        </div>
+      </StoreContext.Provider>
+    )
   }
 
   const location = useLocation()

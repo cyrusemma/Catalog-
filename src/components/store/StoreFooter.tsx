@@ -27,7 +27,7 @@ function socialUrl(value: string, base: string): string {
 }
 
 export default function StoreFooter() {
-  const { storeName, tagline, socialInstagram, socialTiktok, socialFacebook, whatsappNumber } =
+  const { storeName, tagline, socialInstagram, socialTiktok, socialFacebook, whatsappNumber, operatingHours } =
     useStoreContext()
 
   const socials = [
@@ -81,6 +81,17 @@ export default function StoreFooter() {
             )}
           </div>
         </div>
+
+        {operatingHours && (
+          <div className="flex flex-col items-center gap-1 -mt-4 mb-2">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-dark-800/30 dark:text-white/20">
+              Business Hours
+            </span>
+            <p className="text-sm text-dark-800/60 dark:text-white/60 font-medium">
+              {operatingHours}
+            </p>
+          </div>
+        )}
 
         {/* Social & Contact Links */}
         {socials.length > 0 && (

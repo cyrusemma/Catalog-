@@ -24,6 +24,10 @@ export interface StoreContextValue {
   ownerId: string | null
   heroImages: string[]
   settings: Record<string, any>
+  minimumOrderAmount: number
+  maintenanceMode: boolean
+  maintenanceMessage: string | null
+  operatingHours: string | null
 }
 
 const defaultValue: StoreContextValue = {
@@ -39,6 +43,10 @@ const defaultValue: StoreContextValue = {
   ownerId: null,
   heroImages: [],
   settings: {},
+  minimumOrderAmount: 0,
+  maintenanceMode: false,
+  maintenanceMessage: null,
+  operatingHours: null,
 }
 
 export const StoreContext = createContext<StoreContextValue>(defaultValue)

@@ -77,6 +77,8 @@ export default function Cart() {
     : merchantStore
 
   const subtotal = useMemo(() => filteredItems.reduce((sum, i) => sum + effectivePrice(i.product) * i.quantity, 0), [filteredItems])
+  const minimumOrderAmount = storeContext.minimumOrderAmount || 0
+  const isBelowMinimum = minimumOrderAmount > 0 && subtotal < minimumOrderAmount
   // Per-product delivery: take the highest fee across all cart items (one delivery trip)
   const baseDeliveryFee = useMemo(() => filteredItems.reduce(
     (max, item) => Math.max(max, Number(item.product.delivery_fee) || 0),
@@ -381,8 +383,8 @@ export default function Cart() {
                   <button type="button" onClick={() => setIsCheckingOut(false)} className="btn-ghost flex-1">
                     Back to Cart
                   </button>
-                  <motion.button whileTap={{ scale: 0.95 }} type="submit" disabled={isSubmitting} className="btn-primary flex-1">
-                    {isSubmitting ? 'Recording...' : 'Complete Order'}
+                  <motion.button whileTap={{ scale: 0.95 }} type="submit" disabled={isSubmitting || isBelowMinimum} className="btn-primary flex-1">
+                    {isSubmitting ? 'Recording...' : isBelowMinimum ? 'Minimum not met' : 'Complete Order'}
                   </motion.button>
                 </div>
               </form>
@@ -490,9 +492,19 @@ export default function Cart() {
                 <p>Your cart contains items from multiple stores. Please check out from one store at a time to ensure correct order routing.</p>
               </div>
             )}
+            {!isMultiMerchantCart && isBelowMinimum && (
+              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-2xl p-4 mb-4 text-xs text-amber-700 dark:text-amber-400">
+                <p className="font-bold mb-1">Minimum Order Amount Not Met</p>
+                <p>This store requires a minimum order of {formatPrice(minimumOrderAmount)}. Please add more items to proceed.</p>
+              </div>
+            )}
             {isMultiMerchantCart ? (
               <button disabled className="btn-primary w-full justify-center py-4 text-base opacity-50 cursor-not-allowed">
                 Checkout Blocked
+              </button>
+            ) : isBelowMinimum ? (
+              <button disabled className="btn-primary w-full justify-center py-4 text-base opacity-50 cursor-not-allowed">
+                Minimum order not met
               </button>
             ) : isCheckingOut ? (
               <button disabled className="btn-primary w-full justify-center py-4 text-base opacity-50 cursor-not-allowed">
