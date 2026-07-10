@@ -47,6 +47,7 @@ export function useProducts(
     categoryIds?: string[]
     search?: string
     featured?: boolean
+    storeId?: string
   },
   options?: { enabled?: boolean }
 ) {
@@ -58,8 +59,13 @@ export function useProducts(
         .from('products')
         .select('*, store:stores(markup_percentage)')
         .eq('is_published', true)
-        .or('store_id.is.null,is_approved_for_marketplace.eq.true')
         .order('created_at', { ascending: false })
+
+      if (filters?.storeId) {
+        query = query.eq('store_id', filters.storeId)
+      } else {
+        query = query.or('store_id.is.null,is_approved_for_marketplace.eq.true')
+      }
 
       if (filters?.categoryIds && filters.categoryIds.length > 0) {
         query = query.in('category_id', filters.categoryIds)
@@ -88,6 +94,7 @@ export function useInfiniteProducts(
     categoryIds?: string[]
     search?: string
     featured?: boolean
+    storeId?: string
   },
   options?: { enabled?: boolean },
   pageSize = 10
@@ -99,9 +106,14 @@ export function useInfiniteProducts(
         .from('products')
         .select('*, store:stores(markup_percentage)')
         .eq('is_published', true)
-        .or('store_id.is.null,is_approved_for_marketplace.eq.true')
         .order('created_at', { ascending: false })
         .range(pageParam, pageParam + pageSize - 1)
+
+      if (filters?.storeId) {
+        q = q.eq('store_id', filters.storeId)
+      } else {
+        q = q.or('store_id.is.null,is_approved_for_marketplace.eq.true')
+      }
 
       if (filters?.categoryIds && filters.categoryIds.length > 0) {
         q = q.in('category_id', filters.categoryIds)

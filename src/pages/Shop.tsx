@@ -24,6 +24,7 @@ import {
   expandCategoryIds,
 } from '../hooks/useProducts'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useStoreContext } from '../contexts/StoreContext'
 
 import type { Product } from '../types'
 
@@ -129,10 +130,13 @@ export default function Shop() {
     (filters.preorderOnly ? 1 : 0) +
     (filters.excludePreorders ? 1 : 0)
 
+  const storeContext = useStoreContext()
+  const storeId = storeContext.storeId
+
   const isMainShopView = !activeParent && !query && activeFilterCount === 0
 
   const { data: allProducts, isLoading: isLoadingAll, isError: allProductsIsError, error: allProductsError } = useProducts(
-    { categoryIds: undefined, search: undefined },
+    { categoryIds: undefined, search: undefined, storeId: storeId ?? undefined },
     { enabled: isMainShopView }
   )
 
@@ -144,7 +148,7 @@ export default function Shop() {
     fetchNextPage,
     hasNextPage
   } = useInfiniteProducts(
-    { categoryIds, search: query || undefined },
+    { categoryIds, search: query || undefined, storeId: storeId ?? undefined },
     { enabled: !isMainShopView },
     PRODUCT_CHUNK_SIZE
   )

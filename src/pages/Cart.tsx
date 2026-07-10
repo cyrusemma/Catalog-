@@ -243,7 +243,7 @@ export default function Cart() {
           </Link>
         </motion.div>
         
-        <RecommendedProducts />
+        <RecommendedProducts storeId={currentStoreId} />
       </main>
     )
   }
@@ -515,8 +515,11 @@ export default function Cart() {
   )
 }
 
-function RecommendedProducts() {
-  const { data: featuredProducts, isLoading } = useProducts({ featured: true })
+function RecommendedProducts({ storeId }: { storeId?: string | null }) {
+  const { data: featuredProducts, isLoading } = useProducts({
+    featured: true,
+    storeId: storeId ?? undefined
+  })
 
   if (isLoading || !featuredProducts || featuredProducts.length === 0) {
     return null

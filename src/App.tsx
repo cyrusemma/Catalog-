@@ -34,6 +34,7 @@ import PWAInstallPrompt from './components/ui/PWAInstallPrompt'
 import AppReviewPrompt, { trackSession } from './components/ui/AppReviewPrompt'
 import NewArrivalsListener from './components/ui/NewArrivalsListener'
 import CartSync from './components/ui/CartSync'
+import WishlistSync from './components/ui/WishlistSync'
 import { useSignInStore } from './store/signInStore'
 
 const Home = lazy(() => import('./pages/Home'))
@@ -480,6 +481,7 @@ export default function App() {
       <BrowserRouter>
         <NewArrivalsListener />
         <CartSync />
+        <WishlistSync />
         <ScrollToTopButton />
         <Suspense
           fallback={<ShopLoader />}

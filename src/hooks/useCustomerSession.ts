@@ -10,6 +10,7 @@ export interface CustomerProfile {
   avatar_url: string | null
   notify_new_arrivals: boolean
   cart: any[]
+  wishlist?: any[]
   created_at: string
 }
 
@@ -28,6 +29,7 @@ function deriveProfileFromUser(user: User): CustomerProfile {
     avatar_url: typeof user.user_metadata?.avatar_url === 'string' ? user.user_metadata.avatar_url : null,
     notify_new_arrivals: false,
     cart: [],
+    wishlist: [],
     created_at: new Date().toISOString(),
   }
 }
@@ -59,6 +61,7 @@ function normalizeProfileRow(row: any, fallback: CustomerProfile): CustomerProfi
         : fallback.avatar_url,
     notify_new_arrivals: typeof row?.notify_new_arrivals === 'boolean' ? row.notify_new_arrivals : false,
     cart: Array.isArray(row?.cart) ? row.cart : [],
+    wishlist: Array.isArray(row?.wishlist) ? row.wishlist : [],
     created_at: typeof row?.created_at === 'string' ? row.created_at : fallback.created_at,
   }
 }
@@ -72,6 +75,7 @@ async function fetchProfileWithFallback(user: User): Promise<CustomerProfile> {
   const fallback = deriveProfileFromUser(user)
 
   const projections = [
+    'id, email, display_name, avatar_url, notify_new_arrivals, cart, wishlist, created_at',
     'id, email, display_name, avatar_url, notify_new_arrivals, cart, created_at',
     'id, email, display_name, avatar_url, created_at',
     'id, email, display_name, avatar_url',

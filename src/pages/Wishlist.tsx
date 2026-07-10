@@ -90,7 +90,7 @@ export default function Wishlist() {
           >
             Browse products <ArrowRight size={16} weight="bold" />
           </Link>
-          <RecommendedProducts />
+          <RecommendedProducts storeId={currentStoreId} />
         </motion.div>
       ) : (
         <motion.div
@@ -117,8 +117,11 @@ export default function Wishlist() {
   )
 }
 
-function RecommendedProducts() {
-  const { data: featuredProducts, isLoading } = useProducts({ featured: true })
+function RecommendedProducts({ storeId }: { storeId?: string | null }) {
+  const { data: featuredProducts, isLoading } = useProducts({
+    featured: true,
+    storeId: storeId ?? undefined
+  })
 
   if (isLoading || !featuredProducts || featuredProducts.length === 0) {
     return null

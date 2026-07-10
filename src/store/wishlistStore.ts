@@ -7,6 +7,7 @@ interface WishlistStore {
   items: Product[]
   toggle: (product: Product) => void
   remove: (productId: string) => void
+  setItems: (items: Product[]) => void
   clear: () => void
   has: (productId: string) => boolean
   count: () => number
@@ -30,6 +31,7 @@ export const useWishlistStore = create<WishlistStore>()(
         }
       },
       remove: (productId) => set({ items: get().items.filter(p => p.id !== productId) }),
+      setItems: (items) => set({ items }),
       clear: () => set({ items: [] }),
       has: (productId) => get().items.some(p => p.id === productId),
       count: () => get().items.length,
