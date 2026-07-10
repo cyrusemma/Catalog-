@@ -585,6 +585,7 @@ export default function AdminApprovals() {
                 setIsStoreModalOpen(false)
                 setEditingStore(null)
               }}
+              title="Close"
               className="absolute right-4 top-4 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all animate-spin-once"
             >
               <X size={18} />

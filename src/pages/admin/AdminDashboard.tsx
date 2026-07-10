@@ -489,7 +489,7 @@ export default function AdminDashboard() {
                         </div>
                         <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div 
-                            style={{ width: `${pct}%` }}
+                            ref={el => { if (el) el.style.width = `${pct}%` }}
                             className="h-full bg-brand-400 transition-all duration-500" 
                           />
                         </div>
