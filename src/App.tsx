@@ -398,7 +398,7 @@ function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
                   </div>
                 ) : (
                   <div className="w-20 h-20 rounded-3xl bg-brand-400/10 border border-brand-400/20 flex items-center justify-center text-brand-400">
-                    <Store size={38} weight="duotone" />
+                    <Store size={38} />
                   </div>
                 )}
               </div>
@@ -456,8 +456,6 @@ function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
       </StoreContext.Provider>
     )
   }
-
-  const location = useLocation()
 
   return (
     <StoreContext.Provider value={ctxValue}>
