@@ -409,7 +409,9 @@ export default function Cart() {
                 <div>
                   <label className="block text-dark-800/60 dark:text-white/60 text-sm font-medium mb-1">Full Name</label>
                   <input
+                    name="name"
                     type="text"
+                    autoComplete="name"
                     required
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
@@ -432,7 +434,9 @@ export default function Cart() {
                     )}
                   </div>
                   <input
+                    name="tel"
                     type="tel"
+                    autoComplete="tel"
                     required
                     value={customerPhone}
                     onChange={e => setCustomerPhone(formatPhoneNumber(e.target.value))}
@@ -502,6 +506,8 @@ export default function Cart() {
                 <div>
                   <label className="block text-dark-800/60 dark:text-white/60 text-sm font-medium mb-1">Delivery Address</label>
                   <textarea
+                    name="street-address"
+                    autoComplete="street-address"
                     rows={3}
                     value={customerAddress}
                     onChange={e => setCustomerAddress(e.target.value)}

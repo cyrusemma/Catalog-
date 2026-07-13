@@ -308,6 +308,72 @@ export default function SignInModal({ open, onClose, reason }: Props) {
                         </button>
                       </div>
 
+                      {mode === 'signup' && password.length > 0 && (
+                        <div className="space-y-3 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                          {/* Strength Bar */}
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-white/50 font-bold uppercase tracking-wider">Strength:</span>
+                            <div className="flex-1 flex gap-1 h-1.5">
+                              {[1, 2, 3, 4, 5].map(step => {
+                                const score = getPasswordStrength(password)
+                                const active = step <= score
+                                let bgClass = 'bg-white/10'
+                                if (active) {
+                                  bgClass = score <= 2 ? 'bg-red-500' : score <= 4 ? 'bg-amber-500' : 'bg-emerald-500'
+                                }
+                                return (
+                                  <div
+                                    key={step}
+                                    className={`flex-1 h-full rounded-full transition-colors duration-300 ${bgClass}`}
+                                  />
+                                )
+                              })}
+                            </div>
+                            <span className={`text-[10px] font-extrabold uppercase tracking-wider ${
+                              getPasswordStrength(password) <= 2 ? 'text-red-400' : getPasswordStrength(password) <= 4 ? 'text-amber-400' : 'text-emerald-400'
+                            }`}>
+                              {getPasswordStrength(password) <= 2 ? 'Weak' : getPasswordStrength(password) <= 4 ? 'Medium' : 'Strong!'}
+                            </span>
+                          </div>
+
+                          {/* Requirements Checklist */}
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 bg-white/5 rounded-2xl p-3 border border-white/5 text-[11px] text-left">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border transition-all ${
+                                password.length >= 6 ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'border-white/20 text-white/40'
+                              }`}>
+                                <span className="text-[8px] font-bold">✓</span>
+                              </div>
+                              <span className={password.length >= 6 ? 'text-emerald-400 font-semibold' : 'text-white/55'}>Min 6 characters</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border transition-all ${
+                                /[A-Z]/.test(password) ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'border-white/20 text-white/40'
+                              }`}>
+                                <span className="text-[8px] font-bold">✓</span>
+                              </div>
+                              <span className={/[A-Z]/.test(password) ? 'text-emerald-400 font-semibold' : 'text-white/55'}>1 Uppercase letter</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border transition-all ${
+                                /[0-9]/.test(password) ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'border-white/20 text-white/40'
+                              }`}>
+                                <span className="text-[8px] font-bold">✓</span>
+                              </div>
+                              <span className={/[0-9]/.test(password) ? 'text-emerald-400 font-semibold' : 'text-white/55'}>1 Number (0-9)</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border transition-all ${
+                                /[^a-zA-Z0-9]/.test(password) ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'border-white/20 text-white/40'
+                              }`}>
+                                <span className="text-[8px] font-bold">✓</span>
+                              </div>
+                              <span className={/[^a-zA-Z0-9]/.test(password) ? 'text-emerald-400 font-semibold' : 'text-white/55'}>1 Special symbol</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {error && <p className="text-red-300 text-xs">{error}</p>}
 
                       <button
@@ -396,4 +462,15 @@ function humanizeAuthError(raw: string): string {
   if (m.includes('rate limit')) return "Too many tries. Wait a minute and try again."
   if (m.includes('signups not allowed')) return 'New signups are disabled by the admin.'
   return raw
+}
+
+function getPasswordStrength(p: string): number {
+  let score = 0
+  if (!p) return 0
+  if (p.length >= 6) score += 1
+  if (p.length >= 8) score += 1
+  if (/[A-Z]/.test(p)) score += 1
+  if (/[0-9]/.test(p)) score += 1
+  if (/[^a-zA-Z0-9]/.test(p)) score += 1
+  return score
 }
