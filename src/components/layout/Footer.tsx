@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Storefront,
@@ -9,6 +10,7 @@ import {
   Phone,
 } from '@phosphor-icons/react'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
+import { supabase } from '../../lib/supabase'
 
 function socialUrl(value: string, base: string): string {
   const v = value.trim()
@@ -20,6 +22,24 @@ function socialUrl(value: string, base: string): string {
 
 export default function Footer() {
   const settings = useStoreSettings()
+  const [visitorCount, setVisitorCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!settings.show_visitor_count) return
+
+    async function fetchVisitorCount() {
+      try {
+        const { data, error } = await supabase.rpc('get_visitor_count')
+        if (!error && typeof data === 'number') {
+          setVisitorCount(data)
+        }
+      } catch (err) {
+        console.error('Error fetching visitor count:', err)
+      }
+    }
+
+    fetchVisitorCount()
+  }, [settings.show_visitor_count])
 
   const contactLinks = [
     settings.whatsapp_number && {
@@ -125,6 +145,16 @@ export default function Footer() {
           </div>
           
         </div>
+
+        {settings.show_visitor_count && visitorCount !== null && (
+          <div className="mb-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-400/10 border border-brand-400/25 text-[10px] font-extrabold uppercase tracking-wider text-brand-400 shadow-md">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-400"></span>
+            </span>
+            <span>{visitorCount.toLocaleString()} Site Visits</span>
+          </div>
+        )}
 
         {/* Copyright */}
         <div className="flex flex-col sm:flex-row items-center justify-between w-full max-w-md border-t border-brand-400/10 pt-6 text-xs text-dark-800/40 dark:text-white/30 gap-4">

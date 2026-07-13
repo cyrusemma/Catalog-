@@ -566,6 +566,32 @@ export default function App() {
     }
   }, [])
 
+  // Anonymous visit tracking hook
+  useEffect(() => {
+    const logVisit = async () => {
+      try {
+        const isLogged = sessionStorage.getItem('logged_visit')
+        if (isLogged) return
+
+        let sessionId = sessionStorage.getItem('tab_session_id')
+        if (!sessionId) {
+          sessionId = crypto.randomUUID()
+          sessionStorage.setItem('tab_session_id', sessionId)
+        }
+
+        const { error } = await supabase.from('visits').insert({
+          session_id: sessionId
+        })
+        if (!error) {
+          sessionStorage.setItem('logged_visit', 'true')
+        }
+      } catch (err) {
+        console.error('Error logging visit:', err)
+      }
+    }
+    logVisit()
+  }, [])
+
   // Offline orders sync listener
   useEffect(() => {
     syncOfflineOrders()
