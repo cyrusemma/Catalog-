@@ -6,6 +6,7 @@ export interface AdminContextData {
   storeId: string | null
   approvalStatus: string | null
   adminWhatsapp: string
+  currency: string
 }
 
 export function useAdminContext() {
@@ -17,16 +18,18 @@ export function useAdminContext() {
       const isAdmin = user?.app_metadata?.role === 'admin'
       let storeId: string | null = null
       let approvalStatus: string | null = null
+      let storeCurrency: string | null = null
 
       if (user && !isAdmin) {
         const { data: store } = await supabase
           .from('stores')
-          .select('id, approval_status')
+          .select('id, approval_status, currency')
           .eq('owner_id', user.id)
           .maybeSingle()
         if (store) {
           storeId = store.id
           approvalStatus = store.approval_status
+          storeCurrency = store.currency
         }
       }
 
@@ -41,7 +44,7 @@ export function useAdminContext() {
         // Fallback if settings table is empty or error occurs
       }
 
-      return { isAdmin, storeId, approvalStatus, adminWhatsapp }
+      return { isAdmin, storeId, approvalStatus, adminWhatsapp, currency: storeCurrency || 'GHS' }
     },
     staleTime: 1000 * 60 * 15, // Cache the admin/store context lookup for 15 minutes
   })

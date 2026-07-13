@@ -74,7 +74,8 @@ export function buildCartWhatsAppMessage(
   subtotal: number,
   deliveryFee = 0,
   currency = 'GHS',
-  template?: string | null
+  template?: string | null,
+  discountAmount = 0
 ): string {
   const sym = getCurrencySymbol(currency)
   const lines = items.map(i => {
@@ -84,9 +85,11 @@ export function buildCartWhatsAppMessage(
     }
     return line
   }).join('\n\n')
-  const total = subtotal + deliveryFee
+  const total = Math.max(0, subtotal + deliveryFee - discountAmount)
   const summary =
-    deliveryFee > 0
+    discountAmount > 0
+      ? `Subtotal: ${sym} ${subtotal.toFixed(2)}\nDiscount: -${sym} ${discountAmount.toFixed(2)}\nDelivery: ${sym} ${deliveryFee.toFixed(2)}\n*Total: ${sym} ${total.toFixed(2)}*`
+      : deliveryFee > 0
       ? `Subtotal: ${sym} ${subtotal.toFixed(2)}\nDelivery: ${sym} ${deliveryFee.toFixed(2)}\n*Total: ${sym} ${total.toFixed(2)}*`
       : `*Total: ${sym} ${total.toFixed(2)}*`
 
@@ -96,6 +99,7 @@ export function buildCartWhatsAppMessage(
     return template
       .replace(/\{items\}/g, lines)
       .replace(/\{subtotal\}/g, `${sym} ${subtotal.toFixed(2)}`)
+      .replace(/\{discount\}/g, discountAmount > 0 ? `-${sym} ${discountAmount.toFixed(2)}` : 'None')
       .replace(/\{delivery\}/g, deliveryFee > 0 ? `${sym} ${deliveryFee.toFixed(2)}` : 'Free')
       .replace(/\{total\}/g, `${sym} ${total.toFixed(2)}`)
       .replace(/\{currency\}/g, currency)

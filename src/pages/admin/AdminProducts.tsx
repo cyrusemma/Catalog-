@@ -280,7 +280,7 @@ export default function AdminProducts() {
                               </button>
                             </div>
                           ) : (
-                            <p className="text-gray-400 text-xs truncate">{formatPrice(product.selling_price)} · {product.category} · Stock: {product.stock}</p>
+                            <p className="text-gray-400 text-xs truncate">{formatPrice(product.selling_price, context?.currency)} · {product.category} · Stock: {product.stock}</p>
                           )}
                         </div>
                       </div>

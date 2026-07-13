@@ -193,7 +193,7 @@ export default function AdminOrders() {
                   <TrendUp size={16} weight="bold" />
                 </span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatPrice(totalRevenue)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatPrice(totalRevenue, context?.currency)}</p>
               <p className="text-[10px] text-gray-400 mt-1">Excludes cancelled orders</p>
             </div>
 
@@ -344,10 +344,10 @@ export default function AdminOrders() {
                           <img src={item.product_image || 'https://placehold.co/100x100/f3f4f6/9ca3af?text=?'} alt="" className="w-12 h-12 rounded-xl object-cover bg-white flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-gray-900 text-sm font-semibold truncate">{item.product_title}</p>
-                            <p className="text-brand-400 text-xs font-bold mt-0.5">{formatPrice(item.price)} <span className="text-gray-400 font-medium ml-1">x {item.quantity}</span></p>
+                            <p className="text-brand-400 text-xs font-bold mt-0.5">{formatPrice(item.price, context?.currency)} <span className="text-gray-400 font-medium ml-1">x {item.quantity}</span></p>
                           </div>
                           <div className="text-right pl-2">
-                            <span className="text-gray-900 text-sm font-bold">{formatPrice(item.price * item.quantity)}</span>
+                            <span className="text-gray-900 text-sm font-bold">{formatPrice(item.price * item.quantity, context?.currency)}</span>
                           </div>
                         </div>
                       ))}
@@ -396,21 +396,21 @@ export default function AdminOrders() {
                       <div className="space-y-2.5 mb-4 text-sm">
                         <div className="flex justify-between text-gray-600 font-medium">
                           <span>Subtotal</span>
-                          <span>{formatPrice(order.subtotal)}</span>
+                          <span>{formatPrice(order.subtotal, context?.currency)}</span>
                         </div>
                         <div className="flex justify-between text-gray-600 font-medium">
                           <span>Delivery Fee</span>
-                          <span>{formatPrice(order.delivery_fee)}</span>
+                          <span>{formatPrice(order.delivery_fee, context?.currency)}</span>
                         </div>
                         {order.discount_amount > 0 && (
                           <div className="flex justify-between text-green-500 font-medium">
                             <span>Discount</span>
-                            <span>-{formatPrice(order.discount_amount)}</span>
+                            <span>-{formatPrice(order.discount_amount, context?.currency)}</span>
                           </div>
                         )}
                         <div className="pt-2.5 mt-2.5 border-t border-gray-100 flex justify-between items-center">
                           <span className="font-bold text-gray-900">Total</span>
-                          <span className="text-lg font-bold text-brand-400">{formatPrice(order.total)}</span>
+                          <span className="text-lg font-bold text-brand-400">{formatPrice(order.total, context?.currency)}</span>
                         </div>
                       </div>
 

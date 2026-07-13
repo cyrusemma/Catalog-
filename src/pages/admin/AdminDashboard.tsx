@@ -195,7 +195,7 @@ export default function AdminDashboard() {
     { label: 'Orders', value: stats?.ordersCount ?? '—', icon: ShoppingBag, color: 'bg-blue-500' },
     ...(context?.isAdmin ? [
       { label: 'Reviews', value: stats?.reviewsCount ?? '—', icon: MessageSquareQuote, color: 'bg-emerald-500' },
-      { label: 'Revenue', value: stats ? formatPrice(stats.revenue) : '—', icon: TrendingUp, color: 'bg-purple-500' },
+      { label: 'Revenue', value: stats ? formatPrice(stats.revenue, context?.currency) : '—', icon: TrendingUp, color: 'bg-purple-500' },
       {
         label: 'Visits',
         value: stats ? `${stats.visitsCount.toLocaleString()} · ${stats.uniqueVisitors.toLocaleString()} unique` : '—',
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
         color: 'bg-amber-500',
       },
     ] : [
-      { label: 'Revenue', value: stats ? formatPrice(stats.revenue) : '—', icon: TrendingUp, color: 'bg-purple-500' }
+      { label: 'Revenue', value: stats ? formatPrice(stats.revenue, context?.currency) : '—', icon: TrendingUp, color: 'bg-purple-500' }
     ]),
   ]
 
@@ -485,7 +485,7 @@ export default function AdminDashboard() {
                             <p className="text-sm font-semibold text-gray-900 truncate">{p.title}</p>
                             <p className="text-xs text-gray-400 mt-0.5">{p.count} sold</p>
                           </div>
-                          <p className="text-sm font-bold text-gray-900">{formatPrice(p.revenue)}</p>
+                          <p className="text-sm font-bold text-gray-900">{formatPrice(p.revenue, context?.currency)}</p>
                         </div>
                         <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div 
@@ -526,7 +526,7 @@ export default function AdminDashboard() {
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-gray-900 text-sm font-medium truncate">{product.title}</p>
-                  <p className="text-gray-400 text-xs">{formatPrice(product.selling_price)}</p>
+                  <p className="text-gray-400 text-xs">{formatPrice(product.selling_price, context?.currency)}</p>
                 </div>
                 <span
                   className={`text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${

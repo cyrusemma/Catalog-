@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Trash, Plus, Minus, ShoppingBag } from '@phosphor-icons/react'
+import { ArrowLeft, Trash, Plus, Minus, ShoppingBag, CheckCircle } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { useCartStore } from '../store/cartStore'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useCustomerSession } from '../hooks/useCustomerSession'
@@ -97,7 +98,134 @@ export default function Cart() {
     return baseDeliveryFee
   }, [deliveryMethod, baseDeliveryFee])
 
-  const grandTotal = subtotal + deliveryFee
+  // Fetch active store discounts
+  const { data: discounts } = useQuery({
+    queryKey: ['store-discounts', currentStoreId],
+    queryFn: async () => {
+      if (!currentStoreId) return []
+      const { data, error } = await supabase
+        .from('discounts')
+        .select('*')
+        .eq('store_id', currentStoreId)
+        .eq('active', true)
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!currentStoreId,
+  })
+
+  const [promoCodeInput, setPromoCodeInput] = useState('')
+  const [appliedPromoCodeRule, setAppliedPromoCodeRule] = useState<any>(null)
+  const [promoCodeError, setPromoCodeError] = useState('')
+
+  // 1. Calculate Auto-Applied Discounts
+  const autoDiscountAmount = useMemo(() => {
+    if (!discounts || discounts.length === 0) return 0
+    let totalAutoDiscount = 0
+
+    // Auto rules have no promo code
+    const autoRules = discounts.filter(d => !d.code)
+
+    for (const item of filteredItems) {
+      const itemPrice = effectivePrice(item.product)
+      
+      const matchingRules = autoRules.filter(d => {
+        if (d.min_order_amount > 0 && subtotal < d.min_order_amount) return false
+        if (d.type === 'product' && d.target_id === item.product.id) return true
+        if (d.type === 'category' && d.target_id && item.product.category && d.target_id.toLowerCase() === item.product.category.toLowerCase()) return true
+        if (d.type === 'storewide') return true
+        return false
+      })
+
+      if (matchingRules.length > 0) {
+        let bestItemDiscount = 0
+        for (const rule of matchingRules) {
+          let itemDiscount = 0
+          if (rule.discount_type === 'percentage') {
+            itemDiscount = itemPrice * (Number(rule.value) / 100) * item.quantity
+          } else {
+            if (rule.type === 'storewide') {
+              itemDiscount = Number(rule.value) / filteredItems.length
+            } else {
+              itemDiscount = Number(rule.value) * item.quantity
+            }
+          }
+          bestItemDiscount = Math.max(bestItemDiscount, itemDiscount)
+        }
+        totalAutoDiscount += bestItemDiscount
+      }
+    }
+
+    return Math.min(totalAutoDiscount, subtotal)
+  }, [discounts, filteredItems, subtotal])
+
+  // 2. Calculate Promo Code Discount
+  const promoDiscountAmount = useMemo(() => {
+    if (!appliedPromoCodeRule) return 0
+    const rule = appliedPromoCodeRule
+    if (rule.min_order_amount > 0 && subtotal < rule.min_order_amount) return 0
+
+    let discount = 0
+    if (rule.type === 'storewide') {
+      if (rule.discount_type === 'percentage') {
+        discount = subtotal * (Number(rule.value) / 100)
+      } else {
+        discount = Number(rule.value)
+      }
+    } else {
+      for (const item of filteredItems) {
+        const matches = 
+          (rule.type === 'product' && rule.target_id === item.product.id) ||
+          (rule.type === 'category' && rule.target_id && item.product.category && rule.target_id.toLowerCase() === item.product.category.toLowerCase())
+
+        if (matches) {
+          const itemPrice = effectivePrice(item.product)
+          if (rule.discount_type === 'percentage') {
+            discount += itemPrice * (Number(rule.value) / 100) * item.quantity
+          } else {
+            discount += Number(rule.value) * item.quantity
+          }
+        }
+      }
+    }
+
+    return Math.min(discount, subtotal)
+  }, [appliedPromoCodeRule, filteredItems, subtotal])
+
+  const discountAmount = useMemo(() => {
+    return Math.min(autoDiscountAmount + promoDiscountAmount, subtotal)
+  }, [autoDiscountAmount, promoDiscountAmount, subtotal])
+
+  const grandTotal = Math.max(0, subtotal + deliveryFee - discountAmount)
+
+  const handleApplyPromoCode = () => {
+    setPromoCodeError('')
+    if (!promoCodeInput.trim()) return
+
+    if (!discounts || discounts.length === 0) {
+      setPromoCodeError('Invalid promo code')
+      return
+    }
+
+    const rule = discounts.find(
+      d => d.code && d.code.toLowerCase() === promoCodeInput.trim().toLowerCase()
+    )
+
+    if (!rule) {
+      setPromoCodeError('Invalid promo code')
+      setAppliedPromoCodeRule(null)
+      return
+    }
+
+    if (rule.min_order_amount > 0 && subtotal < rule.min_order_amount) {
+      setPromoCodeError(`Min. order of ${formatPrice(rule.min_order_amount)} required`)
+      setAppliedPromoCodeRule(null)
+      return
+    }
+
+    setAppliedPromoCodeRule(rule)
+    toast.success(`Promo code "${rule.code}" applied!`)
+  }
 
   const [isCheckingOut, setIsCheckingOut] = useState(false)
   const [customerName, setCustomerName] = useState('')
@@ -145,6 +273,7 @@ export default function Cart() {
       })),
       subtotal,
       delivery_fee: deliveryFee,
+      discount_amount: discountAmount,
       total: grandTotal,
       currency: settings.currency || 'GHS',
       payment_method: 'whatsapp',
@@ -199,7 +328,8 @@ export default function Cart() {
       subtotal,
       deliveryFee,
       targetCurrency,
-      targetTemplate
+      targetTemplate,
+      discountAmount
     )
     
     const finalMessage = `*Order ID: #${orderIdShort}*\n\n${baseMessage}\n\n*Delivery Method:* ${selectedOptionText}\n*Delivery Address:* ${customerAddress}`
@@ -470,11 +600,65 @@ export default function Cart() {
                 </div>
               ))}
             </div>
+            {/* Promo Code Input */}
+            {currentStoreId && !isMultiMerchantCart && (
+              <div className="mb-4 pt-3 border-t border-cream-200/40 dark:border-white/5">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/30 mb-1.5">
+                  Have a Promo Code?
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter code"
+                    value={promoCodeInput}
+                    onChange={e => setPromoCodeInput(e.target.value.toUpperCase())}
+                    className="input py-2 text-xs flex-1 uppercase font-mono border-cream-200 dark:border-white/10"
+                    disabled={!!appliedPromoCodeRule}
+                  />
+                  {appliedPromoCodeRule ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAppliedPromoCodeRule(null)
+                        setPromoCodeInput('')
+                      }}
+                      className="btn-ghost py-2 px-3 text-xs border border-red-200 dark:border-red-900/30 text-red-500 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20"
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleApplyPromoCode}
+                      className="btn-primary py-2 px-4 text-xs font-bold rounded-xl cursor-pointer"
+                    >
+                      Apply
+                    </button>
+                  )}
+                </div>
+                {promoCodeError && (
+                  <p className="text-red-500 text-[10px] mt-1 font-medium">{promoCodeError}</p>
+                )}
+                {appliedPromoCodeRule && (
+                  <p className="text-green-600 dark:text-green-400 text-[10px] mt-1 font-medium flex items-center gap-1">
+                    <CheckCircle size={12} weight="fill" />
+                    Code "{appliedPromoCodeRule.code}" applied!
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="border-t border-cream-200 dark:border-white/10 pt-4 mb-5 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-dark-800/70 dark:text-white/60">Subtotal</span>
                 <span className="text-dark-800 dark:text-white font-medium">{formatPrice(subtotal)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-sm text-green-600 dark:text-green-400 font-medium">
+                  <span>Discount</span>
+                  <span>-{formatPrice(discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-dark-800/70 dark:text-white/60">Delivery</span>
                 <span className="text-dark-800 dark:text-white font-medium">
