@@ -108,7 +108,17 @@ export default function Footer() {
             <Link to="/" className="hover:text-brand-400 transition-colors">Home</Link>
             <Link to="/shop" className="hover:text-brand-400 transition-colors">Shop</Link>
             <Link to="/cart" className="hover:text-brand-400 transition-colors">Cart</Link>
-            <Link to="/sell" className="hover:text-brand-400 transition-colors">Sell with us</Link>
+            <Link
+              to="/sell"
+              className="relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-400 text-white font-extrabold text-xs shadow-md shadow-brand-400/25 hover:bg-brand-500 transition-all hover:scale-105"
+            >
+              <Storefront size={12} weight="bold" />
+              Sell with us
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+              </span>
+            </Link>
             <Link to="/settings" className="hover:text-brand-400 transition-colors">Contact & Settings</Link>
           </div>
 
