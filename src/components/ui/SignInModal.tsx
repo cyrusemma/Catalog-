@@ -24,7 +24,7 @@ type Tab = 'password' | 'magic'
  */
 export default function SignInModal({ open, onClose, reason }: Props) {
   const [tab, setTab] = useState<Tab>('password')
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -144,6 +144,32 @@ export default function SignInModal({ open, onClose, reason }: Props) {
     })
   }
 
+  const submitForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const cleanedEmail = email.trim().toLowerCase()
+    if (!cleanedEmail || !cleanedEmail.includes('@')) {
+      setError('Please enter a valid email address.')
+      return
+    }
+    setWorking(true)
+    setError('')
+
+    const resetUrl = `${window.location.origin}/reset-password`
+    const { error } = await supabase.auth.resetPasswordForEmail(cleanedEmail, {
+      redirectTo: resetUrl,
+    })
+    setWorking(false)
+    if (error) {
+      setError(humanizeAuthError(error.message))
+      return
+    }
+    setNotice({
+      kind: 'info',
+      title: 'Reset link sent',
+      body: `We sent a password reset link to ${cleanedEmail}. Click it to choose a new password.`,
+    })
+  }
+
   return (
     <AnimatePresence>
       {open && (
@@ -208,50 +234,89 @@ export default function SignInModal({ open, onClose, reason }: Props) {
                 </div>
               ) : (
                 <>
-                  <button
-                    type="button"
-                    onClick={signInWithGoogle}
-                    className="mt-6 w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-white text-dark-900 font-semibold py-3 hover:bg-white/90 transition-colors"
-                  >
-                    <GoogleLogo size={18} weight="bold" />
-                    Continue with Google
-                  </button>
+                  {mode !== 'forgot' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={signInWithGoogle}
+                        className="mt-6 w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-white text-dark-900 font-semibold py-3 hover:bg-white/90 transition-colors"
+                      >
+                        <GoogleLogo size={18} weight="bold" />
+                        Continue with Google
+                      </button>
 
-                  <div className="flex items-center gap-3 my-5 text-white/35 text-xs uppercase tracking-[0.24em]">
-                    <span className="flex-1 h-px bg-white/10" />
-                    or with email
-                    <span className="flex-1 h-px bg-white/10" />
-                  </div>
+                      <div className="flex items-center gap-3 my-5 text-white/35 text-xs uppercase tracking-[0.24em]">
+                        <span className="flex-1 h-px bg-white/10" />
+                        or with email
+                        <span className="flex-1 h-px bg-white/10" />
+                      </div>
 
-                  {/* Tab switcher — password is the default since the user
-                      explicitly asked for it; magic link is the lightweight
-                      backup for people who don't want to remember one. */}
-                  <div className="grid grid-cols-2 gap-1 p-1 bg-white/5 rounded-2xl border border-white/10 mb-4">
-                    <button
-                      type="button"
-                      onClick={() => { setTab('password'); setError('') }}
-                      className={`text-xs font-semibold py-2 rounded-xl transition-colors ${
-                        tab === 'password'
-                          ? 'bg-brand-400 text-white shadow-sm'
-                          : 'text-white/55 hover:text-white'
-                      }`}
-                    >
-                      Password
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setTab('magic'); setError('') }}
-                      className={`text-xs font-semibold py-2 rounded-xl transition-colors ${
-                        tab === 'magic'
-                          ? 'bg-brand-400 text-white shadow-sm'
-                          : 'text-white/55 hover:text-white'
-                      }`}
-                    >
-                      Magic link
-                    </button>
-                  </div>
+                      {/* Tab switcher — password is the default since the user
+                          explicitly asked for it; magic link is the lightweight
+                          backup for people who don't want to remember one. */}
+                      <div className="grid grid-cols-2 gap-1 p-1 bg-white/5 rounded-2xl border border-white/10 mb-4">
+                        <button
+                          type="button"
+                          onClick={() => { setTab('password'); setError('') }}
+                          className={`text-xs font-semibold py-2 rounded-xl transition-colors ${
+                            tab === 'password'
+                              ? 'bg-brand-400 text-white shadow-sm'
+                              : 'text-white/55 hover:text-white'
+                          }`}
+                        >
+                          Password
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setTab('magic'); setError('') }}
+                          className={`text-xs font-semibold py-2 rounded-xl transition-colors ${
+                            tab === 'magic'
+                              ? 'bg-brand-400 text-white shadow-sm'
+                              : 'text-white/55 hover:text-white'
+                          }`}
+                        >
+                          Magic link
+                        </button>
+                      </div>
+                    </>
+                  )}
 
-                  {tab === 'password' ? (
+                  {mode === 'forgot' ? (
+                    <form onSubmit={submitForgotPassword} className="space-y-4">
+                      <label className="block text-white/55 text-[10px] uppercase tracking-[0.24em] font-semibold">Email</label>
+                      <div className="flex items-center gap-2 rounded-2xl bg-white/10 border border-white/15 focus-within:border-brand-400/60 px-3 py-2.5">
+                        <EnvelopeSimple size={16} className="text-white/55" />
+                        <input
+                          name="email"
+                          type="email"
+                          value={email}
+                          onChange={e => setEmail(e.target.value)}
+                          placeholder="you@example.com"
+                          autoComplete="email"
+                          required
+                          className="flex-1 bg-transparent text-white placeholder-white/35 text-sm outline-none"
+                        />
+                      </div>
+                      {error && <p className="text-red-300 text-xs">{error}</p>}
+                      <button
+                        type="submit"
+                        disabled={working}
+                        className="w-full bg-brand-400 hover:bg-brand-500 disabled:opacity-60 text-white font-semibold py-3 rounded-2xl transition-colors"
+                      >
+                        {working ? 'Sending Link…' : 'Send Reset Link'}
+                      </button>
+                      <p className="text-center text-white/45 text-[11px]">
+                        Remembered your password?{' '}
+                        <button
+                          type="button"
+                          onClick={() => { setMode('signin'); setError('') }}
+                          className="text-brand-400 hover:text-brand-300 font-semibold"
+                        >
+                          Sign in
+                        </button>
+                      </p>
+                    </form>
+                  ) : tab === 'password' ? (
                     <form onSubmit={submitPassword} className="space-y-3">
                       <label className="block text-white/55 text-[10px] uppercase tracking-[0.24em] font-semibold">Email</label>
                       <div className="flex items-center gap-2 rounded-2xl bg-white/10 border border-white/15 focus-within:border-brand-400/60 px-3 py-2.5">
@@ -307,6 +372,18 @@ export default function SignInModal({ open, onClose, reason }: Props) {
                           {showPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
                         </button>
                       </div>
+
+                      {mode === 'signin' && (
+                        <div className="flex justify-end -mt-1 pb-1">
+                          <button
+                            type="button"
+                            onClick={() => { setMode('forgot'); setError('') }}
+                            className="text-xs text-brand-400 hover:text-brand-300 font-semibold"
+                          >
+                            Forgot password?
+                          </button>
+                        </div>
+                      )}
 
                       {mode === 'signup' && password.length > 0 && (
                         <div className="space-y-3 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
