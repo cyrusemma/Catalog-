@@ -18,6 +18,14 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
   const addItem = useCartStore(s => s.addItem)
   const [idx, setIdx] = useState(0)
   const [direction, setDirection] = useState(0) // -1 for prev, 1 for next
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Autoplay functionality
   useEffect(() => {
@@ -56,26 +64,31 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
     }
   }
 
-  // Animation variants
+  // Animation variants: Smoother, smaller shifts on desktop; pure crossfades (with tiny vertical slide) on mobile
   const slideVariants = {
     enter: (dir: number) => ({
-      x: dir > 0 ? 200 : -200,
+      x: isMobile ? 0 : (dir > 0 ? 50 : -50),
+      y: isMobile ? 8 : 0,
       opacity: 0,
     }),
     center: {
       x: 0,
+      y: 0,
       opacity: 1,
       transition: {
-        x: { type: 'spring' as const, stiffness: 300, damping: 30 },
-        opacity: { duration: 0.4 },
+        x: { type: 'spring' as const, stiffness: 180, damping: 20 },
+        y: { type: 'spring' as const, stiffness: 180, damping: 20 },
+        opacity: { duration: 0.35 },
       },
     },
     exit: (dir: number) => ({
-      x: dir > 0 ? -200 : 200,
+      x: isMobile ? 0 : (dir > 0 ? -50 : 50),
+      y: isMobile ? -8 : 0,
       opacity: 0,
       transition: {
-        x: { type: 'spring' as const, stiffness: 300, damping: 30 },
-        opacity: { duration: 0.4 },
+        x: { type: 'spring' as const, stiffness: 180, damping: 20 },
+        y: { type: 'spring' as const, stiffness: 180, damping: 20 },
+        opacity: { duration: 0.35 },
       },
     }),
   }
@@ -85,18 +98,18 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.1,
+        staggerChildren: 0.05,
+        delayChildren: 0.05,
       },
     },
   }
 
   const textItemVariants = {
-    hidden: { opacity: 0, y: 15 },
+    hidden: { opacity: 0, y: isMobile ? 4 : 10 },
     show: { 
       opacity: 1, 
       y: 0, 
-      transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } 
+      transition: { duration: 0.4, ease: 'easeOut' as const } 
     },
   }
 
@@ -107,10 +120,10 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
         <AnimatePresence mode="popLayout">
           <motion.div
             key={activeBackdrop || 'fallback'}
-            initial={{ opacity: 0, scale: 1.05 }}
+            initial={{ opacity: 0, scale: isMobile ? 1 : 1.02 }}
             animate={{ opacity: 0.25, scale: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: 'easeInOut' }}
+            transition={{ duration: 0.7, ease: 'easeInOut' }}
             className="absolute inset-0 w-full h-full"
           >
             {activeBackdrop ? (
@@ -135,7 +148,7 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
         <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           
           {/* Left Column: Glassmorphic Editorial Typography */}
-          <div className="lg:col-span-7 flex flex-col justify-center text-left max-w-xl">
+          <div className="lg:col-span-7 flex flex-col justify-center text-left max-w-xl order-2 lg:order-1">
             <AnimatePresence>
               <motion.div
                 key={idx}
@@ -202,7 +215,7 @@ export default function UnifiedHeroCarousel({ products, heroImages = [] }: Unifi
           </div>
 
           {/* Right Column: Floating 3D/Interactive Product Card */}
-          <div className="lg:col-span-5 flex justify-center items-center relative min-h-[350px] sm:min-h-[420px]">
+          <div className="lg:col-span-5 flex justify-center items-center relative min-h-[350px] sm:min-h-[420px] order-1 lg:order-2">
             <div className="absolute inset-0 bg-gradient-radial from-brand-500/10 to-transparent blur-3xl rounded-full scale-75 select-none pointer-events-none" />
             
             <div className="relative w-full max-w-[280px] sm:max-w-[340px] aspect-[4/5]">
