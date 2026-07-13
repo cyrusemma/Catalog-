@@ -102,16 +102,17 @@ export default function Cart() {
   const { data: discounts } = useQuery({
     queryKey: ['store-discounts', currentStoreId],
     queryFn: async () => {
-      if (!currentStoreId) return []
-      const { data, error } = await supabase
-        .from('discounts')
-        .select('*')
-        .eq('store_id', currentStoreId)
-        .eq('active', true)
+      let query = supabase.from('discounts').select('*').eq('active', true)
+      if (currentStoreId) {
+        query = query.eq('store_id', currentStoreId)
+      } else {
+        query = query.is('store_id', null)
+      }
+      const { data, error } = await query
       if (error) throw error
       return data || []
     },
-    enabled: !!currentStoreId,
+    enabled: true,
   })
 
   const [promoCodeInput, setPromoCodeInput] = useState('')
