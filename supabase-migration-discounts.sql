@@ -2,7 +2,7 @@
 
 create table if not exists public.discounts (
   id uuid default gen_random_uuid() primary key,
-  store_id uuid references public.stores(id) on delete cascade not null,
+  store_id uuid references public.stores(id) on delete cascade, -- nullable: if null, it belongs to the Platform/General store
   code text, -- nullable: if null, it is an auto-applied discount
   type text not null check (type in ('storewide', 'category', 'product')),
   target_id text, -- product ID for 'product', category name for 'category', null for 'storewide'
@@ -22,6 +22,7 @@ alter table public.discounts enable row level security;
 -- Drop existing policies if they exist to prevent duplication conflicts
 drop policy if exists "Anyone can view discounts" on public.discounts;
 drop policy if exists "Merchants can manage their own discounts" on public.discounts;
+drop policy if exists "Platform admins can manage general discounts" on public.discounts;
 
 -- Policy: Customers need to query discounts to calculate totals during checkout
 create policy "Anyone can view discounts"
@@ -44,4 +45,14 @@ create policy "Merchants can manage their own discounts"
       where s.id = discounts.store_id
         and s.owner_id = auth.uid()
     )
+  );
+
+-- Policy: Platform admins can manage general/platform store discounts (where store_id is null)
+create policy "Platform admins can manage general discounts"
+  on public.discounts for all
+  using (
+    store_id is null and (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+  )
+  with check (
+    store_id is null and (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
   );

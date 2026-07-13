@@ -22,29 +22,21 @@ export default function AdminDiscounts() {
   const [value, setValue] = useState('')
   const [minOrderAmount, setMinOrderAmount] = useState('0')
   const [active, setActive] = useState(true)
-  const [adminSelectedStoreId, setAdminSelectedStoreId] = useState('')
 
   const qc = useQueryClient()
   const { data: context } = useAdminContext()
-
-  // Fetch All Stores (for platform admins only)
-  const { data: stores } = useQuery({
-    queryKey: ['admin-all-stores'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('stores').select('id, name')
-      if (error) throw error
-      return data || []
-    },
-    enabled: !!context?.isAdmin,
-  })
 
   // Fetch Discounts
   const { data: discounts, isLoading: discountsLoading } = useQuery({
     queryKey: ['admin-discounts', context?.storeId, context?.isAdmin],
     queryFn: async () => {
       let query = supabase.from('discounts').select('*')
-      if (context && !context.isAdmin && context.storeId) {
+      if (context?.isAdmin) {
+        query = query.is('store_id', null)
+      } else if (context?.storeId) {
         query = query.eq('store_id', context.storeId)
+      } else {
+        return []
       }
       const { data, error } = await query.order('created_at', { ascending: false })
       if (error) throw error
@@ -58,8 +50,12 @@ export default function AdminDiscounts() {
     queryKey: ['admin-products-for-discounts', context?.storeId, context?.isAdmin],
     queryFn: async () => {
       let query = supabase.from('products').select('id, title, category, store_id')
-      if (context && !context.isAdmin && context.storeId) {
+      if (context?.isAdmin) {
+        query = query.is('store_id', null)
+      } else if (context?.storeId) {
         query = query.eq('store_id', context.storeId)
+      } else {
+        return []
       }
       const { data, error } = await query
       if (error) throw error
@@ -68,18 +64,10 @@ export default function AdminDiscounts() {
     enabled: !!context,
   })
 
-  // Dynamically filter products by store for dropdown selections
-  const filteredProducts = useMemo(() => {
-    if (context?.isAdmin) {
-      return products?.filter((p: any) => p.store_id === adminSelectedStoreId) || []
-    }
-    return products || []
-  }, [products, context?.isAdmin, adminSelectedStoreId])
-
   // Get unique categories of this store
   const categories = useMemo(() => {
-    return Array.from(new Set(filteredProducts.map((p: any) => p.category).filter(Boolean))) as string[]
-  }, [filteredProducts])
+    return Array.from(new Set(products?.map((p: any) => p.category).filter(Boolean))) as string[]
+  }, [products])
 
   // Mutations
   const createDiscount = useMutation({
@@ -142,7 +130,6 @@ export default function AdminDiscounts() {
     setValue('')
     setMinOrderAmount('0')
     setActive(true)
-    setAdminSelectedStoreId('')
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -157,11 +144,7 @@ export default function AdminDiscounts() {
       return
     }
 
-    const storeIdToUse = context?.isAdmin ? adminSelectedStoreId : context?.storeId
-    if (!storeIdToUse) {
-      toast.error('Please select a store')
-      return
-    }
+    const storeIdToUse = context?.isAdmin ? null : context?.storeId
 
     createDiscount.mutate({
       store_id: storeIdToUse,
@@ -318,28 +301,6 @@ export default function AdminDiscounts() {
               </div>
 
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                {/* Store Selector (Admins Only) */}
-                {context?.isAdmin && (
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                      Select Store
-                    </label>
-                    <select
-                      title="Select Store"
-                      required
-                      value={adminSelectedStoreId}
-                      onChange={e => {
-                        setAdminSelectedStoreId(e.target.value)
-                        setTargetId('')
-                      }}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none text-sm focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 transition-all cursor-pointer font-medium"
-                    >
-                      <option value="">-- Choose Store --</option>
-                      {stores?.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
-                  </div>
-                )}
-
                 {/* Promo Code */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
@@ -407,7 +368,7 @@ export default function AdminDiscounts() {
                       className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none text-sm focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 transition-all cursor-pointer font-medium"
                     >
                       <option value="">-- Choose Product --</option>
-                      {filteredProducts?.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                      {products?.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
                     </select>
                   </div>
                 )}
