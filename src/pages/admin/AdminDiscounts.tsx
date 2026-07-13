@@ -5,9 +5,7 @@ import {
   Plus, 
   Trash, 
   X, 
-  CheckCircle,
-  Percent,
-  Warning
+  Percent
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import AdminLayout from '../../components/admin/AdminLayout'
