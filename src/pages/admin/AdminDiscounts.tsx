@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { 
   Tag, 
@@ -22,53 +22,71 @@ export default function AdminDiscounts() {
   const [value, setValue] = useState('')
   const [minOrderAmount, setMinOrderAmount] = useState('0')
   const [active, setActive] = useState(true)
+  const [adminSelectedStoreId, setAdminSelectedStoreId] = useState('')
 
   const qc = useQueryClient()
   const { data: context } = useAdminContext()
 
-  // Fetch Discounts
-  const { data: discounts, isLoading: discountsLoading } = useQuery({
-    queryKey: ['admin-discounts', context?.storeId],
+  // Fetch All Stores (for platform admins only)
+  const { data: stores } = useQuery({
+    queryKey: ['admin-all-stores'],
     queryFn: async () => {
-      if (!context?.storeId) return []
-      const { data, error } = await supabase
-        .from('discounts')
-        .select('*')
-        .eq('store_id', context.storeId)
-        .order('created_at', { ascending: false })
+      const { data, error } = await supabase.from('stores').select('id, name')
       if (error) throw error
       return data || []
     },
-    enabled: !!context?.storeId,
+    enabled: !!context?.isAdmin,
+  })
+
+  // Fetch Discounts
+  const { data: discounts, isLoading: discountsLoading } = useQuery({
+    queryKey: ['admin-discounts', context?.storeId, context?.isAdmin],
+    queryFn: async () => {
+      let query = supabase.from('discounts').select('*')
+      if (context && !context.isAdmin && context.storeId) {
+        query = query.eq('store_id', context.storeId)
+      }
+      const { data, error } = await query.order('created_at', { ascending: false })
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!context,
   })
 
   // Fetch Store Products (for product/category selections)
   const { data: products } = useQuery({
-    queryKey: ['admin-products-for-discounts', context?.storeId],
+    queryKey: ['admin-products-for-discounts', context?.storeId, context?.isAdmin],
     queryFn: async () => {
-      if (!context?.storeId) return []
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, title, category')
-        .eq('store_id', context.storeId)
+      let query = supabase.from('products').select('id, title, category, store_id')
+      if (context && !context.isAdmin && context.storeId) {
+        query = query.eq('store_id', context.storeId)
+      }
+      const { data, error } = await query
       if (error) throw error
       return data || []
     },
-    enabled: !!context?.storeId,
+    enabled: !!context,
   })
 
+  // Dynamically filter products by store for dropdown selections
+  const filteredProducts = useMemo(() => {
+    if (context?.isAdmin) {
+      return products?.filter((p: any) => p.store_id === adminSelectedStoreId) || []
+    }
+    return products || []
+  }, [products, context?.isAdmin, adminSelectedStoreId])
+
   // Get unique categories of this store
-  const categories = Array.from(new Set(products?.map(p => p.category).filter(Boolean))) as string[]
+  const categories = useMemo(() => {
+    return Array.from(new Set(filteredProducts.map((p: any) => p.category).filter(Boolean))) as string[]
+  }, [filteredProducts])
 
   // Mutations
   const createDiscount = useMutation({
     mutationFn: async (newDiscount: any) => {
       const { error } = await supabase
         .from('discounts')
-        .insert({
-          ...newDiscount,
-          store_id: context?.storeId,
-        })
+        .insert(newDiscount)
       if (error) throw error
     },
     onSuccess: () => {
@@ -124,6 +142,7 @@ export default function AdminDiscounts() {
     setValue('')
     setMinOrderAmount('0')
     setActive(true)
+    setAdminSelectedStoreId('')
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -138,7 +157,14 @@ export default function AdminDiscounts() {
       return
     }
 
+    const storeIdToUse = context?.isAdmin ? adminSelectedStoreId : context?.storeId
+    if (!storeIdToUse) {
+      toast.error('Please select a store')
+      return
+    }
+
     createDiscount.mutate({
+      store_id: storeIdToUse,
       code: code.trim() || null,
       type,
       target_id: type === 'storewide' ? null : targetId,
@@ -292,6 +318,28 @@ export default function AdminDiscounts() {
               </div>
 
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                {/* Store Selector (Admins Only) */}
+                {context?.isAdmin && (
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                      Select Store
+                    </label>
+                    <select
+                      title="Select Store"
+                      required
+                      value={adminSelectedStoreId}
+                      onChange={e => {
+                        setAdminSelectedStoreId(e.target.value)
+                        setTargetId('')
+                      }}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none text-sm focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 transition-all cursor-pointer font-medium"
+                    >
+                      <option value="">-- Choose Store --</option>
+                      {stores?.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                )}
+
                 {/* Promo Code */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
@@ -359,7 +407,7 @@ export default function AdminDiscounts() {
                       className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 outline-none text-sm focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 transition-all cursor-pointer font-medium"
                     >
                       <option value="">-- Choose Product --</option>
-                      {products?.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                      {filteredProducts?.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
                     </select>
                   </div>
                 )}
