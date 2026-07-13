@@ -133,7 +133,7 @@ export default function Cart() {
       const matchingRules = autoRules.filter(d => {
         if (d.min_order_amount > 0 && subtotal < d.min_order_amount) return false
         if (d.type === 'product' && d.target_id === item.product.id) return true
-        if (d.type === 'category' && d.target_id && item.product.category && d.target_id.toLowerCase() === item.product.category.toLowerCase()) return true
+        if (d.type === 'category' && d.target_id && item.product.category && d.target_id.trim().toLowerCase() === item.product.category.trim().toLowerCase()) return true
         if (d.type === 'storewide') return true
         return false
       })
@@ -148,7 +148,7 @@ export default function Cart() {
             if (rule.type === 'storewide') {
               itemDiscount = Number(rule.value) / filteredItems.length
             } else {
-              itemDiscount = Number(rule.value) * item.quantity
+              itemDiscount = Math.min(itemPrice, Number(rule.value)) * item.quantity
             }
           }
           bestItemDiscount = Math.max(bestItemDiscount, itemDiscount)
@@ -177,14 +177,14 @@ export default function Cart() {
       for (const item of filteredItems) {
         const matches = 
           (rule.type === 'product' && rule.target_id === item.product.id) ||
-          (rule.type === 'category' && rule.target_id && item.product.category && rule.target_id.toLowerCase() === item.product.category.toLowerCase())
+          (rule.type === 'category' && rule.target_id && item.product.category && rule.target_id.trim().toLowerCase() === item.product.category.trim().toLowerCase())
 
         if (matches) {
           const itemPrice = effectivePrice(item.product)
           if (rule.discount_type === 'percentage') {
             discount += itemPrice * (Number(rule.value) / 100) * item.quantity
           } else {
-            discount += Number(rule.value) * item.quantity
+            discount += Math.min(itemPrice, Number(rule.value)) * item.quantity
           }
         }
       }
