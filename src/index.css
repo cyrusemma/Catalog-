@@ -252,14 +252,29 @@ html.theme-turquoise-dark {
   --hero-shape: rgba(45, 212, 191, 0.2);
 }
 
+/* Base Pattern Layer */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-repeat: repeat;
+  background-attachment: fixed;
+  background-size: 450px 450px;
+  opacity: 0;
+  transition: opacity 0.3s ease, filter 0.3s ease, background-image 0.3s ease;
+}
+
 /* Rose-light — softens the cream palette into a dusty pink. Brand amber
    accents stay so the overall identity holds. */
 html.theme-rose-light body {
   background-color: #fdf2f5 !important;
-  background-image: linear-gradient(rgba(253, 242, 245, 0.85), rgba(253, 242, 245, 0.85)), url('/rose-pattern.png') !important;
-  background-repeat: repeat !important;
-  background-size: auto, 450px 450px !important;
-  background-attachment: fixed !important;
+}
+
+html.theme-rose-light body::before {
+  background-image: url('/rose-pattern.png') !important;
+  opacity: 0.12 !important;
 }
 
 html.theme-rose-light .bg-cream-50 {
@@ -290,10 +305,12 @@ html.theme-rose-light .bg-cream-50\/90 {
 /* Rose-dark — deep wine background with rose-gold accents. */
 html.theme-rose-dark body {
   background-color: #1c0a12 !important;
-  background-image: linear-gradient(rgba(28, 10, 18, 0.85), rgba(28, 10, 18, 0.85)), url('/rose-pattern.png') !important;
-  background-repeat: repeat !important;
-  background-size: auto, 450px 450px !important;
-  background-attachment: fixed !important;
+}
+
+html.theme-rose-dark body::before {
+  background-image: url('/rose-pattern.png') !important;
+  filter: invert(1) brightness(1.6) !important;
+  opacity: 0.08 !important;
 }
 
 html.theme-rose-dark .dark\:bg-dark-900 {
@@ -335,6 +352,12 @@ html.theme-turquoise-light body {
   background-color: #effdfb !important;
 }
 
+html.theme-turquoise-light body::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M 0 20 Q 15 10, 30 20 T 60 20 M 0 40 Q 15 30, 30 40 T 60 40' fill='none' stroke='%230d9488' stroke-width='1'/%3E%3C/svg%3E") !important;
+  background-size: 60px 60px !important;
+  opacity: 0.25 !important;
+}
+
 html.theme-turquoise-light .bg-cream-50 {
   background-color: #effdfb !important;
 }
@@ -363,6 +386,12 @@ html.theme-turquoise-light .bg-cream-50\/90 {
 /* Turquoise-dark — deep teal background with bright aqua accents. */
 html.theme-turquoise-dark body {
   background-color: #03201c !important;
+}
+
+html.theme-turquoise-dark body::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M 0 20 Q 15 10, 30 20 T 60 20 M 0 40 Q 15 30, 30 40 T 60 40' fill='none' stroke='%232dd4bf' stroke-width='1'/%3E%3C/svg%3E") !important;
+  background-size: 60px 60px !important;
+  opacity: 0.15 !important;
 }
 
 html.theme-turquoise-dark .dark\:bg-dark-900 {
