@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
+  MagnifyingGlass,
   ShoppingBagOpen,
   Storefront,
 } from '@phosphor-icons/react'
-import { motion, useReducedMotion } from 'framer-motion'
-import { useEffect, useMemo } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { useEffect, useMemo, useState } from 'react'
 import ProductCard from '../components/ui/ProductCard'
 import CustomerReviews from '../components/ui/CustomerReviews'
 import UnifiedHeroCarousel from '../components/ui/UnifiedHeroCarousel'
@@ -26,6 +27,8 @@ export default function Home() {
   const settings = useStoreSettings()
   const reduceMotion = useReducedMotion()
   const navigate = useNavigate()
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     // If installed as PWA and they open the default route (/), trap them to their store
@@ -38,6 +41,14 @@ export default function Home() {
       }
     }
   }, [navigate])
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const query = searchTerm.trim()
+    if (!query) return
+    navigate(`/shop?q=${encodeURIComponent(query)}`)
+  }
+
   // Hero product showcase — featured first, topped up with new arrivals, deduped.
   const heroShowcase = useMemo(() => {
     const seen = new Set<string>()
@@ -57,6 +68,70 @@ export default function Home() {
 
   return (
     <main className="flex-1">
+      <motion.section
+        initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+        animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-7xl mx-auto px-4 pt-6 sm:pt-10"
+      >
+        <div className="glass rounded-[2rem] border border-brand-400/15 p-4 sm:p-5 shadow-lg shadow-brand-500/5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-400/10 border border-brand-400/20 text-[10px] font-extrabold uppercase tracking-[0.28em] text-brand-400 mb-3">
+                Search
+              </span>
+              <h2 className="text-xl sm:text-2xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
+                Find a product fast
+              </h2>
+              <p className="text-xs sm:text-sm text-dark-800/55 dark:text-white/45 mt-1">
+                Open the search bar here, type what you need, and jump straight to the catalog.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSearchOpen(open => !open)}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold bg-brand-400 text-white shadow-lg shadow-brand-500/20 hover:bg-brand-500 transition-colors"
+            >
+              <MagnifyingGlass size={16} weight="bold" />
+              {searchOpen ? 'Close search' : 'Search products'}
+            </button>
+          </div>
+
+          <AnimatePresence initial={false}>
+            {searchOpen && (
+              <motion.form
+                initial={{ height: 0, opacity: 0, y: -8 }}
+                animate={{ height: 'auto', opacity: 1, y: 0 }}
+                exit={{ height: 0, opacity: 0, y: -8 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                onSubmit={handleSearch}
+                className="mt-4 overflow-hidden"
+              >
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <MagnifyingGlass size={18} weight="bold" className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-800/30 dark:text-white/30" />
+                    <input
+                      type="search"
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      placeholder="Search products, brands, or styles..."
+                      className="w-full h-14 rounded-2xl border border-cream-200 dark:border-white/10 bg-white/80 dark:bg-dark-900/60 backdrop-blur px-11 pr-4 text-sm text-dark-800 dark:text-white placeholder:text-dark-800/30 dark:placeholder:text-white/30 outline-none focus:border-brand-400/50 focus:ring-2 focus:ring-brand-400/15 transition"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="h-14 sm:min-w-[140px] rounded-2xl bg-dark-800 text-white text-sm font-semibold hover:bg-dark-900 transition-colors"
+                  >
+                    Search now
+                  </button>
+                </div>
+              </motion.form>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.section>
+
       {/* Premium Unified Swiper Hero Carousel */}
       <UnifiedHeroCarousel products={heroShowcase} heroImages={settings.hero_images || []} />
 
