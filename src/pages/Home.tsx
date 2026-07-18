@@ -5,7 +5,7 @@ import {
   ShoppingBagOpen,
   Storefront,
 } from '@phosphor-icons/react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import ProductCard from '../components/ui/ProductCard'
 import CustomerReviews from '../components/ui/CustomerReviews'
@@ -27,7 +27,6 @@ export default function Home() {
   const settings = useStoreSettings()
   const reduceMotion = useReducedMotion()
   const navigate = useNavigate()
-  const [searchOpen, setSearchOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
@@ -74,61 +73,57 @@ export default function Home() {
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         className="max-w-7xl mx-auto px-4 pt-6 sm:pt-10"
       >
-        <div className="glass rounded-[2rem] border border-brand-400/15 p-4 sm:p-5 shadow-lg shadow-brand-500/5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-400/10 border border-brand-400/20 text-[10px] font-extrabold uppercase tracking-[0.28em] text-brand-400 mb-3">
-                Search
-              </span>
-              <h2 className="text-xl sm:text-2xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
-                Find a product fast
-              </h2>
-              <p className="text-xs sm:text-sm text-dark-800/55 dark:text-white/45 mt-1">
-                Open the search bar here, type what you need, and jump straight to the catalog.
-              </p>
+        <div className="relative overflow-hidden rounded-[2rem] border border-brand-400/15 bg-white/65 dark:bg-dark-900/55 backdrop-blur-xl p-4 sm:p-6 shadow-[0_24px_80px_rgba(17,24,39,0.08)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/70 via-transparent to-brand-400/10 pointer-events-none" />
+          <div className="absolute -right-14 -top-16 h-40 w-40 rounded-full bg-brand-400/15 blur-3xl pointer-events-none" />
+          <div className="absolute -left-12 bottom-[-2.5rem] h-32 w-32 rounded-full bg-brand-400/10 blur-3xl pointer-events-none" />
+
+          <div className="relative flex flex-col gap-4 sm:gap-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-400/10 border border-brand-400/20 text-[10px] font-extrabold uppercase tracking-[0.28em] text-brand-400 mb-3">
+                  Quick Search
+                </span>
+                <h2 className="text-xl sm:text-2xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
+                  Find a product fast
+                </h2>
+                <p className="text-xs sm:text-sm text-dark-800/55 dark:text-white/45 mt-1 max-w-2xl">
+                  Search products, brands, or styles with a clean glassy feel and jump straight to the catalog.
+                </p>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setSearchOpen(open => !open)}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold bg-brand-400 text-white shadow-lg shadow-brand-500/20 hover:bg-brand-500 transition-colors"
+            <motion.form
+              initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+              animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              onSubmit={handleSearch}
+              className="relative"
             >
-              <MagnifyingGlass size={16} weight="bold" />
-              {searchOpen ? 'Close search' : 'Search products'}
-            </button>
-          </div>
-
-          <AnimatePresence initial={false}>
-            {searchOpen && (
-              <motion.form
-                initial={{ height: 0, opacity: 0, y: -8 }}
-                animate={{ height: 'auto', opacity: 1, y: 0 }}
-                exit={{ height: 0, opacity: 0, y: -8 }}
-                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                onSubmit={handleSearch}
-                className="mt-4 overflow-hidden"
-              >
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative flex-1">
-                    <MagnifyingGlass size={18} weight="bold" className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-800/30 dark:text-white/30" />
-                    <input
-                      type="search"
-                      value={searchTerm}
-                      onChange={e => setSearchTerm(e.target.value)}
-                      placeholder="Search products, brands, or styles..."
-                      className="w-full h-14 rounded-2xl border border-cream-200 dark:border-white/10 bg-white/80 dark:bg-dark-900/60 backdrop-blur px-11 pr-4 text-sm text-dark-800 dark:text-white placeholder:text-dark-800/30 dark:placeholder:text-white/30 outline-none focus:border-brand-400/50 focus:ring-2 focus:ring-brand-400/15 transition"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="h-14 sm:min-w-[140px] rounded-2xl bg-dark-800 text-white text-sm font-semibold hover:bg-dark-900 transition-colors"
-                  >
-                    Search now
-                  </button>
+              <div className="relative flex flex-col gap-3 rounded-[1.75rem] border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/5 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_12px_30px_rgba(17,24,39,0.08)] backdrop-blur-xl sm:flex-row sm:items-center">
+                <div className="flex items-center gap-3 rounded-[1.4rem] bg-white/70 dark:bg-white/5 px-4 py-3.5 ring-1 ring-inset ring-white/55 dark:ring-white/10 flex-1">
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-brand-400/12 text-brand-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+                    <MagnifyingGlass size={18} weight="bold" />
+                  </span>
+                  <input
+                    type="search"
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    placeholder="Search products, brands, or styles..."
+                    autoComplete="off"
+                    className="w-full bg-transparent text-sm sm:text-[15px] text-dark-800 dark:text-white placeholder:text-dark-800/35 dark:placeholder:text-white/35 outline-none"
+                  />
                 </div>
-              </motion.form>
-            )}
-          </AnimatePresence>
+                <button
+                  type="submit"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-[1.25rem] px-5 sm:min-w-[144px] text-sm font-semibold text-white bg-dark-800/90 hover:bg-dark-900 transition-colors shadow-lg shadow-dark-900/10"
+                >
+                  Search
+                  <ArrowRight size={16} weight="bold" />
+                </button>
+              </div>
+            </motion.form>
+          </div>
         </div>
       </motion.section>
 
