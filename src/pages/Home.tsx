@@ -6,7 +6,8 @@ import {
   Storefront,
 } from '@phosphor-icons/react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import ProductCard from '../components/ui/ProductCard'
 import CustomerReviews from '../components/ui/CustomerReviews'
 import UnifiedHeroCarousel from '../components/ui/UnifiedHeroCarousel'
@@ -16,6 +17,16 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useNavigate } from 'react-router-dom'
 import type { Product } from '../types'
 import ShopLoader from '../components/ui/ShopLoader'
+import { formatPrice } from '../lib/utils'
+
+function useDebouncedValue<T>(value: T, delay = 250): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(t)
+  }, [value, delay])
+  return debounced
+}
 
 export default function Home() {
   useDocumentTitle('Home')
@@ -48,6 +59,49 @@ export default function Home() {
     navigate(`/shop?q=${encodeURIComponent(query)}`)
   }
 
+  // Typeahead suggestions
+  const debouncedQuery = useDebouncedValue(searchTerm.trim(), 250)
+  const showSuggestions = debouncedQuery.length >= 2
+  const { data: suggestions = [], isFetching: suggestionsLoading } = useProducts(
+    { search: debouncedQuery },
+    { enabled: showSuggestions }
+  )
+  const topSuggestions = useMemo(() => (suggestions ?? []).slice(0, 6), [suggestions])
+  const hasNoResults = showSuggestions && !suggestionsLoading && topSuggestions.length === 0
+  const suggestionsOpen = showSuggestions && (topSuggestions.length > 0 || hasNoResults)
+
+  const [activeIndex, setActiveIndex] = useState(-1)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const searchRootRef = useRef<HTMLDivElement>(null)
+
+  // Reset highlight whenever the result set changes
+  useEffect(() => {
+    setActiveIndex(-1)
+  }, [debouncedQuery])
+
+  // Open on typing/focus when there are results; close on outside click + Escape
+  useEffect(() => {
+    if (suggestionsOpen) setDropdownOpen(true)
+  }, [suggestionsOpen])
+
+  useEffect(() => {
+    if (!dropdownOpen) return
+    const onClick = (e: MouseEvent) => {
+      if (searchRootRef.current && !searchRootRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDropdownOpen(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [dropdownOpen])
+
   // Hero product showcase — featured first, topped up with new arrivals, deduped.
   const heroShowcase = useMemo(() => {
     const seen = new Set<string>()
@@ -68,62 +122,131 @@ export default function Home() {
   return (
     <main className="flex-1">
       <motion.section
-        initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 8 }}
         animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-7xl mx-auto px-4 pt-6 sm:pt-10"
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8"
       >
-        <div className="relative overflow-hidden rounded-[2rem] border border-brand-400/15 bg-white/65 dark:bg-dark-900/55 backdrop-blur-xl p-4 sm:p-6 shadow-[0_24px_80px_rgba(17,24,39,0.08)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/70 via-transparent to-brand-400/10 pointer-events-none" />
-          <div className="absolute -right-14 -top-16 h-40 w-40 rounded-full bg-brand-400/15 blur-3xl pointer-events-none" />
-          <div className="absolute -left-12 bottom-[-2.5rem] h-32 w-32 rounded-full bg-brand-400/10 blur-3xl pointer-events-none" />
+        <div ref={searchRootRef} className="relative">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (activeIndex >= 0 && topSuggestions[activeIndex]) {
+                const p = topSuggestions[activeIndex]
+                setDropdownOpen(false)
+                navigate(`/product/${p.slug}`)
+                return
+              }
+              handleSearch(e)
+            }}
+            role="search"
+          >
+            <MagnifyingGlass
+              size={18}
+              weight="bold"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 pointer-events-none"
+            />
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                if (e.target.value.trim().length >= 2) setDropdownOpen(true)
+              }}
+              onFocus={() => {
+                if (suggestionsOpen) setDropdownOpen(true)
+              }}
+              onKeyDown={(e) => {
+                if (!dropdownOpen || topSuggestions.length === 0) return
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault()
+                  setActiveIndex(i => (i + 1) % topSuggestions.length)
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault()
+                  setActiveIndex(i => (i <= 0 ? topSuggestions.length - 1 : i - 1))
+                }
+              }}
+              placeholder="Search products, brands, or styles..."
+              autoComplete="off"
+              enterKeyHint="search"
+              role="combobox"
+              aria-expanded={dropdownOpen}
+              aria-autocomplete="list"
+              aria-controls="home-search-listbox"
+              aria-activedescendant={
+                activeIndex >= 0 ? `home-search-opt-${topSuggestions[activeIndex]?.id}` : undefined
+              }
+              className="w-full h-12 sm:h-14 pl-11 pr-4 rounded-full bg-white/80 dark:bg-white/5 border border-dark-800/10 dark:border-white/10 text-base text-dark-800 dark:text-white placeholder:text-dark-800/40 dark:placeholder:text-white/40 outline-none focus:border-brand-400/50 focus:ring-2 focus:ring-brand-400/20 transition-all shadow-sm"
+            />
+          </form>
 
-          <div className="relative flex flex-col gap-4 sm:gap-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-400/10 border border-brand-400/20 text-[10px] font-extrabold uppercase tracking-[0.28em] text-brand-400 mb-3">
-                  Quick Search
-                </span>
-                <h2 className="text-xl sm:text-2xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
-                  Find a product fast
-                </h2>
-                <p className="text-xs sm:text-sm text-dark-800/55 dark:text-white/45 mt-1 max-w-2xl">
-                  Search products, brands, or styles with a clean glassy feel and jump straight to the catalog.
-                </p>
-              </div>
-            </div>
-
-            <motion.form
-              initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-              animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              onSubmit={handleSearch}
-              className="relative"
-            >
-              <div className="relative flex flex-col gap-3 rounded-[1.75rem] border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/5 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_12px_30px_rgba(17,24,39,0.08)] backdrop-blur-xl sm:flex-row sm:items-center">
-                <div className="flex items-center gap-3 rounded-[1.4rem] bg-white/70 dark:bg-white/5 px-4 py-3.5 ring-1 ring-inset ring-white/55 dark:ring-white/10 flex-1">
-                  <span className="grid h-10 w-10 place-items-center rounded-full bg-brand-400/12 text-brand-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
-                    <MagnifyingGlass size={18} weight="bold" />
-                  </span>
-                  <input
-                    type="search"
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    placeholder="Search products, brands, or styles..."
-                    autoComplete="off"
-                    className="w-full bg-transparent text-sm sm:text-[15px] text-dark-800 dark:text-white placeholder:text-dark-800/35 dark:placeholder:text-white/35 outline-none"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-[1.25rem] px-5 sm:min-w-[144px] text-sm font-semibold text-white bg-dark-800/90 hover:bg-dark-900 transition-colors shadow-lg shadow-dark-900/10"
-                >
-                  Search
-                  <ArrowRight size={16} weight="bold" />
-                </button>
-              </div>
-            </motion.form>
-          </div>
+          <AnimatePresence>
+            {dropdownOpen && (
+              <motion.div
+                id="home-search-listbox"
+                role="listbox"
+                initial={reduceMotion ? false : { opacity: 0, y: -4 }}
+                animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+                exit={reduceMotion ? undefined : { opacity: 0, y: -4 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                className="absolute left-0 right-0 top-full mt-2 z-30 rounded-2xl border border-dark-800/10 dark:border-white/10 bg-white/95 dark:bg-dark-900/95 backdrop-blur-xl shadow-xl overflow-hidden"
+              >
+                {topSuggestions.length > 0 ? (
+                  <ul className="max-h-[60vh] overflow-y-auto py-1">
+                    {topSuggestions.map((p, i) => {
+                      const isActive = i === activeIndex
+                      const thumb = p.images?.[0]
+                      return (
+                        <li key={p.id} id={`home-search-opt-${p.id}`} role="option" aria-selected={isActive}>
+                          <Link
+                            to={`/product/${p.slug}`}
+                            onMouseEnter={() => setActiveIndex(i)}
+                            onMouseDown={(e) => {
+                              e.preventDefault()
+                              setDropdownOpen(false)
+                            }}
+                            className={`flex items-center gap-3 px-3 py-2.5 transition-colors ${
+                              isActive ? 'bg-brand-400/10' : 'hover:bg-dark-800/5 dark:hover:bg-white/5'
+                            }`}
+                          >
+                            <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-dark-800/5 dark:bg-white/5">
+                              {thumb ? (
+                                <img
+                                  src={thumb}
+                                  alt=""
+                                  loading="lazy"
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <ShoppingBagOpen size={18} weight="duotone" className="text-dark-800/30 dark:text-white/30" />
+                              )}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-medium text-dark-800 dark:text-white">
+                                {p.title}
+                              </span>
+                              {p.category && (
+                                <span className="block truncate text-xs text-dark-800/55 dark:text-white/45">
+                                  {p.category}
+                                </span>
+                              )}
+                            </span>
+                            <span className="shrink-0 text-sm font-semibold text-dark-800 dark:text-white">
+                              {formatPrice(p.selling_price)}
+                            </span>
+                          </Link>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                ) : hasNoResults ? (
+                  <div className="px-4 py-3 text-sm text-dark-800/55 dark:text-white/45">
+                    No products found for &ldquo;{debouncedQuery}&rdquo;
+                  </div>
+                ) : null}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.section>
 
