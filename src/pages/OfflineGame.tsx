@@ -35,9 +35,8 @@ function FallingItemComponent({ x, y, type, icon: Icon }: FallingItemComponentPr
   return (
     <div
       ref={ref}
-      className={`absolute w-12 h-12 -ml-6 -mt-6 flex items-center justify-center rounded-2xl shadow-lg ${
-        type === 'good' ? 'bg-white text-brand-500' : 'bg-red-500 text-white'
-      }`}
+      className={`absolute w-12 h-12 -ml-6 -mt-6 flex items-center justify-center rounded-2xl shadow-lg ${type === 'good' ? 'bg-white text-brand-500' : 'bg-red-500 text-white'
+        }`}
     >
       <Icon size={28} weight={type === 'bad' ? 'fill' : 'duotone'} />
     </div>
@@ -65,14 +64,14 @@ function PlayerCart({ cartX }: { cartX: number }) {
 export default function OfflineGame() {
   const navigate = useNavigate()
   const canvasRef = useRef<HTMLDivElement>(null)
-  
+
   const [isPlaying, setIsPlaying] = useState(false)
   const [isGameOver, setIsGameOver] = useState(false)
   const [score, setScore] = useState(0)
   const [highScore, setHighScore] = useState(0)
   const [lives, setLives] = useState(3)
   const [isMuted, setIsMuted] = useState(false)
-  
+
   const [cartX, setCartX] = useState(50) // percentage 0-100
   const [items, setItems] = useState<FallingItem[]>([])
 
@@ -93,16 +92,16 @@ export default function OfflineGame() {
     }
     const ctx = audioCtxRef.current
     if (ctx.state === 'suspended') ctx.resume()
-    
+
     const osc = ctx.createOscillator()
     const gainNode = ctx.createGain()
     osc.type = 'sine'
     osc.frequency.setValueAtTime(800, ctx.currentTime)
     osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1)
-    
+
     gainNode.gain.setValueAtTime(0.1, ctx.currentTime)
     gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1)
-    
+
     osc.connect(gainNode)
     gainNode.connect(ctx.destination)
     osc.start()
@@ -122,10 +121,10 @@ export default function OfflineGame() {
     osc.type = 'sawtooth'
     osc.frequency.setValueAtTime(150, ctx.currentTime)
     osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.3)
-    
+
     gainNode.gain.setValueAtTime(0.2, ctx.currentTime)
     gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
-    
+
     osc.connect(gainNode)
     gainNode.connect(ctx.destination)
     osc.start()
@@ -166,7 +165,7 @@ export default function OfflineGame() {
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isPlaying || !canvasRef.current) return
     if (e.buttons !== 1 && e.pointerType === 'mouse') return // require click-drag for mouse
-    
+
     const rect = canvasRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const percent = Math.max(0, Math.min(100, (x / rect.width) * 100))
@@ -179,7 +178,7 @@ export default function OfflineGame() {
 
     const loop = (time: number) => {
       const state = stateRef.current
-      
+
       let newItems = [...state.items]
       let newScore = state.score
       let newLives = state.lives
@@ -191,7 +190,7 @@ export default function OfflineGame() {
         const isBad = Math.random() < 0.2 // 20% chance of bad item
         const IconList = isBad ? BAD_ICONS : GOOD_ICONS
         const RandomIcon = IconList[Math.floor(Math.random() * IconList.length)]
-        
+
         newItems.push({
           id: Math.random().toString(),
           x: Math.random() * 90 + 5, // 5% to 95%
@@ -205,7 +204,7 @@ export default function OfflineGame() {
       // Move items and check collisions
       const CART_WIDTH = 15 // approx % width of cart
       const CART_Y = 85 // % from top where cart sits
-      
+
       newItems = newItems.filter(item => {
         item.y += item.speed
 
@@ -268,7 +267,7 @@ export default function OfflineGame() {
     if (audioCtxRef.current.state === 'suspended') {
       audioCtxRef.current.resume()
     }
-    
+
     setScore(0)
     setLives(3)
     setItems([])
@@ -288,17 +287,17 @@ export default function OfflineGame() {
     <div className="fixed inset-0 z-50 bg-brand-50 flex flex-col font-sans overflow-hidden select-none">
       {/* Background Gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br opacity-80 transition-colors duration-1000 ${getBackgroundClass()}`} />
-      
+
       {/* Header */}
       <div className="relative z-10 p-4 flex items-center justify-between">
         <button title="Go back" aria-label="Go back" onClick={() => navigate(-1)} className="p-2 bg-white/50 rounded-full hover:bg-white/80 transition-colors">
           <ArrowLeft size={24} className="text-gray-700" />
         </button>
         <div className="flex items-center gap-4 font-bold text-sm sm:text-lg text-gray-800">
-          <button 
-            title={isMuted ? 'Unmute' : 'Mute'} 
-            aria-label={isMuted ? 'Unmute' : 'Mute'} 
-            onClick={() => setIsMuted(!isMuted)} 
+          <button
+            title={isMuted ? 'Unmute' : 'Mute'}
+            aria-label={isMuted ? 'Unmute' : 'Mute'}
+            onClick={() => setIsMuted(!isMuted)}
             className="p-2 bg-white/50 rounded-full hover:bg-white/80 transition-colors text-gray-700"
           >
             {isMuted ? <SpeakerSlash size={20} /> : <SpeakerHigh size={20} />}
@@ -306,7 +305,7 @@ export default function OfflineGame() {
           <div className="bg-white/60 px-4 py-1.5 rounded-full shadow-sm">Best: {highScore}</div>
           <div className="bg-white/60 px-4 py-1.5 rounded-full shadow-sm">Score: {score}</div>
           <div className="bg-white/60 px-4 py-1.5 rounded-full shadow-sm flex items-center gap-1 hidden sm:flex">
-            Lives: 
+            Lives:
             {[...Array(3)].map((_, i) => (
               <ShoppingCart key={i} size={16} weight="fill" className={i < lives ? 'text-brand-500' : 'text-gray-300'} />
             ))}
@@ -315,7 +314,7 @@ export default function OfflineGame() {
       </div>
 
       {/* Game Canvas */}
-      <div 
+      <div
         ref={canvasRef}
         onPointerDown={handlePointerMove}
         onPointerMove={handlePointerMove}
@@ -328,7 +327,7 @@ export default function OfflineGame() {
             </div>
             <h1 className="text-4xl font-display font-bold text-gray-900 mb-4">Cart Catch</h1>
             <p className="text-gray-800 font-medium mb-8 max-w-xs">
-              Looks like you're offline! Catch the products in your cart, but avoid the broken boxes. 
+              Looks like you're offline! Catch the products in your cart, but avoid the broken boxes.
               Drag the cart or use Arrow Keys.
             </p>
             <button onClick={startGame} className="btn-primary flex items-center gap-2 text-lg px-8 py-4">
@@ -363,7 +362,7 @@ export default function OfflineGame() {
 
         {/* Player Cart */}
         <PlayerCart cartX={cartX} />
-        
+
         {/* Floor */}
         <div className="absolute bottom-0 left-0 right-0 h-[10%] bg-white/30 backdrop-blur-md border-t border-white/40" />
       </div>

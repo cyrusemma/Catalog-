@@ -46,17 +46,17 @@ export function useDynamicPWA(config: PwaConfig | null) {
       theme_color: config.themeColor || '#0f0a05',
       icons: config.iconUrl
         ? [
-            {
-              src: config.iconUrl,
-              sizes: '192x192',
-              type: 'image/png',
-              purpose: 'any maskable'
-            }
-          ]
+          {
+            src: config.iconUrl,
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any maskable'
+          }
+        ]
         : [
-            { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-            { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-          ]
+          { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+        ]
     }
 
     const manifestString = JSON.stringify(manifest)
