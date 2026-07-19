@@ -5,13 +5,13 @@ import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useCustomerSession } from '../hooks/useCustomerSession'
+import { useNotificationPreferences } from '../hooks/useNotificationPreferences'
 
 export default function Account() {
   const { isLoggedIn, user, profile, loading } = useCustomerSession()
+  const { pushSubscribed, pushWorking, pushError, supported, toggle } = useNotificationPreferences()
   const navigate = useNavigate()
   const qc = useQueryClient()
-  const [savingNotify, setSavingNotify] = useState(false)
-  const [notifyError, setNotifyError] = useState('')
   const [signedOut, setSignedOut] = useState(false)
   const [showCreateWizard, setShowCreateWizard] = useState(false)
 
@@ -32,29 +32,12 @@ export default function Account() {
         .select('*')
         .eq('owner_id', user?.id)
         .maybeSingle()
-      
+
       if (error) throw error
       return data
     },
     enabled: !!user?.id,
   })
-
-  const toggleNotify = async () => {
-    if (!profile || !user) return
-    setNotifyError('')
-    setSavingNotify(true)
-    const next = !profile.notify_new_arrivals
-    const { error } = await supabase
-      .from('profiles')
-      .update({ notify_new_arrivals: next })
-      .eq('id', user.id)
-    setSavingNotify(false)
-    if (error) {
-      setNotifyError(error.message)
-      return
-    }
-    qc.invalidateQueries({ queryKey: ['customer-profile'] })
-  }
 
   const signOut = async () => {
     setSignedOut(true)
@@ -192,7 +175,7 @@ export default function Account() {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              {profile.notify_new_arrivals ? (
+              {pushSubscribed ? (
                 <Bell size={18} weight="fill" className="text-brand-400" />
               ) : (
                 <BellSlash size={18} weight="duotone" className="text-dark-800/40 dark:text-white/40" />
@@ -200,27 +183,31 @@ export default function Account() {
               <h2 className="text-dark-800 dark:text-white font-semibold">New-arrival notifications</h2>
             </div>
             <p className="text-dark-800/55 dark:text-white/50 text-sm mt-1.5">
-              Get a push notification whenever a new product goes live. We'll only ping you about real new arrivals — not promos or noise.
+              {!supported
+                ? 'Push notifications aren\'t available here. On iPhone, add the app to your home screen first, then come back.'
+                : pushSubscribed === null
+                  ? 'Checking this device…'
+                  : 'Get a push notification whenever a new product goes live. We\'ll only ping you about real new arrivals — not promos or noise.'}
             </p>
-            {notifyError && <p className="text-red-500 text-xs mt-2">{notifyError}</p>}
+            {pushError && <p className="text-red-500 text-xs mt-2">{pushError}</p>}
           </div>
           <button
             type="button"
-            onClick={toggleNotify}
-            disabled={savingNotify}
+            onClick={toggle}
+            disabled={pushWorking || !supported || pushSubscribed === null}
             aria-label="Toggle new-arrival notifications"
             className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors ${
-              profile.notify_new_arrivals ? 'bg-brand-400' : 'bg-cream-200 dark:bg-dark-700'
+              pushSubscribed ? 'bg-brand-400' : 'bg-cream-200 dark:bg-dark-700'
             } disabled:opacity-50`}
           >
             <span
               className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                profile.notify_new_arrivals ? 'translate-x-6' : 'translate-x-1'
+                pushSubscribed ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
           </button>
         </div>
-        {profile.notify_new_arrivals && (
+        {pushSubscribed && (
           <p className="text-green-600 dark:text-green-400 text-xs font-medium mt-3 inline-flex items-center gap-1">
             <CheckCircle size={12} weight="fill" /> You'll be notified about new arrivals
           </p>

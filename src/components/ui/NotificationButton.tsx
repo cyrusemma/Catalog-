@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Bell, X, BellRinging, BellSlash, Megaphone, ArrowRight } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useQueryClient } from '@tanstack/react-query'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
+import { useNotificationPreferences } from '../../hooks/useNotificationPreferences'
 import { useSignInStore } from '../../store/signInStore'
-import { supabase } from '../../lib/supabase'
-import { getActiveSubscription, pushIsSupported, subscribeToPush, unsubscribeFromPush } from '../../lib/pushSubscription'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
 
 const SIGNIN_DISMISSED_KEY = 'catalog-signin-prompt-seen-v1'
@@ -20,22 +18,15 @@ const SIGNIN_DISMISSED_KEY = 'catalog-signin-prompt-seen-v1'
  * navbar otherwise. A pulsing dot signals actionable items.
  */
 export default function NotificationButton() {
-  const { isLoggedIn, loading: sessionLoading, user, profile } = useCustomerSession()
+  const { isLoggedIn, loading: sessionLoading, profile } = useCustomerSession()
   const openSignIn = useSignInStore(s => s.openModal)
-  const qc = useQueryClient()
+  const { pushSubscribed, pushWorking, pushError, supported, subscribe, unsubscribe } = useNotificationPreferences()
   const [open, setOpen] = useState(false)
   const [signInDismissed, setSignInDismissed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false
     return !!window.localStorage.getItem(SIGNIN_DISMISSED_KEY)
   })
   const rootRef = useRef<HTMLDivElement>(null)
-
-  // Browser-side push subscription state. We check on mount and whenever the
-  // signed-in user changes, so the UI reflects "already subscribed" without
-  // re-prompting permission.
-  const [pushSubscribed, setPushSubscribed] = useState<boolean | null>(null)
-  const [pushWorking, setPushWorking] = useState(false)
-  const [pushError, setPushError] = useState<string | null>(null)
 
   const settings = useStoreSettings()
   const [announcementSeen, setAnnouncementSeen] = useState(true)
@@ -61,66 +52,6 @@ export default function NotificationButton() {
     }
   }, [open, settings.announcement_active, announcementSeen, announcementSeenKey])
 
-  useEffect(() => {
-    let active = true
-    if (!isLoggedIn || !pushIsSupported()) {
-      setPushSubscribed(null)
-      return
-    }
-    getActiveSubscription().then(sub => {
-      if (active) setPushSubscribed(!!sub)
-    })
-    return () => { active = false }
-  }, [isLoggedIn])
-
-  const handleSubscribePush = async () => {
-    if (!user) return
-    setPushError(null)
-    setPushWorking(true)
-    try {
-      const sub = await subscribeToPush(user.id)
-      if (!sub) {
-        setPushError('Notifications were blocked. Enable them in your browser settings to receive new-arrival alerts.')
-        setPushSubscribed(false)
-        return
-      }
-      // Best effort: keep profile flag in sync where that column exists.
-      const { error: profileErr } = await supabase
-        .from('profiles')
-        .update({ notify_new_arrivals: true })
-        .eq('id', user.id)
-      if (!profileErr) {
-        qc.invalidateQueries({ queryKey: ['customer-profile'] })
-      }
-      setPushSubscribed(true)
-    } catch (err) {
-      setPushError(err instanceof Error ? err.message : 'Could not subscribe.')
-    } finally {
-      setPushWorking(false)
-    }
-  }
-
-  const handleUnsubscribePush = async () => {
-    if (!user) return
-    setPushError(null)
-    setPushWorking(true)
-    try {
-      await unsubscribeFromPush(user.id)
-      const { error: profileErr } = await supabase
-        .from('profiles')
-        .update({ notify_new_arrivals: false })
-        .eq('id', user.id)
-      if (!profileErr) {
-        qc.invalidateQueries({ queryKey: ['customer-profile'] })
-      }
-      setPushSubscribed(false)
-    } catch (err) {
-      setPushError(err instanceof Error ? err.message : 'Could not unsubscribe.')
-    } finally {
-      setPushWorking(false)
-    }
-  }
-
   // Close on outside click + Escape.
   useEffect(() => {
     if (!open) return
@@ -139,7 +70,7 @@ export default function NotificationButton() {
   }, [open])
 
   const showSignInCard = !sessionLoading && !isLoggedIn && !signInDismissed
-  const showPushCard = !sessionLoading && isLoggedIn && pushIsSupported()
+  const showPushCard = !sessionLoading && isLoggedIn && supported
 
   // Hide the bell entirely when there's literally nothing to surface — saves
   // navbar space for stores that haven't enabled any of this.
@@ -298,7 +229,7 @@ export default function NotificationButton() {
                       {pushSubscribed ? (
                         <button
                           type="button"
-                          onClick={handleUnsubscribePush}
+                          onClick={unsubscribe}
                           disabled={pushWorking}
                           className="bg-dark-800/10 dark:bg-white/10 hover:bg-dark-800/15 dark:hover:bg-white/15 text-dark-800 dark:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
                         >
@@ -307,7 +238,7 @@ export default function NotificationButton() {
                       ) : (
                         <button
                           type="button"
-                          onClick={handleSubscribePush}
+                          onClick={subscribe}
                           disabled={pushWorking || pushSubscribed === null}
                           className="bg-brand-400 hover:bg-brand-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
                         >

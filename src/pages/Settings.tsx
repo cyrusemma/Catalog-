@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Palette,
@@ -12,18 +11,12 @@ import {
   CaretRight,
 } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
-import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { COLOR_THEMES, useThemeStore } from '../store/themeStore'
 import { useCustomerSession } from '../hooks/useCustomerSession'
+import { useNotificationPreferences } from '../hooks/useNotificationPreferences'
 import { useSignInStore } from '../store/signInStore'
 import CurrencySelector from '../components/ui/CurrencySelector'
-import {
-  getActiveSubscription,
-  pushIsSupported,
-  subscribeToPush,
-  unsubscribeFromPush,
-} from '../lib/pushSubscription'
 
 const sectionMotion = (delay: number) => ({
   initial: { opacity: 0, y: 12 },
@@ -36,67 +29,10 @@ export default function Settings() {
   const setColor = useThemeStore(s => s.setColor)
   const mode = useThemeStore(s => s.mode)
   const setMode = useThemeStore(s => s.setMode)
-  const { isLoggedIn, user, profile } = useCustomerSession()
+  const { isLoggedIn, profile } = useCustomerSession()
+  const { pushSubscribed, pushWorking, pushError, supported, toggle } = useNotificationPreferences()
   const openSignIn = useSignInStore(s => s.openModal)
   const navigate = useNavigate()
-  const qc = useQueryClient()
-
-  // Browser-side push state — mirrors the navbar bell so this page can manage
-  // the same subscription without re-prompting.
-  const [pushSubscribed, setPushSubscribed] = useState<boolean | null>(null)
-  const [pushWorking, setPushWorking] = useState(false)
-  const [pushError, setPushError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let active = true
-    if (!isLoggedIn || !pushIsSupported()) {
-      setPushSubscribed(null)
-      return
-    }
-    getActiveSubscription().then(sub => {
-      if (active) setPushSubscribed(!!sub)
-    })
-    return () => { active = false }
-  }, [isLoggedIn])
-
-  const handleTogglePush = async () => {
-    if (!user) return
-    setPushError(null)
-    setPushWorking(true)
-    try {
-      if (pushSubscribed) {
-        await unsubscribeFromPush(user.id)
-        const { error: profileErr } = await supabase
-          .from('profiles')
-          .update({ notify_new_arrivals: false })
-          .eq('id', user.id)
-        if (profileErr) {
-          console.warn('Could not sync notify_new_arrivals flag:', profileErr.message)
-        }
-        setPushSubscribed(false)
-      } else {
-        const sub = await subscribeToPush(user.id)
-        if (!sub) {
-          setPushError('Notifications were blocked. Enable them in your browser settings to receive alerts.')
-          setPushSubscribed(false)
-          return
-        }
-        const { error: profileErr } = await supabase
-          .from('profiles')
-          .update({ notify_new_arrivals: true })
-          .eq('id', user.id)
-        if (profileErr) {
-          console.warn('Could not sync notify_new_arrivals flag:', profileErr.message)
-        }
-        setPushSubscribed(true)
-      }
-      qc.invalidateQueries({ queryKey: ['customer-profile'] })
-    } catch (err) {
-      setPushError(err instanceof Error ? err.message : 'Could not update notifications.')
-    } finally {
-      setPushWorking(false)
-    }
-  }
 
   const signOut = async () => {
     await supabase.auth.signOut()
@@ -225,7 +161,7 @@ export default function Settings() {
             <p className="text-dark-800/55 dark:text-white/50 text-sm mt-1.5">
               {!isLoggedIn
                 ? 'Sign in to get a push notification on this device whenever a new product drops.'
-                : !pushIsSupported()
+                : !supported
                   ? 'Push notifications aren\'t available here. On iPhone, add the app to your home screen first, then come back.'
                   : pushSubscribed === null
                     ? 'Checking this device…'
@@ -236,10 +172,10 @@ export default function Settings() {
             {pushError && <p className="text-red-500 text-xs mt-2">{pushError}</p>}
           </div>
 
-          {isLoggedIn && pushIsSupported() ? (
+          {isLoggedIn && supported ? (
             <button
               type="button"
-              onClick={handleTogglePush}
+              onClick={toggle}
               disabled={pushWorking || pushSubscribed === null}
               aria-label="Toggle new-arrival notifications"
               className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors ${
