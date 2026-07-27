@@ -810,75 +810,75 @@ html.theme-aurora-dark .dark\:bg-dark-900\/90 {
    ───────────────────────────────────────────────────────────────────────── */
 :root {
   --aura-c1: #cbd5e1;
-  --aura-c2: #ffffff;
-  --aura-c3: #94a3b8;
-  --aura-c4: #cbd5e1;
-  --aura-opacity: 0.55;
-  --aura-opacity-hover: 0.85;
+  --aura-c2: #94a3b8;
+  --aura-c3: #64748b;
+  --aura-c4: #475569;
+  --aura-opacity: 0.8;
+  --aura-opacity-hover: 1.0;
 }
 
 html.theme-light {
   --aura-c1: #cbd5e1;
-  --aura-c2: #ffffff;
-  --aura-c3: #94a3b8;
-  --aura-c4: #cbd5e1;
-  --aura-opacity: 0.55;
+  --aura-c2: #94a3b8;
+  --aura-c3: #64748b;
+  --aura-c4: #475569;
+  --aura-opacity: 0.8;
 }
 
 html.theme-dark {
   --aura-c1: #475569;
-  --aura-c2: #818cf8;
-  --aura-c3: #67e8f9;
-  --aura-c4: #475569;
-  --aura-opacity: 0.7;
+  --aura-c2: #6366f1;
+  --aura-c3: #818cf8;
+  --aura-c4: #a5b4fc;
+  --aura-opacity: 0.9;
 }
 
 html.theme-rose-light {
   --aura-c1: #f3b8c8;
-  --aura-c2: #fde4ea;
-  --aura-c3: #c45680;
-  --aura-c4: #f3b8c8;
-  --aura-opacity: 0.7;
+  --aura-c2: #fb7185;
+  --aura-c3: #f43f5e;
+  --aura-c4: #e11d48;
+  --aura-opacity: 0.8;
 }
 
 html.theme-rose-dark {
   --aura-c1: #3a1a25;
-  --aura-c2: #f08fb0;
-  --aura-c3: #c45680;
-  --aura-c4: #3a1a25;
-  --aura-opacity: 0.75;
+  --aura-c2: #e11d48;
+  --aura-c3: #f43f5e;
+  --aura-c4: #fb7185;
+  --aura-opacity: 0.9;
 }
 
 html.theme-turquoise-light {
   --aura-c1: #93e6db;
-  --aura-c2: #ffffff;
-  --aura-c3: #0c8577;
-  --aura-c4: #93e6db;
-  --aura-opacity: 0.65;
+  --aura-c2: #2dd4bf;
+  --aura-c3: #14b8a6;
+  --aura-c4: #0d9488;
+  --aura-opacity: 0.8;
 }
 
 html.theme-turquoise-dark {
   --aura-c1: #0a3f38;
-  --aura-c2: #5eead4;
-  --aura-c3: #2dd4bf;
-  --aura-c4: #0a3f38;
-  --aura-opacity: 0.75;
+  --aura-c2: #0d9488;
+  --aura-c3: #14b8a6;
+  --aura-c4: #2dd4bf;
+  --aura-opacity: 0.9;
 }
 
 html.theme-aurora-light {
   --aura-c1: #8bcdec;
-  --aura-c2: #f0cbe1;
-  --aura-c3: #a9e29a;
-  --aura-c4: #8bcdec;
-  --aura-opacity: 0.75;
+  --aura-c2: #60a5fa;
+  --aura-c3: #3b82f6;
+  --aura-c4: #2563eb;
+  --aura-opacity: 0.8;
 }
 
 html.theme-aurora-dark {
   --aura-c1: #4f8db1;
-  --aura-c2: #a57e95;
-  --aura-c3: #619a52;
-  --aura-c4: #4f8db1;
-  --aura-opacity: 0.75;
+  --aura-c2: #2563eb;
+  --aura-c3: #3b82f6;
+  --aura-c4: #60a5fa;
+  --aura-opacity: 0.9;
 }
 
 @property --aura-angle {
@@ -907,13 +907,13 @@ html.theme-aurora-dark {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  padding: 1.5px;
+  padding: 2.5px;
   background: conic-gradient(
     from var(--aura-angle),
     transparent 0%,
-    var(--aura-c2) 30%,
+    var(--aura-c2) 15%,
     var(--aura-c3) 50%,
-    var(--aura-c4) 70%,
+    var(--aura-c4) 85%,
     transparent 100%
   );
   /* Hollow out the middle so only the ring shows. */

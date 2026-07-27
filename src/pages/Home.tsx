@@ -140,44 +140,47 @@ export default function Home() {
               handleSearch(e)
             }}
             role="search"
+            className="search-aura"
           >
-            <MagnifyingGlass
-              size={18}
-              weight="bold"
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 pointer-events-none"
-            />
-            <input
-              type="search"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value)
-                if (e.target.value.trim().length >= 2) setDropdownOpen(true)
-              }}
-              onFocus={() => {
-                if (suggestionsOpen) setDropdownOpen(true)
-              }}
-              onKeyDown={(e) => {
-                if (!dropdownOpen || topSuggestions.length === 0) return
-                if (e.key === 'ArrowDown') {
-                  e.preventDefault()
-                  setActiveIndex(i => (i + 1) % topSuggestions.length)
-                } else if (e.key === 'ArrowUp') {
-                  e.preventDefault()
-                  setActiveIndex(i => (i <= 0 ? topSuggestions.length - 1 : i - 1))
+            <div className="search-aura__inner relative h-12 sm:h-14 rounded-full bg-white/80 dark:bg-white/5 backdrop-blur-xl shadow-sm">
+              <MagnifyingGlass
+                size={18}
+                weight="bold"
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 pointer-events-none"
+              />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  if (e.target.value.trim().length >= 2) setDropdownOpen(true)
+                }}
+                onFocus={() => {
+                  if (suggestionsOpen) setDropdownOpen(true)
+                }}
+                onKeyDown={(e) => {
+                  if (!dropdownOpen || topSuggestions.length === 0) return
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault()
+                    setActiveIndex(i => (i + 1) % topSuggestions.length)
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault()
+                    setActiveIndex(i => (i <= 0 ? topSuggestions.length - 1 : i - 1))
+                  }
+                }}
+                placeholder="Search products, brands, or styles..."
+                autoComplete="off"
+                enterKeyHint="search"
+                role="combobox"
+                aria-expanded={dropdownOpen}
+                aria-autocomplete="list"
+                aria-controls="home-search-listbox"
+                aria-activedescendant={
+                  activeIndex >= 0 ? `home-search-opt-${topSuggestions[activeIndex]?.id}` : undefined
                 }
-              }}
-              placeholder="Search products, brands, or styles..."
-              autoComplete="off"
-              enterKeyHint="search"
-              role="combobox"
-              aria-expanded={dropdownOpen}
-              aria-autocomplete="list"
-              aria-controls="home-search-listbox"
-              aria-activedescendant={
-                activeIndex >= 0 ? `home-search-opt-${topSuggestions[activeIndex]?.id}` : undefined
-              }
-              className="w-full h-12 sm:h-14 pl-11 pr-4 rounded-full bg-white/80 dark:bg-white/5 border border-dark-800/10 dark:border-white/10 text-base text-dark-800 dark:text-white placeholder:text-dark-800/40 dark:placeholder:text-white/40 outline-none focus:border-brand-400/50 focus:ring-2 focus:ring-brand-400/20 transition-all shadow-sm"
-            />
+                className="w-full h-full pl-11 pr-4 rounded-full bg-transparent text-base text-dark-800 dark:text-white placeholder:text-dark-800/40 dark:placeholder:text-white/40 outline-none focus:ring-2 focus:ring-brand-400/30 transition-shadow"
+              />
+            </div>
           </form>
 
           <AnimatePresence>
