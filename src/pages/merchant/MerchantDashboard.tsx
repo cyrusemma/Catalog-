@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useQuery } from '@tanstack/react-query'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Storefront,
   Package,
@@ -97,15 +98,19 @@ function StatCard({
   color: string
 }) {
   return (
-    <div className="card p-5 flex items-center gap-4">
-      <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center flex-shrink-0`}>
+    <motion.div 
+      whileHover={{ scale: 1.02, y: -2 }}
+      className="card p-5 flex items-center gap-4 relative overflow-hidden group border border-cream-200/50 dark:border-white/5"
+    >
+      <div className={`absolute -right-6 -top-6 w-24 h-24 ${color} opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity`} />
+      <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center flex-shrink-0 shadow-sm`}>
         <Icon size={22} weight="duotone" className="text-white" />
       </div>
-      <div>
-        <p className="text-2xl font-bold text-dark-800 dark:text-white">{value}</p>
+      <div className="relative z-10">
+        <p className="text-2xl font-display font-bold text-dark-800 dark:text-white">{value}</p>
         <p className="text-xs text-dark-800/50 dark:text-white/40 font-medium mt-0.5">{label}</p>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -194,15 +199,24 @@ export default function MerchantDashboard() {
   const pendingApproval = products?.filter(p => p.approval_status === 'pending').length ?? 0
 
   return (
-    <div className="min-h-screen bg-cream-50 dark:bg-dark-900">
+    <div className="min-h-screen bg-cream-50 dark:bg-dark-900 overflow-x-hidden">
+      {/* Decorative background gradients */}
+      <div className="fixed top-0 inset-x-0 h-[40vh] bg-gradient-to-b from-brand-400/5 to-transparent pointer-events-none -z-10" />
+      <div className="fixed -top-32 -right-32 w-96 h-96 bg-brand-400/20 blur-[100px] rounded-full pointer-events-none -z-10" />
+      <div className="fixed top-1/4 -left-32 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none -z-10" />
+
       {/* Header */}
-      <header className="bg-white dark:bg-dark-800 border-b border-cream-200 dark:border-white/10 px-4 py-4">
+      <motion.header 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="bg-white/80 dark:bg-dark-800/80 backdrop-blur-xl border-b border-cream-200/50 dark:border-white/5 px-4 py-4 sticky top-0 z-50"
+      >
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             {store.logo_url ? (
-              <img src={store.logo_url} alt={store.name} className="w-10 h-10 rounded-xl object-cover" />
+              <img src={store.logo_url} alt={store.name} className="w-10 h-10 rounded-xl object-cover shadow-sm border border-cream-200 dark:border-white/10" />
             ) : (
-              <div className="w-10 h-10 rounded-xl bg-brand-400/10 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-400/20 to-brand-400/5 flex items-center justify-center border border-brand-400/20">
                 <Storefront size={20} weight="duotone" className="text-brand-400" />
               </div>
             )}
@@ -219,7 +233,7 @@ export default function MerchantDashboard() {
               href={`/s/${store.slug}`}
               target="_blank"
               rel="noreferrer"
-              className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-brand-400 hover:text-brand-500 transition-colors"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-brand-400 hover:bg-brand-400/10 transition-colors"
             >
               <ArrowSquareOut size={14} /> View store
             </a>
@@ -233,9 +247,20 @@ export default function MerchantDashboard() {
             </button>
           </div>
         </div>
-      </header>
+      </motion.header>
 
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      <motion.div 
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+          }
+        }}
+        className="max-w-4xl mx-auto px-4 py-8 space-y-8"
+      >
         {/* Share link — top of page, high visibility */}
         <CopyStoreLinkRow slug={store.slug} />
 
@@ -255,42 +280,41 @@ export default function MerchantDashboard() {
           </div>
         )}
 
-        {/* Stats */}
-        <section>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-dark-800/50 dark:text-white/40 mb-4">
-            Overview
+        <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-dark-800/50 dark:text-white/40 mb-4 flex items-center gap-2">
+            <ChartBar size={16} weight="duotone" /> Overview
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <StatCard
               label="Total Products"
               value={products?.length ?? 0}
               icon={Package}
-              color="bg-brand-400"
+              color="bg-gradient-to-br from-brand-400 to-brand-500"
             />
             <StatCard
               label="Published"
               value={publishedCount}
-              icon={ChartBar}
-              color="bg-green-500"
+              icon={Check}
+              color="bg-gradient-to-br from-green-400 to-green-500"
             />
             <StatCard
               label="Pending Approval"
               value={pendingApproval}
               icon={Star}
-              color="bg-amber-500"
+              color="bg-gradient-to-br from-amber-400 to-amber-500"
             />
           </div>
-        </section>
+        </motion.section>
 
         {/* Recent products */}
-        <section>
+        <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-dark-800/50 dark:text-white/40">
-              Your Products
+            <h2 className="text-sm font-bold uppercase tracking-wider text-dark-800/50 dark:text-white/40 flex items-center gap-2">
+              <Package size={16} weight="duotone" /> Your Products
             </h2>
             <Link
               to="/admin/products"
-              className="text-xs font-semibold text-brand-400 hover:text-brand-500"
+              className="text-xs font-semibold text-brand-400 hover:text-brand-500 bg-brand-400/10 px-3 py-1.5 rounded-lg transition-colors"
             >
               Manage all →
             </Link>
@@ -299,7 +323,13 @@ export default function MerchantDashboard() {
           {productsLoading ? (
             <div className="space-y-2">
               {[1, 2, 3].map(i => (
-                <div key={i} className="animate-pulse h-16 bg-cream-100 dark:bg-dark-800 rounded-2xl" />
+                <div key={i} className="animate-pulse h-16 bg-white/50 dark:bg-dark-800/50 rounded-2xl flex items-center px-4 gap-3">
+                  <div className="w-12 h-12 bg-cream-200 dark:bg-white/5 rounded-xl" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 bg-cream-200 dark:bg-white/5 rounded-full w-1/3" />
+                    <div className="h-2 bg-cream-200 dark:bg-white/5 rounded-full w-1/4" />
+                  </div>
+                </div>
               ))}
             </div>
           ) : !products || products.length === 0 ? (
@@ -357,23 +387,23 @@ export default function MerchantDashboard() {
               )}
             </div>
           )}
-        </section>
+        </motion.section>
 
         {/* Recent orders */}
         {orders && orders.length > 0 && (
-          <section>
+          <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-dark-800/50 dark:text-white/40">
-                Recent Orders
+              <h2 className="text-sm font-bold uppercase tracking-wider text-dark-800/50 dark:text-white/40 flex items-center gap-2">
+                <ShoppingBag size={16} weight="duotone" /> Recent Orders
               </h2>
-              <Link to="/admin/orders" className="text-xs font-semibold text-brand-400 hover:text-brand-500">
+              <Link to="/admin/orders" className="text-xs font-semibold text-brand-400 hover:text-brand-500 bg-brand-400/10 px-3 py-1.5 rounded-lg transition-colors">
                 View all →
               </Link>
             </div>
             <div className="space-y-2">
               {orders.map((order: any) => (
-                <div key={order.id} className="card p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-brand-400/10 flex items-center justify-center flex-shrink-0">
+                <div key={order.id} className="card p-4 flex items-center gap-3 hover:border-brand-400/30 transition-colors border border-transparent">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-400/20 to-brand-400/5 flex items-center justify-center flex-shrink-0">
                     <ShoppingBag size={18} weight="duotone" className="text-brand-400" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -385,12 +415,12 @@ export default function MerchantDashboard() {
                     </p>
                   </div>
                   <span
-                    className={`text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0 ${
+                    className={`text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0 border ${
                       order.status === 'delivered'
-                        ? 'bg-green-100 text-green-600 dark:bg-green-950/30 dark:text-green-400'
+                        ? 'bg-green-100/50 border-green-200 text-green-600 dark:bg-green-950/30 dark:border-green-800/50 dark:text-green-400'
                         : order.status === 'cancelled'
-                        ? 'bg-red-100 text-red-500 dark:bg-red-950/20 dark:text-red-400'
-                        : 'bg-amber-100 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400'
+                        ? 'bg-red-100/50 border-red-200 text-red-500 dark:bg-red-950/20 dark:border-red-800/50 dark:text-red-400'
+                        : 'bg-amber-100/50 border-amber-200 text-amber-600 dark:bg-amber-950/30 dark:border-amber-800/50 dark:text-amber-400'
                     }`}
                   >
                     {order.status}
@@ -398,33 +428,35 @@ export default function MerchantDashboard() {
                 </div>
               ))}
             </div>
-          </section>
+          </motion.section>
         )}
 
         {/* Quick actions */}
-        <section>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-dark-800/50 dark:text-white/40 mb-4">
-            Quick Actions
+        <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-dark-800/50 dark:text-white/40 mb-4 flex items-center gap-2">
+            <Gear size={16} weight="duotone" /> Quick Actions
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: 'Add Product', Icon: Package, to: '/admin/products/new', color: 'text-brand-400' },
               { label: 'View Orders', Icon: ShoppingBag, to: '/admin/orders', color: 'text-blue-500' },
               { label: 'Reviews', Icon: Star, to: '/admin/reviews', color: 'text-amber-500' },
-              { label: 'Store Settings', Icon: Gear, to: '/admin/settings', color: 'text-gray-500' },
+              { label: 'Settings', Icon: Gear, to: '/admin/settings', color: 'text-dark-400 dark:text-white/70' },
             ].map(({ label, Icon, to, color }) => (
               <Link
                 key={label}
                 to={to}
-                className="card p-4 flex flex-col items-center gap-2 text-center hover:shadow-md transition-shadow group"
+                className="card p-4 flex flex-col items-center gap-2 text-center hover:shadow-lg hover:-translate-y-1 transition-all group border border-cream-200/50 dark:border-white/5 bg-white/50 dark:bg-dark-800/50 backdrop-blur-md"
               >
-                <Icon size={24} weight="duotone" className={`${color} group-hover:scale-110 transition-transform`} />
-                <span className="text-xs font-semibold text-dark-800 dark:text-white">{label}</span>
+                <div className={`p-3 rounded-full bg-cream-100 dark:bg-white/5 group-hover:scale-110 transition-transform ${color}`}>
+                  <Icon size={24} weight="duotone" />
+                </div>
+                <span className="text-xs font-bold text-dark-800 dark:text-white">{label}</span>
               </Link>
             ))}
           </div>
-        </section>
-      </div>
+        </motion.section>
+      </motion.div>
     </div>
   )
 }
