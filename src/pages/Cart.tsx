@@ -412,6 +412,9 @@ export default function Cart() {
                     name="name"
                     type="text"
                     autoComplete="name"
+                    inputMode="text"
+                    autoCapitalize="words"
+                    enterKeyHint="next"
                     required
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
@@ -436,7 +439,9 @@ export default function Cart() {
                   <input
                     name="tel"
                     type="tel"
+                    inputMode="tel"
                     autoComplete="tel"
+                    enterKeyHint="next"
                     required
                     value={customerPhone}
                     onChange={e => setCustomerPhone(formatPhoneNumber(e.target.value))}
@@ -508,6 +513,7 @@ export default function Cart() {
                   <textarea
                     name="street-address"
                     autoComplete="street-address"
+                    enterKeyHint="done"
                     rows={3}
                     value={customerAddress}
                     onChange={e => setCustomerAddress(e.target.value)}

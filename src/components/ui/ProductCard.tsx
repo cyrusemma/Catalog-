@@ -61,15 +61,17 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
     }
   }
 
+  const isOutOfStock = product.stock_status === 'out_of_stock'
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.05, ease: 'easeOut' }}
-      whileHover={{ scale: 1.02 }}
-      className="h-full min-w-0"
+      whileHover={isOutOfStock ? undefined : { scale: 1.02 }}
+      className={`h-full min-w-0 ${isOutOfStock ? 'opacity-60' : ''}`}
     >
-      <Link to={detailUrl} className={`card card-hover group flex flex-col h-full min-w-0 ${compact ? 'rounded-2xl' : ''}`}>
+      <Link to={detailUrl} className={`card card-hover group flex flex-col h-full min-w-0 ${compact ? 'rounded-2xl' : ''} ${isOutOfStock ? 'pointer-events-none select-none' : ''}`}>
         {/* Image */}
         <div className={`relative overflow-hidden bg-cream-100 dark:bg-dark-700 ${compact ? 'aspect-[4/5] sm:aspect-square' : 'aspect-square'}`}>
           <Image
@@ -105,8 +107,11 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
             />
           </motion.button>
           {product.stock_status === 'out_of_stock' && (
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
-              <span className="text-white font-semibold text-sm tracking-wide">Out of Stock</span>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20">
+              <span className="inline-flex items-center gap-1 bg-black/75 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wide whitespace-nowrap">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                Out of Stock
+              </span>
             </div>
           )}
         </div>
