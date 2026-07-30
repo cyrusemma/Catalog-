@@ -1,6 +1,6 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { ShoppingCart, Star, Lightning, Heart, Clock } from '@phosphor-icons/react'
+import { ShoppingCart, Star, Lightning, Heart, Clock, Check } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
@@ -30,6 +30,7 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
   const formatPrice = useCurrencyFormatter()
   const { session } = useCustomerSession()
   const openSignInModal = useSignInStore(s => s.openModal)
+  const [added, setAdded] = useState(false)
   
   const isNew = isNewProduct(product.created_at)
   const flashPrice = activeFlashSalePrice(product)
@@ -53,6 +54,8 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     addItem(product)
+    setAdded(true)
+    setTimeout(() => setAdded(false), 1500)
     if (!session) {
       openSignInModal('Create an account for a faster checkout experience!')
     }
@@ -169,32 +172,43 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
               )}
             </div>
 
-            {/* Desktop: inline buttons */}
+            {/* Desktop: inline add to cart button with success feedback */}
             {product.stock_status !== 'out_of_stock' && (
               <div className="hidden sm:flex items-center ml-2">
                 <motion.button
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.88 }}
                   onClick={handleAddToCart}
-                  className={`bg-brand-400 hover:bg-brand-500 rounded-xl flex items-center justify-center transition-colors text-white ${compact ? 'w-8 h-8' : 'w-9 h-9'}`}
-                  aria-label="Add to cart"
+                  aria-label={added ? 'Added to cart' : 'Add to cart'}
+                  className={`rounded-xl flex items-center justify-center transition-all duration-300 text-white ${compact ? 'w-8 h-8' : 'w-9 h-9'} ${
+                    added
+                      ? 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]'
+                      : 'bg-brand-400 hover:bg-brand-500'
+                  }`}
                 >
-                  <ShoppingCart size={compact ? 13 : 14} weight="duotone" />
+                  {added
+                    ? <Check size={compact ? 13 : 15} weight="bold" />
+                    : <ShoppingCart size={compact ? 13 : 14} weight="duotone" />}
                 </motion.button>
               </div>
             )}
           </div>
 
-          {/* Mobile: full-width add to cart */}
+          {/* Mobile: full-width add to cart with success feedback */}
           {product.stock_status !== 'out_of_stock' && (
             <div className={`flex sm:hidden mt-2`}>
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={handleAddToCart}
-                className={`w-full bg-brand-400 hover:bg-brand-500 active:bg-brand-600 rounded-lg flex items-center justify-center gap-2 transition-colors text-white font-semibold text-xs ${compact ? 'h-7' : 'h-8'}`}
-                aria-label="Add to cart"
+                aria-label={added ? 'Added to cart' : 'Add to cart'}
+                className={`w-full rounded-lg flex items-center justify-center gap-2 transition-all duration-300 text-white font-semibold text-xs ${compact ? 'h-7' : 'h-8'} ${
+                  added
+                    ? 'bg-green-500'
+                    : 'bg-brand-400 hover:bg-brand-500 active:bg-brand-600'
+                }`}
               >
-                <ShoppingCart size={compact ? 12 : 14} weight="duotone" />
-                <span>Add</span>
+                {added
+                  ? <><Check size={compact ? 12 : 13} weight="bold" /><span>Added!</span></>
+                  : <><ShoppingCart size={compact ? 12 : 14} weight="duotone" /><span>Add</span></>}
               </motion.button>
             </div>
           )}
