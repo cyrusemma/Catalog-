@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useProduct } from '../hooks/useProducts'
 import { useCartStore } from '../store/cartStore'
+import { useWishlistStore } from '../store/wishlistStore'
 import { useRecentStore } from '../store/recentStore'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
 import { effectivePrice, activeFlashSalePrice } from '../lib/utils'
@@ -62,6 +63,8 @@ export default function ProductDetail() {
     enabled: !!product?.category_id,
   })
   const addItem = useCartStore(s => s.addItem)
+  const toggleWishlist = useWishlistStore(s => s.toggle)
+  const isWishlisted = useWishlistStore(s => s.has(product?.id ?? ''))
   const addRecent = useRecentStore(s => s.addRecent)
   const recentItems = useRecentStore(s => s.recent)
   const [activeImg, setActiveImg] = useState(0)
@@ -81,6 +84,15 @@ export default function ProductDetail() {
 
   const { session } = useCustomerSession()
   const openSignInModal = useSignInStore(s => s.openModal)
+
+  const handleWishlist = () => {
+    if (!product) return
+    if (!session) {
+      openSignInModal('Sign in to save favorites.')
+      return
+    }
+    toggleWishlist(product)
+  }
 
   const handleAddToCart = () => {
     if (!product) return
@@ -168,6 +180,22 @@ export default function ProductDetail() {
                 className="w-full h-full object-cover"
               />
             </AnimatePresence>
+            {/* Wishlist overlay button on image */}
+            <motion.button
+              type="button"
+              onClick={handleWishlist}
+              whileTap={{ scale: 0.82 }}
+              animate={isWishlisted ? { scale: [1, 1.25, 1] } : { scale: 1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+              aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+              className="absolute top-3 right-3 w-10 h-10 bg-white/90 dark:bg-dark-900/80 backdrop-blur-md rounded-full flex items-center justify-center shadow-md ring-1 ring-black/5 z-10"
+            >
+              <Heart
+                size={20}
+                weight={isWishlisted ? 'fill' : 'regular'}
+                className={isWishlisted ? 'text-red-500' : 'text-dark-800/60 dark:text-white/60'}
+              />
+            </motion.button>
           </div>
           {images.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -190,15 +218,35 @@ export default function ProductDetail() {
 
         {/* Details */}
         <div className="flex flex-col">
-          <div className="flex items-center gap-2 flex-wrap mb-2">
-            <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">{product.category}</span>
-            {product.is_preorder && (
-              <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                <Clock size={11} weight="fill" /> PREORDER
-              </span>
-            )}
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">{product.category}</span>
+              {product.is_preorder && (
+                <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                  <Clock size={11} weight="fill" /> PREORDER
+                </span>
+              )}
+            </div>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white mb-4 leading-snug">{product.title}</h1>
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <h1 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white leading-snug flex-1">{product.title}</h1>
+            {/* Wishlist button beside title on desktop */}
+            <motion.button
+              type="button"
+              onClick={handleWishlist}
+              whileTap={{ scale: 0.82 }}
+              animate={isWishlisted ? { scale: [1, 1.3, 1] } : { scale: 1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+              aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+              className={`flex-shrink-0 w-11 h-11 rounded-2xl border flex items-center justify-center transition-colors ${
+                isWishlisted
+                  ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30 text-red-500'
+                  : 'bg-cream-100 dark:bg-dark-700 border-cream-200 dark:border-white/10 text-dark-800/50 dark:text-white/40 hover:text-red-500 hover:border-red-200 dark:hover:border-red-800/30'
+              }`}
+            >
+              <Heart size={20} weight={isWishlisted ? 'fill' : 'regular'} />
+            </motion.button>
+          </div>
 
           {product.rating && (
             <div className="flex items-center gap-2 mb-4">
