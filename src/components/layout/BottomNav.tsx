@@ -29,44 +29,50 @@ export default function BottomNav() {
           const badgeValue = badgeKind === 'cart' ? totalItems : badgeKind === 'wishlist' ? wishlistCount : 0
 
           return (
-            <Link
+            <motion.div
               key={label}
-              to={to}
-              className={`relative flex items-center justify-center transition-all duration-300 ${active ? 'px-4 py-2.5' : 'w-10 h-10'
-                }`}
+              whileTap={{ scale: 0.88 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+              className="relative"
             >
-              {active && (
-                <motion.div
-                  layoutId="bottom-nav-indicator"
-                  className="absolute inset-0 glass-pill"
-                  transition={{ type: "spring", stiffness: 180, damping: 15, mass: 1.5 }}
-                />
-              )}
-
-              <div className="relative z-10 flex items-center gap-1.5">
-                <Icon
-                  size={20}
-                  weight={active ? 'fill' : 'duotone'}
-                  className={active ? 'text-brand-500 dark:text-brand-400' : 'text-dark-800/40 dark:text-white/40 hover:text-dark-800 dark:hover:text-white transition-colors'}
-                />
-
-                {badgeValue > 0 && !active && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-[3px] bg-brand-400 text-white text-[8px] font-bold rounded-full flex items-center justify-center shadow-sm">
-                    {badgeValue > 9 ? '9+' : badgeValue}
-                  </span>
-                )}
-
+              <Link
+                to={to}
+                className={`relative flex items-center justify-center transition-all duration-300 ${active ? 'px-4 py-2.5' : 'w-10 h-10'
+                  }`}
+              >
                 {active && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 'auto' }}
-                    className="text-[11px] font-bold text-brand-500 dark:text-brand-400 overflow-hidden whitespace-nowrap"
-                  >
-                    {label}
-                  </motion.span>
+                  <motion.div
+                    layoutId="bottom-nav-indicator"
+                    className="absolute inset-0 glass-pill"
+                    transition={{ type: "spring", stiffness: 180, damping: 15, mass: 1.5 }}
+                  />
                 )}
-              </div>
-            </Link>
+
+                <div className="relative z-10 flex items-center gap-1.5">
+                  <Icon
+                    size={20}
+                    weight={active ? 'fill' : 'duotone'}
+                    className={active ? 'text-brand-500 dark:text-brand-400' : 'text-dark-800/40 dark:text-white/40 hover:text-dark-800 dark:hover:text-white transition-colors'}
+                  />
+
+                  {badgeValue > 0 && !active && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-[3px] bg-brand-400 text-white text-[8px] font-bold rounded-full flex items-center justify-center shadow-sm">
+                      {badgeValue > 9 ? '9+' : badgeValue}
+                    </span>
+                  )}
+
+                  {active && (
+                    <motion.span
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: 'auto' }}
+                      className="text-[11px] font-bold text-brand-500 dark:text-brand-400 overflow-hidden whitespace-nowrap"
+                    >
+                      {label}
+                    </motion.span>
+                  )}
+                </div>
+              </Link>
+            </motion.div>
           )
         })}
       </div>
