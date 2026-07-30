@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Trash, Plus, Minus, ShoppingBag, CheckCircle } from '@phosphor-icons/react'
+import { ArrowLeft, Trash, Plus, Minus, ShoppingBag, CheckCircle, Heart } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -17,6 +17,8 @@ import { saveOfflineOrder } from '../lib/offlineOrders'
 import { trackOrderPlaced } from '../components/ui/AppReviewPrompt'
 import Image from '../components/ui/Image'
 import { useStoreContext } from '../contexts/StoreContext'
+import { useWishlistStore } from '../store/wishlistStore'
+import { useSignInStore } from '../store/signInStore'
 
 export default function Cart() {
   useDocumentTitle('Your Cart')
@@ -26,6 +28,9 @@ export default function Cart() {
   const { user } = useCustomerSession()
   const storeContext = useStoreContext()
   const currentStoreId = storeContext.storeId
+  const toggleWishlist = useWishlistStore(s => s.toggle)
+  const isWishlisted = useWishlistStore(s => s.has)
+  const openSignIn = useSignInStore(s => s.openModal)
 
   // Filter items to show only this store's items if we are in a merchant context
   const filteredItems = useMemo(() => {
@@ -604,14 +609,43 @@ export default function Cart() {
                         <Plus size={12} weight="bold" />
                       </button>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <p className="text-dark-800/70 dark:text-white/60 text-sm font-medium">{formatPrice(effectivePrice(item.product) * item.quantity)}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-dark-800/70 dark:text-white/60 text-sm font-medium mr-1">{formatPrice(effectivePrice(item.product) * item.quantity)}</p>
+                      {/* Save for Later button */}
+                      <motion.button
+                        whileTap={{ scale: 0.85 }}
+                        onClick={() => {
+                          if (!user) {
+                            openSignIn('Sign in to save items to your wishlist.')
+                            return
+                          }
+                          if (!isWishlisted(item.product.id)) {
+                            toggleWishlist(item.product)
+                          }
+                          removeItem(item.product.id)
+                          toast.success(`"${item.product.title.slice(0, 28)}${item.product.title.length > 28 ? '…' : ''}" saved to wishlist`, {
+                            icon: '❤️',
+                          })
+                        }}
+                        aria-label="Save for later"
+                        title="Save for later"
+                        className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
+                          isWishlisted(item.product.id)
+                            ? 'bg-red-50 dark:bg-red-900/20 text-red-500 border-red-200 dark:border-red-800/30'
+                            : 'bg-cream-100 dark:bg-dark-700 text-dark-800/50 dark:text-white/40 border-cream-200 dark:border-white/10 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 hover:border-red-200 dark:hover:border-red-800/30'
+                        }`}
+                      >
+                        <Heart size={12} weight={isWishlisted(item.product.id) ? 'fill' : 'regular'} />
+                        <span className="hidden sm:inline">{isWishlisted(item.product.id) ? 'Saved' : 'Save'}</span>
+                      </motion.button>
+                      {/* Hard remove */}
                       <button
                         onClick={() => removeItem(item.product.id)}
                         aria-label="Remove item"
-                        className="text-dark-800/40 dark:text-white/30 hover:text-red-500 transition-colors"
+                        title="Remove"
+                        className="text-dark-800/30 dark:text-white/20 hover:text-red-500 transition-colors"
                       >
-                        <Trash size={14} />
+                        <Trash size={13} />
                       </button>
                     </div>
                   </div>
