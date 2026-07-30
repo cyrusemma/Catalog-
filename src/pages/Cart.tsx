@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Trash, Plus, Minus, ShoppingBag, CheckCircle } from '@phosphor-icons/react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useCartStore } from '../store/cartStore'
@@ -558,13 +558,37 @@ export default function Cart() {
                   </div>
                   <div className="flex items-center justify-between mt-3">
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                        aria-label="Decrease quantity"
-                        className="w-8 h-8 bg-cream-100 dark:bg-dark-700 hover:bg-brand-400 hover:text-white rounded-full flex items-center justify-center transition-colors text-dark-800 dark:text-white"
-                      >
-                        <Minus size={12} weight="bold" />
-                      </button>
+                      {/* Minus / Remove button — morphs to trash icon at qty 1 */}
+                      <AnimatePresence mode="wait" initial={false}>
+                        {item.quantity === 1 ? (
+                          <motion.button
+                            key="remove"
+                            initial={{ scale: 0.7, rotate: -15 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            exit={{ scale: 0.7, rotate: 15 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                            onClick={() => removeItem(item.product.id)}
+                            aria-label="Remove item from cart"
+                            title="Remove item"
+                            className="w-8 h-8 bg-red-50 dark:bg-red-900/20 hover:bg-red-500 text-red-500 hover:text-white rounded-full flex items-center justify-center transition-colors border border-red-200 dark:border-red-800/30"
+                          >
+                            <Trash size={13} weight="bold" />
+                          </motion.button>
+                        ) : (
+                          <motion.button
+                            key="minus"
+                            initial={{ scale: 0.7 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0.7 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            aria-label="Decrease quantity"
+                            className="w-8 h-8 bg-cream-100 dark:bg-dark-700 hover:bg-brand-400 hover:text-white rounded-full flex items-center justify-center transition-colors text-dark-800 dark:text-white"
+                          >
+                            <Minus size={12} weight="bold" />
+                          </motion.button>
+                        )}
+                      </AnimatePresence>
                       <span className="text-dark-800 dark:text-white font-semibold text-sm w-6 text-center">{item.quantity}</span>
                       <button
                         onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
