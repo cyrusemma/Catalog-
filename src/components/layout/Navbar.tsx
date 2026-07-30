@@ -27,6 +27,16 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [showMiniCart, setShowMiniCart] = useState(false)
   const lastY = useRef(0)
+  const miniCartTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const openMiniCart = () => {
+    if (miniCartTimeout.current) clearTimeout(miniCartTimeout.current)
+    setShowMiniCart(true)
+  }
+
+  const closeMiniCart = () => {
+    miniCartTimeout.current = setTimeout(() => setShowMiniCart(false), 180)
+  }
 
   useEffect(() => {
     const onScroll = () => {
@@ -155,10 +165,10 @@ export default function Navbar() {
             </Link>
 
             {/* Cart Preview Hover Wrapper */}
-            <div 
+            <div
               className="relative"
-              onMouseEnter={() => setShowMiniCart(true)}
-              onMouseLeave={() => setShowMiniCart(false)}
+              onMouseEnter={openMiniCart}
+              onMouseLeave={closeMiniCart}
             >
               <Link to="/cart" className="relative w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors pointer-events-auto">
                 <ShoppingCart size={18} weight="duotone" className="text-dark-800 dark:text-white" />
@@ -183,40 +193,44 @@ export default function Navbar() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.96 }}
                     transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className="absolute right-0 mt-2 w-72 rounded-2xl bg-white/95 dark:bg-dark-900/95 backdrop-blur-xl border border-cream-200 dark:border-white/10 shadow-2xl p-4 text-left pointer-events-auto flex flex-col gap-3 z-50"
+                    onMouseEnter={openMiniCart}
+                    onMouseLeave={closeMiniCart}
+                    className="absolute right-0 top-full pt-2 w-72 z-50"
                   >
-                    <p className="text-[10px] font-bold text-dark-800/40 dark:text-white/40 uppercase tracking-wider">Cart Summary ({totalItems})</p>
-                    <div className="max-h-48 overflow-y-auto divide-y divide-gray-150/40 dark:divide-white/5 pr-1 scrollbar-thin">
-                      {cartItems.slice(0, 3).map((item) => {
-                        const priceVal = effectivePrice(item.product)
-                        return (
-                          <div key={item.product.id} className="py-2.5 flex gap-2.5 items-center">
-                            <img
-                              src={item.product.images?.[0] || 'https://placehold.co/40x40/f3f4f6/9ca3af?text=?'}
-                              alt=""
-                              className="w-10 h-10 rounded-lg object-cover bg-gray-100 flex-shrink-0 border border-gray-100 dark:border-white/5"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-dark-800 dark:text-white truncate">{item.product.title}</p>
-                              <p className="text-[10px] text-gray-400 mt-0.5">{item.quantity} × {formatPrice(priceVal)}</p>
+                    <div className="rounded-2xl bg-white/95 dark:bg-dark-900/95 backdrop-blur-xl border border-cream-200 dark:border-white/10 shadow-2xl p-4 text-left pointer-events-auto flex flex-col gap-3">
+                      <p className="text-[10px] font-bold text-dark-800/40 dark:text-white/40 uppercase tracking-wider">Cart Summary ({totalItems})</p>
+                      <div className="max-h-48 overflow-y-auto divide-y divide-gray-150/40 dark:divide-white/5 pr-1 scrollbar-thin">
+                        {cartItems.slice(0, 3).map((item) => {
+                          const priceVal = effectivePrice(item.product)
+                          return (
+                            <div key={item.product.id} className="py-2.5 flex gap-2.5 items-center">
+                              <img
+                                src={item.product.images?.[0] || 'https://placehold.co/40x40/f3f4f6/9ca3af?text=?'}
+                                alt=""
+                                className="w-10 h-10 rounded-lg object-cover bg-gray-100 flex-shrink-0 border border-gray-100 dark:border-white/5"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-dark-800 dark:text-white truncate">{item.product.title}</p>
+                                <p className="text-[10px] text-gray-400 mt-0.5">{item.quantity} × {formatPrice(priceVal)}</p>
+                              </div>
                             </div>
-                          </div>
-                        )
-                      })}
-                      {cartItems.length > 3 && (
-                        <p className="text-[10px] text-center text-brand-500 py-1.5 font-semibold">And {cartItems.length - 3} more items...</p>
-                      )}
+                          )
+                        })}
+                        {cartItems.length > 3 && (
+                          <p className="text-[10px] text-center text-brand-500 py-1.5 font-semibold">And {cartItems.length - 3} more items...</p>
+                        )}
+                      </div>
+                      <div className="border-t border-gray-150/40 dark:border-white/5 pt-3 flex items-center justify-between">
+                        <span className="text-xs font-semibold text-dark-800/60 dark:text-white/60">Subtotal:</span>
+                        <span className="text-sm font-bold text-dark-800 dark:text-white">{formatPrice(subtotal)}</span>
+                      </div>
+                      <Link
+                        to="/cart"
+                        className="w-full bg-brand-400 hover:bg-brand-500 text-white text-xs font-bold py-2 rounded-xl text-center shadow-md shadow-brand-400/10 block transition-all"
+                      >
+                        Go to Checkout
+                      </Link>
                     </div>
-                    <div className="border-t border-gray-150/40 dark:border-white/5 pt-3 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-dark-800/60 dark:text-white/60">Subtotal:</span>
-                      <span className="text-sm font-bold text-dark-800 dark:text-white">{formatPrice(subtotal)}</span>
-                    </div>
-                    <Link
-                      to="/cart"
-                      className="w-full bg-brand-400 hover:bg-brand-500 text-white text-xs font-bold py-2 rounded-xl text-center shadow-md shadow-brand-400/10 block transition-all"
-                    >
-                      Go to Checkout
-                    </Link>
                   </motion.div>
                 )}
               </AnimatePresence>
