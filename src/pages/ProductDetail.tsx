@@ -66,11 +66,16 @@ export default function ProductDetail() {
   const recentItems = useRecentStore(s => s.recent)
   const [activeImg, setActiveImg] = useState(0)
   const [added, setAdded] = useState(false)
+  const [selectedSize, setSelectedSize] = useState<string | null>(null)
+  const [selectedColor, setSelectedColor] = useState<string | null>(null)
 
   useEffect(() => {
     if (product) {
       addRecent(product)
       setActiveImg(0)
+      // Reset selections when product changes
+      setSelectedSize(null)
+      setSelectedColor(null)
     }
   }, [product, addRecent])
 
@@ -278,22 +283,43 @@ export default function ProductDetail() {
           {/* Available sizes */}
           {product.sizes && product.sizes.length > 0 && (
             <div className="mb-6">
-              <p className="text-dark-800/60 dark:text-white/50 text-xs uppercase tracking-[0.2em] font-semibold mb-2">
-                Available Sizes
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {product.sizes.map(s => (
-                  <span
-                    key={s}
-                    className="inline-flex items-center justify-center min-w-[2.5rem] px-3 py-1.5 rounded-lg border border-brand-400/30 bg-brand-400/5 text-dark-800 dark:text-white text-sm font-semibold"
-                  >
-                    {s}
-                  </span>
-                ))}
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-dark-800/60 dark:text-white/50 text-xs uppercase tracking-[0.2em] font-semibold">
+                  Size
+                </p>
+                {selectedSize && (
+                  <span className="text-xs font-semibold text-brand-400">{selectedSize}</span>
+                )}
               </div>
-              {(!product.colors || product.colors.length === 0) && (
+              <div className="flex flex-wrap gap-2">
+                {product.sizes.map(s => {
+                  const active = selectedSize === s
+                  return (
+                    <motion.button
+                      key={s}
+                      type="button"
+                      onClick={() => setSelectedSize(active ? null : s)}
+                      whileTap={{ scale: 0.92 }}
+                      animate={active ? { scale: 1.06 } : { scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                      aria-label={`Select size ${s}`}
+                      aria-pressed={active}
+                      className={`relative inline-flex items-center justify-center min-w-[2.75rem] px-3 py-1.5 rounded-lg border-2 text-sm font-semibold transition-colors duration-150 ${
+                        active
+                          ? 'border-brand-400 bg-brand-400 text-white shadow-amber-glow'
+                          : 'border-brand-400/30 bg-brand-400/5 text-dark-800 dark:text-white hover:border-brand-400/60 hover:bg-brand-400/10'
+                      }`}
+                    >
+                      {s}
+                    </motion.button>
+                  )
+                })}
+              </div>
+              {!selectedSize && (
                 <p className="text-dark-800/45 dark:text-white/35 text-[11px] mt-2">
-                  Mention your size when you order via WhatsApp.
+                  {(!product.colors || product.colors.length === 0)
+                    ? 'Tap to select your size.'
+                    : 'Tap to select your size.'}
                 </p>
               )}
             </div>
@@ -302,26 +328,41 @@ export default function ProductDetail() {
           {/* Available colors */}
           {product.colors && product.colors.length > 0 && (
             <div className="mb-6">
-              <p className="text-dark-800/60 dark:text-white/50 text-xs uppercase tracking-[0.2em] font-semibold mb-2">
-                Available Colors
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {product.colors.map(c => (
-                  <span
-                    key={c}
-                    className="inline-flex items-center justify-center min-w-[2.5rem] px-3 py-1.5 rounded-lg border border-brand-400/30 bg-brand-400/5 text-dark-800 dark:text-white text-sm font-semibold"
-                  >
-                    {c}
-                  </span>
-                ))}
-              </div>
-              {product.sizes && product.sizes.length > 0 ? (
-                <p className="text-dark-800/45 dark:text-white/35 text-[11px] mt-2">
-                  Mention your size and color when you order via WhatsApp.
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-dark-800/60 dark:text-white/50 text-xs uppercase tracking-[0.2em] font-semibold">
+                  Color
                 </p>
-              ) : (
+                {selectedColor && (
+                  <span className="text-xs font-semibold text-brand-400">{selectedColor}</span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {product.colors.map(c => {
+                  const active = selectedColor === c
+                  return (
+                    <motion.button
+                      key={c}
+                      type="button"
+                      onClick={() => setSelectedColor(active ? null : c)}
+                      whileTap={{ scale: 0.92 }}
+                      animate={active ? { scale: 1.06 } : { scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                      aria-label={`Select color ${c}`}
+                      aria-pressed={active}
+                      className={`relative inline-flex items-center justify-center min-w-[2.75rem] px-3 py-1.5 rounded-lg border-2 text-sm font-semibold transition-colors duration-150 ${
+                        active
+                          ? 'border-brand-400 bg-brand-400 text-white shadow-amber-glow'
+                          : 'border-brand-400/30 bg-brand-400/5 text-dark-800 dark:text-white hover:border-brand-400/60 hover:bg-brand-400/10'
+                      }`}
+                    >
+                      {c}
+                    </motion.button>
+                  )
+                })}
+              </div>
+              {!selectedColor && (
                 <p className="text-dark-800/45 dark:text-white/35 text-[11px] mt-2">
-                  Mention your color when you order via WhatsApp.
+                  Tap to select your color.
                 </p>
               )}
             </div>
@@ -351,18 +392,33 @@ export default function ProductDetail() {
           {/* Actions */}
           {product.stock_status !== 'out_of_stock' && (
             <div className="flex gap-3 mt-auto">
-              <button
+              <motion.button
                 type="button"
-                onClick={handleAddToCart}
+                onClick={() => {
+                  handleAddToCart()
+                  // Reset selections after adding to cart
+                  setTimeout(() => {
+                    setSelectedSize(null)
+                    setSelectedColor(null)
+                  }, 2000)
+                }}
+                whileTap={{ scale: 0.97 }}
                 className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold transition-all ${
                   added
-                    ? 'bg-green-500 text-white'
+                    ? 'bg-green-500 text-white shadow-lg'
                     : 'bg-dark-800 dark:bg-dark-700 hover:bg-dark-700 dark:hover:bg-dark-600 text-white border border-dark-700 dark:border-white/10'
                 }`}
               >
                 <ShoppingCart size={18} weight="duotone" />
-                {added ? 'Added to Cart!' : 'Add to Cart'}
-              </button>
+                {added
+                  ? 'Added to Cart!'
+                  : (() => {
+                      const parts = ['Add to Cart']
+                      const details = [selectedSize, selectedColor].filter(Boolean)
+                      if (details.length > 0) return `Add — ${details.join(' · ')}`
+                      return parts[0]
+                    })()}
+              </motion.button>
             </div>
           )}
 
