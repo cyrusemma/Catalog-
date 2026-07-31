@@ -293,14 +293,18 @@ export default function AdminProducts() {
                         >
                           <Star size={14} fill={product.is_featured ? 'currentColor' : 'none'} />
                         </button>
-                        {/* Publish toggle */}
-                        <button
-                          onClick={() => togglePublish.mutate({ id: product.id, val: !product.is_published })}
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${product.is_published ? 'bg-green-50 text-green-500' : 'bg-gray-100 text-gray-400'}`}
-                          title={product.is_published ? 'Unpublish' : 'Publish'}
-                        >
-                          {product.is_published ? <Eye size={14} /> : <EyeOff size={14} />}
-                        </button>
+                        {/* Publish toggle switch */}
+                        <div className="flex items-center gap-2 px-1">
+                          <button
+                            onClick={() => togglePublish.mutate({ id: product.id, val: !product.is_published })}
+                            className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 cursor-pointer ${product.is_published ? 'bg-green-500' : 'bg-gray-300'}`}
+                            title={product.is_published ? 'Unpublish' : 'Publish'}
+                          >
+                            <span
+                              className={`absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${product.is_published ? 'translate-x-4' : 'translate-x-0'}`}
+                            />
+                          </button>
+                        </div>
                         {/* Quick Edit */}
                         <button
                           onClick={() => {

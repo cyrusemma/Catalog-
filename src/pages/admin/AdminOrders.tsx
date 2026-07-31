@@ -415,8 +415,21 @@ export default function AdminOrders() {
                       </div>
 
                       <div className="mt-6">
+                        {order.status === 'pending' && (
+                          <button onClick={() => updateStatus.mutate({ id: order.id, status: 'confirmed' })} className="w-full mb-3 bg-brand-400 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-brand-500 shadow-sm transition-all cursor-pointer">Confirm Order</button>
+                        )}
+                        {order.status === 'confirmed' && (
+                          <button onClick={() => updateStatus.mutate({ id: order.id, status: 'processing' })} className="w-full mb-3 bg-brand-400 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-brand-500 shadow-sm transition-all cursor-pointer">Start Processing</button>
+                        )}
+                        {order.status === 'processing' && (
+                          <button onClick={() => updateStatus.mutate({ id: order.id, status: 'shipped' })} className="w-full mb-3 bg-brand-400 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-brand-500 shadow-sm transition-all cursor-pointer">Mark Shipped</button>
+                        )}
+                        {order.status === 'shipped' && (
+                          <button onClick={() => updateStatus.mutate({ id: order.id, status: 'delivered' })} className="w-full mb-3 bg-green-500 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-green-600 shadow-sm transition-all cursor-pointer">Mark Delivered</button>
+                        )}
+
                         <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-                          Update Status
+                          Manual Status Override
                         </label>
                         <div className="relative">
                           <select
