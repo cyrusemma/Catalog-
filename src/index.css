@@ -897,6 +897,7 @@ html.theme-aurora-dark {
   position: relative;
   border-radius: 9999px;
   isolation: isolate;
+  cursor: text;
   /* The ring lives on a ::before at exactly 1px outset — sharp, on the edge,
      no halo. The conic gradient is masked so the inner area is hollowed out,
      leaving only a ring tracing the input's border. */
@@ -925,7 +926,7 @@ html.theme-aurora-dark {
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  opacity: var(--aura-opacity);
+  opacity: 0; /* Hidden by default, shown on hover/focus */
   transition: opacity 0.3s ease;
   pointer-events: none;
   animation: search-aura-spin 4s linear infinite;
