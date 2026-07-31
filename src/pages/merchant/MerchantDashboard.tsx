@@ -22,6 +22,8 @@ import {
   SignOut,
   ChartBar,
   Warning,
+  ArrowRight,
+  ShareNetwork,
 } from '@phosphor-icons/react'
 import { supabase } from '../../lib/supabase'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
@@ -107,7 +109,16 @@ function StatCard({
         <Icon size={22} weight="duotone" className="text-white" />
       </div>
       <div className="relative z-10">
-        <p className="text-2xl font-display font-bold text-dark-800 dark:text-white">{value}</p>
+        <p className="text-2xl font-display font-bold text-dark-800 dark:text-white">
+          <motion.span
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-block"
+          >
+            {value}
+          </motion.span>
+        </p>
         <p className="text-xs text-dark-800/50 dark:text-white/40 font-medium mt-0.5">{label}</p>
       </div>
     </motion.div>
@@ -264,6 +275,49 @@ export default function MerchantDashboard() {
         {/* Share link — top of page, high visibility */}
         <CopyStoreLinkRow slug={store.slug} />
 
+        {/* Onboarding Empty State */}
+        {!productsLoading && (!products || products.length === 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-brand-400 to-brand-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-brand-500/20 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="relative z-10 max-w-lg">
+              <h2 className="text-2xl font-bold font-display mb-2">Welcome to your store, {store.name}! 🚀</h2>
+              <p className="text-white/80 text-sm mb-6">You're just a few steps away from making your first sale. Let's get your store set up and ready for customers.</p>
+              
+              <div className="space-y-3">
+                <Link to="/admin/settings" className="flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-xl transition-colors backdrop-blur-sm border border-white/10">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0"><Storefront size={20} weight="fill" /></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm">1. Customize your profile</p>
+                    <p className="text-white/60 text-xs truncate">Add a logo, banner, and contact details</p>
+                  </div>
+                  <ArrowRight size={16} className="text-white/50" />
+                </Link>
+                
+                <Link to="/admin/products/new" className="flex items-center gap-3 bg-white text-brand-600 hover:bg-white/90 p-3 rounded-xl transition-colors shadow-sm">
+                  <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0"><Package size={20} weight="fill" /></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm">2. Add your first product</p>
+                    <p className="text-brand-600/60 text-xs truncate">Upload images, set pricing and stock</p>
+                  </div>
+                  <ArrowRight size={16} className="text-brand-400" />
+                </Link>
+                
+                <div className="flex items-center gap-3 bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 opacity-70">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0"><ShareNetwork size={20} weight="fill" /></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm">3. Share with the world</p>
+                    <p className="text-white/60 text-xs truncate">Post your store link on social media</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Pending review alert */}
         {(pendingReviews ?? 0) > 0 && (
           <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-2xl px-4 py-3">
@@ -333,13 +387,13 @@ export default function MerchantDashboard() {
               ))}
             </div>
           ) : !products || products.length === 0 ? (
-            <div className="card p-8 text-center">
-              <Package size={36} className="text-dark-800/20 dark:text-white/20 mx-auto mb-3" />
+            <div className="card p-8 text-center bg-gray-50/50 dark:bg-dark-800/20 border-dashed border-2 border-gray-200 dark:border-white/5">
+              <Package size={36} className="text-brand-400/50 mx-auto mb-3" />
               <p className="text-dark-800/50 dark:text-white/40 text-sm font-medium mb-4">
-                No products yet
+                Your product catalog is empty.
               </p>
               <Link to="/admin/products/new" className="btn-primary text-sm py-2 px-6">
-                Add your first product
+                Add a product
               </Link>
             </div>
           ) : (
@@ -390,16 +444,26 @@ export default function MerchantDashboard() {
         </motion.section>
 
         {/* Recent orders */}
-        {orders && orders.length > 0 && (
-          <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-dark-800/50 dark:text-white/40 flex items-center gap-2">
-                <ShoppingBag size={16} weight="duotone" /> Recent Orders
-              </h2>
+        <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-dark-800/50 dark:text-white/40 flex items-center gap-2">
+              <ShoppingBag size={16} weight="duotone" /> Recent Orders
+            </h2>
+            {orders && orders.length > 0 && (
               <Link to="/admin/orders" className="text-xs font-semibold text-brand-400 hover:text-brand-500 bg-brand-400/10 px-3 py-1.5 rounded-lg transition-colors">
                 View all →
               </Link>
+            )}
+          </div>
+          
+          {!orders || orders.length === 0 ? (
+            <div className="card p-8 text-center bg-gray-50/50 dark:bg-dark-800/20 border-dashed border-2 border-gray-200 dark:border-white/5">
+              <ShoppingBag size={36} className="text-brand-400/50 mx-auto mb-3" />
+              <p className="text-dark-800/50 dark:text-white/40 text-sm font-medium">
+                No orders yet. Share your store link to get your first sale!
+              </p>
             </div>
+          ) : (
             <div className="space-y-2">
               {orders.map((order: any) => (
                 <div key={order.id} className="card p-4 flex items-center gap-3 hover:border-brand-400/30 transition-colors border border-transparent">
@@ -428,8 +492,8 @@ export default function MerchantDashboard() {
                 </div>
               ))}
             </div>
-          </motion.section>
-        )}
+          )}
+        </motion.section>
 
         {/* Quick actions */}
         <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
