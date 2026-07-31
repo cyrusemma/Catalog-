@@ -77,6 +77,7 @@ export default function AdminProductForm() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [form, setForm] = useState<FormData>(emptyForm)
+  const [activeTab, setActiveTab] = useState<'basic' | 'media' | 'pricing' | 'variants' | 'settings'>('basic')
 
   // Unsaved changes warning
   useEffect(() => {
@@ -414,8 +415,34 @@ export default function AdminProductForm() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-5 lg:gap-6">
+        <div className="grid lg:grid-cols-4 gap-5 lg:gap-8">
           <div className="lg:col-span-3 space-y-5">
+            {/* Tab Navigation */}
+            <div className="flex overflow-x-auto hide-scrollbar border-b border-gray-200">
+              {[
+                { id: 'basic', label: 'Basic Info' },
+                { id: 'media', label: 'Media' },
+                { id: 'pricing', label: 'Pricing & Inventory' },
+                { id: 'variants', label: 'Variants' },
+                { id: 'settings', label: 'Settings' },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-brand-500 text-brand-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === 'media' && (
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Images</h2>
               <div className="grid grid-cols-2 gap-2 mb-3">
@@ -491,7 +518,9 @@ export default function AdminProductForm() {
                 </button>
               </div>
             </div>
+            )}
 
+            {activeTab === 'basic' && (
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Product Details</h2>
 
@@ -608,29 +637,10 @@ export default function AdminProductForm() {
                 </div>
               </div>
             </div>
+            )}
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Pricing</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-gray-700 text-xs font-semibold mb-1.5">Selling Price (GHS) *</label>
-                  <input type="number" min="0" step="0.01" value={form.selling_price} onChange={e => setPrice('selling_price', e.target.value)} placeholder="0.00" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Compare-at Price (GHS)</label>
-                  <input type="number" min="0" step="0.01" value={form.original_price} onChange={e => setPrice('original_price', e.target.value)} placeholder="0.00" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Discount % (auto)</label>
-                  <input type="number" readOnly value={form.discount_percent} placeholder="—" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-100 cursor-not-allowed" />
-                </div>
-              </div>
-              <p className="text-gray-400 text-xs mt-3">
-                Compare-at price shows as a strikethrough next to your selling price to highlight savings.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+            {activeTab === 'basic' && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 mt-5">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Key Features</h2>
               <div className="space-y-2 mb-3">
                 {form.key_features.map((f, i) => (
@@ -660,7 +670,103 @@ export default function AdminProductForm() {
                 </button>
               </div>
             </div>
+            )}
 
+            {activeTab === 'pricing' && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Pricing</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-gray-700 text-xs font-semibold mb-1.5">Selling Price (GHS) *</label>
+                  <input type="number" min="0" step="0.01" value={form.selling_price} onChange={e => setPrice('selling_price', e.target.value)} placeholder="0.00" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Compare-at Price (GHS)</label>
+                  <input type="number" min="0" step="0.01" value={form.original_price} onChange={e => setPrice('original_price', e.target.value)} placeholder="0.00" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Discount % (auto)</label>
+                  <input type="number" readOnly value={form.discount_percent} placeholder="—" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-100 cursor-not-allowed" />
+                </div>
+              </div>
+              <p className="text-gray-400 text-xs mt-3">
+                Compare-at price shows as a strikethrough next to your selling price to highlight savings.
+              </p>
+            </div>
+            )}
+
+            {activeTab === 'pricing' && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 mt-5">
+              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Stock Status</h2>
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {([
+                  { value: 'in_stock', label: 'In Stock' },
+                  { value: 'few_units_left', label: 'Few Units Left' },
+                  { value: 'out_of_stock', label: 'Out of Stock' },
+                ] as const).map(s => (
+                  <button key={s.value} type="button" onClick={() => selectStockStatus(s.value)} className={`py-2 px-1 rounded-xl text-xs font-medium transition-colors ${form.stock_status === s.value ? 'bg-brand-400 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+              {form.stock_status !== 'out_of_stock' && (
+                <div>
+                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Units left</label>
+                  <input type="number" min="0" value={form.stock} onChange={e => set('stock', e.target.value)} placeholder="e.g. 3" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
+                  {form.stock_status === 'in_stock' && (
+                    <p className="text-gray-400 text-[11px] mt-2">Pre-filled for you — adjust only if you want an exact count.</p>
+                  )}
+                </div>
+              )}
+            </div>
+            )}
+
+            {activeTab === 'pricing' && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 mt-5">
+              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Flash Sale</h2>
+              <p className="text-gray-400 text-[11px] mb-4">
+                Set a temporary sale price and an end time. Customers see a live countdown and the price reverts automatically when it ends. Leave blank for no sale.
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Sale price (GHS)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.flash_sale_price}
+                    onChange={e => set('flash_sale_price', e.target.value)}
+                    placeholder="Lower than selling price"
+                    className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Ends at</label>
+                  <input
+                    type="datetime-local"
+                    value={form.flash_sale_ends_at}
+                    onChange={e => set('flash_sale_ends_at', e.target.value)}
+                    aria-label="Flash sale end time"
+                    className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white"
+                  />
+                </div>
+                {form.selling_price && form.flash_sale_price && parseFloat(form.flash_sale_price) >= parseFloat(form.selling_price) && (
+                  <p className="text-amber-600 text-[11px]">Sale price should be lower than the selling price ({form.selling_price}) to show as a deal.</p>
+                )}
+                {(form.flash_sale_price || form.flash_sale_ends_at) && (
+                  <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, flash_sale_price: '', flash_sale_ends_at: '' }))}
+                    className="text-gray-500 hover:text-red-500 text-xs font-medium"
+                  >
+                    Clear flash sale
+                  </button>
+                )}
+              </div>
+            </div>
+            )}
+
+            {activeTab === 'variants' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="bg-white rounded-2xl border border-gray-100 p-5">
                 <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Available Sizes</h2>
@@ -764,33 +870,10 @@ export default function AdminProductForm() {
                 </div>
               </div>
             </div>
-          </div>
+            )}
 
-          <div className="lg:col-span-2 space-y-5">
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Stock Status</h2>
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                {([
-                  { value: 'in_stock', label: 'In Stock' },
-                  { value: 'few_units_left', label: 'Few Units Left' },
-                  { value: 'out_of_stock', label: 'Out of Stock' },
-                ] as const).map(s => (
-                  <button key={s.value} type="button" onClick={() => selectStockStatus(s.value)} className={`py-2 px-1 rounded-xl text-xs font-medium transition-colors ${form.stock_status === s.value ? 'bg-brand-400 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-              {form.stock_status !== 'out_of_stock' && (
-                <div>
-                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Units left</label>
-                  <input type="number" min="0" value={form.stock} onChange={e => set('stock', e.target.value)} placeholder="e.g. 3" className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white" />
-                  {form.stock_status === 'in_stock' && (
-                    <p className="text-gray-400 text-[11px] mt-2">Pre-filled for you — adjust only if you want an exact count.</p>
-                  )}
-                </div>
-              )}
-            </div>
-
+            {activeTab === 'settings' && (
+            <div className="space-y-5">
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Delivery</h2>
               <div className="grid grid-cols-2 gap-2 mb-3">
@@ -833,48 +916,7 @@ export default function AdminProductForm() {
               )}
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Flash Sale</h2>
-              <p className="text-gray-400 text-[11px] mb-4">
-                Set a temporary sale price and an end time. Customers see a live countdown and the price reverts automatically when it ends. Leave blank for no sale.
-              </p>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Sale price (GHS)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={form.flash_sale_price}
-                    onChange={e => set('flash_sale_price', e.target.value)}
-                    placeholder="Lower than selling price"
-                    className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Ends at</label>
-                  <input
-                    type="datetime-local"
-                    value={form.flash_sale_ends_at}
-                    onChange={e => set('flash_sale_ends_at', e.target.value)}
-                    aria-label="Flash sale end time"
-                    className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white"
-                  />
-                </div>
-                {form.selling_price && form.flash_sale_price && parseFloat(form.flash_sale_price) >= parseFloat(form.selling_price) && (
-                  <p className="text-amber-600 text-[11px]">Sale price should be lower than the selling price ({form.selling_price}) to show as a deal.</p>
-                )}
-                {(form.flash_sale_price || form.flash_sale_ends_at) && (
-                  <button
-                    type="button"
-                    onClick={() => setForm(f => ({ ...f, flash_sale_price: '', flash_sale_ends_at: '' }))}
-                    className="text-gray-500 hover:text-red-500 text-xs font-medium"
-                  >
-                    Clear flash sale
-                  </button>
-                )}
-              </div>
-            </div>
+
 
             <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Options</h2>
@@ -892,6 +934,12 @@ export default function AdminProductForm() {
                 </label>
               ))}
             </div>
+            </div>
+            )}
+          </div>
+
+          {/* Sidebar / Sticky Actions */}
+          <div className="lg:col-span-1 space-y-5">
 
             <div className="space-y-2">
               {saveError && (
