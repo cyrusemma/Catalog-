@@ -150,7 +150,7 @@ export function useProduct(id: string, isMarketplaceView = true) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*, store:stores(markup_percentage)')
+        .select('*, store:stores(name, slug, logo_url, markup_percentage)')
         .eq('id', id)
         .eq('is_published', true)
         .single()

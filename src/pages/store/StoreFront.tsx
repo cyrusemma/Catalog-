@@ -95,8 +95,9 @@ function ShareStoreLinkButton({ storeSlug }: { storeSlug: string }) {
 export default function StoreFront() {
   const formatPrice = useCurrencyFormatter()
   const { storeSlug } = useParams<{ storeSlug: string }>()
-  const { session } = useCustomerSession()
+  const { session, profile, isLoggedIn } = useCustomerSession()
   const qc = useQueryClient()
+  const [followingWorking, setFollowingWorking] = useState(false)
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [sortBy, setSortBy] = useState<string>('newest')
@@ -115,6 +116,47 @@ export default function StoreFront() {
     whatsapp_number: storeContext.whatsappNumber,
     owner_id: storeContext.ownerId,
     settings: storeContext.settings,
+  }
+
+  const isFollowing = !!store.id && !!profile?.followed_stores?.includes(store.id)
+
+  const handleFollowToggle = async () => {
+    if (!isLoggedIn) {
+      toast.error('Please sign in to follow stores')
+      return
+    }
+    if (!profile || !store.id) return
+    setFollowingWorking(true)
+
+    try {
+      const currentFollows = profile.followed_stores || []
+      let newFollows: string[]
+      if (currentFollows.includes(store.id)) {
+        newFollows = currentFollows.filter(id => id !== store.id)
+      } else {
+        newFollows = [...currentFollows, store.id]
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ followed_stores: newFollows })
+        .eq('id', profile.id)
+
+      if (error) {
+        localStorage.setItem(`catalog_follows_${profile.id}`, JSON.stringify(newFollows))
+        profile.followed_stores = newFollows
+        qc.invalidateQueries({ queryKey: ['customer-profile'] })
+        toast.success(currentFollows.includes(store.id) ? 'Unfollowed store' : 'Followed store!')
+      } else {
+        qc.invalidateQueries({ queryKey: ['customer-profile'] })
+        toast.success(currentFollows.includes(store.id) ? 'Unfollowed store' : 'Followed store!')
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to update follow status')
+    } finally {
+      setFollowingWorking(false)
+    }
   }
 
   // 2. Fetch products belonging to this store only
@@ -206,9 +248,31 @@ export default function StoreFront() {
 
             {/* Store info */}
             <div className="text-center md:text-left flex-1 mt-2 md:mt-0 pt-2 md:pt-12">
-              <h1 className="text-3xl font-display font-semibold text-gray-900 dark:text-white">
-                {store.name}
-              </h1>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+                <h1 className="text-3xl font-display font-semibold text-gray-900 dark:text-white">
+                  {store.name}
+                </h1>
+                {!isOwner && store.id && (
+                  <button
+                    onClick={handleFollowToggle}
+                    disabled={followingWorking}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 transition-all ${
+                      isFollowing
+                        ? 'bg-cream-100 dark:bg-dark-700 text-dark-800/80 dark:text-white/80 border border-cream-200 dark:border-white/10'
+                        : 'bg-brand-400 hover:bg-brand-500 text-white shadow-sm'
+                    }`}
+                  >
+                    {isFollowing ? (
+                      <>
+                        <Check size={12} className="stroke-[3]" />
+                        Following
+                      </>
+                    ) : (
+                      '+ Follow'
+                    )}
+                  </button>
+                )}
+              </div>
               {store.tagline && (
                 <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm max-w-2xl">
                   {store.tagline}

@@ -31,6 +31,12 @@ export interface Product {
   approval_status?: 'pending' | 'approved' | 'rejected'
   is_approved_for_marketplace?: boolean
   marketplace_price?: number | null
+  store?: {
+    name: string
+    slug: string
+    logo_url?: string | null
+    markup_percentage?: number
+  } | null
 }
 
 export interface Order {

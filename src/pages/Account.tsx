@@ -1,29 +1,74 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Bell, BellSlash, SignOut, User as UserIcon, EnvelopeSimple, CheckCircle, Storefront, ArrowSquareOut, Package } from '@phosphor-icons/react'
-import { motion } from 'framer-motion'
+import {
+  Bell,
+  BellSlash,
+  SignOut,
+  User as UserIcon,
+  EnvelopeSimple,
+  CheckCircle,
+  Storefront,
+  ArrowSquareOut,
+  Package,
+  Heart,
+  Eye,
+  MapPin,
+  Ticket,
+  ClipboardText,
+  Clock,
+  Truck,
+  Check,
+  XCircle,
+  Plus
+} from '@phosphor-icons/react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useNotificationPreferences } from '../hooks/useNotificationPreferences'
+import { useRecentStore } from '../store/recentStore'
+import { useWishlistStore } from '../store/wishlistStore'
+import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
+import ProductCard from '../components/ui/ProductCard'
+import { toast } from 'sonner'
+
+// Status steps for tracking orders
+const STATUS_STEPS = ['pending', 'confirmed', 'processing', 'shipped', 'delivered']
 
 export default function Account() {
   const { isLoggedIn, user, profile, loading } = useCustomerSession()
   const { pushSubscribed, pushWorking, pushError, supported, toggle } = useNotificationPreferences()
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const formatPrice = useCurrencyFormatter()
+  
   const [signedOut, setSignedOut] = useState(false)
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'inbox' | 'vouchers' | 'wishlist' | 'followed' | 'recent' | 'address' | 'alerts' | 'store'>('overview')
   const [showCreateWizard, setShowCreateWizard] = useState(false)
 
-  // Redirect to home if we end up here without a session. Wait for the auth
-  // check to settle so we don't bounce a user who's mid-sign-in.
+  // Address form fields
+  const [phone, setPhone] = useState('')
+  const [address, setAddress] = useState('')
+  const [savingAddress, setSavingAddress] = useState(false)
+
+  // Sync address fields when profile updates
+  useEffect(() => {
+    if (profile) {
+      const savedLocal = localStorage.getItem(`catalog_address_${user?.id}`)
+      const localData = savedLocal ? JSON.parse(savedLocal) : null
+      setPhone(profile.phone || localData?.phone || '')
+      setAddress(profile.address || localData?.address || '')
+    }
+  }, [profile, user?.id])
+
+  // Redirect to home if not logged in
   useEffect(() => {
     if (!loading && !isLoggedIn && !signedOut) {
       navigate('/', { replace: true })
     }
   }, [loading, isLoggedIn, signedOut, navigate])
 
-  // Fetch the logged-in user's store
+  // 1. Fetch user's own store (merchant credentials)
   const { data: store, isLoading: storeLoading } = useQuery({
     queryKey: ['user-store', user?.id],
     queryFn: async () => {
@@ -39,19 +84,138 @@ export default function Account() {
     enabled: !!user?.id,
   })
 
+  // 2. Fetch customer order history
+  const { data: orders, isLoading: ordersLoading } = useQuery({
+    queryKey: ['customer-orders', user?.id],
+    queryFn: async () => {
+      if (!user) return []
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('customer_id', user.id)
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      return data
+    },
+    enabled: !!user?.id,
+  })
+
+  // 3. Fetch active promo codes (vouchers) from DB
+  const { data: vouchers, isLoading: vouchersLoading } = useQuery({
+    queryKey: ['customer-vouchers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('discounts')
+        .select('*, store:stores(name, slug)')
+        .eq('active', true)
+        .not('code', 'is', null)
+      if (error) throw error
+      return data || []
+    }
+  })
+
+  // 4. Fetch details of followed stores
+  const { data: followedStores, isLoading: followedStoresLoading } = useQuery({
+    queryKey: ['followed-stores', profile?.followed_stores],
+    queryFn: async () => {
+      if (!profile?.followed_stores || profile.followed_stores.length === 0) return []
+      const { data, error } = await supabase
+        .from('stores')
+        .select('id, name, slug, tagline, logo_url')
+        .in('id', profile.followed_stores)
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!profile?.followed_stores && profile.followed_stores.length > 0,
+  })
+
+  // 5. Gather Zustand stores data (Recently viewed, Wishlist)
+  const recentProducts = useRecentStore(s => s.recent)
+  const wishlistItems = useWishlistStore(s => s.items)
+
+  // 6. Dynamic notification system computed from order logs
+  const notifications = useMemo(() => {
+    const list = [
+      {
+        id: 'welcome',
+        title: 'Welcome to Catalog!',
+        body: 'Start exploring customized vendor shops, bookmark your favorites, and manage your account details.',
+        time: profile?.created_at ? new Date(profile.created_at) : new Date(),
+        type: 'info'
+      }
+    ]
+    if (orders && orders.length > 0) {
+      orders.forEach(order => {
+        const orderShort = order.id.split('-')[0].toUpperCase()
+        if (order.status !== 'pending') {
+          list.push({
+            id: `${order.id}-status`,
+            title: `Order #${orderShort} updated`,
+            body: `Your order is now status: ${order.status.toUpperCase()}`,
+            time: new Date(order.created_at), // Fallback if no specific change logs
+            type: order.status === 'delivered' ? 'success' : 'info'
+          })
+        }
+      })
+    }
+    return list.sort((a, b) => b.time.getTime() - a.time.getTime())
+  }, [profile?.created_at, orders])
+
   const signOut = async () => {
     setSignedOut(true)
     await supabase.auth.signOut()
     navigate('/', { replace: true })
   }
 
+  const handleSaveAddress = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) return
+    setSavingAddress(true)
+    try {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          phone: phone.trim(),
+          address: address.trim()
+        })
+        .eq('id', user.id)
+
+      localStorage.setItem(`catalog_address_${user.id}`, JSON.stringify({
+        phone: phone.trim(),
+        address: address.trim()
+      }))
+
+      if (updateError) {
+        // Fallback works, but warn in dev log
+        console.warn('DB write failed, fallback saved locally:', updateError.message)
+      }
+      
+      qc.invalidateQueries({ queryKey: ['customer-profile', user.id] })
+      toast.success('Address Book updated!')
+      setActiveTab('overview')
+    } catch {
+      toast.error('Failed to update Address details.')
+    } finally {
+      setSavingAddress(false)
+    }
+  }
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code)
+    toast.success(`Copied code: ${code}`)
+  }
+
   if (loading || !profile) {
     return (
-      <main className="w-full flex-1 max-w-3xl mx-auto px-4 py-12 pb-28 lg:pb-12">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-40 bg-cream-100 dark:bg-dark-700 rounded" />
-          <div className="h-32 bg-cream-100 dark:bg-dark-700 rounded-3xl" />
-          <div className="h-24 bg-cream-100 dark:bg-dark-700 rounded-3xl" />
+      <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-12 pb-28 lg:pb-12">
+        <div className="animate-pulse flex gap-6">
+          <div className="hidden lg:block w-64 h-96 bg-cream-100 dark:bg-dark-700 rounded-3xl" />
+          <div className="flex-1 space-y-4">
+            <div className="h-8 w-40 bg-cream-100 dark:bg-dark-700 rounded" />
+            <div className="h-32 bg-cream-100 dark:bg-dark-700 rounded-3xl" />
+            <div className="h-48 bg-cream-100 dark:bg-dark-700 rounded-3xl" />
+          </div>
         </div>
       </main>
     )
@@ -63,210 +227,595 @@ export default function Account() {
     .slice(0, 2)
     .join('') || '?'
 
+  const sidebarItems = [
+    { id: 'overview', label: 'Account Overview', icon: UserIcon },
+    { id: 'orders', label: 'My Orders', icon: Package, count: orders?.length },
+    { id: 'inbox', label: 'Inbox', icon: ClipboardText, count: notifications.length },
+    { id: 'vouchers', label: 'Vouchers & Coupons', icon: Ticket, count: vouchers?.length },
+    { id: 'wishlist', label: 'Wishlist', icon: Heart, count: wishlistItems.length },
+    { id: 'followed', label: 'Followed Sellers', icon: Storefront, count: profile.followed_stores?.length },
+    { id: 'recently-viewed', label: 'Recently Viewed', icon: Eye, count: recentProducts.length },
+    { id: 'address', label: 'Address Book', icon: MapPin },
+    { id: 'alerts', label: 'Notification Settings', icon: Bell },
+    { id: 'store', label: 'Merchant Dashboard', icon: Storefront }
+  ] as const
+
   return (
-    <main className="w-full flex-1 max-w-3xl mx-auto px-4 py-10 pb-28 lg:pb-10">
+    <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-10 pb-28 lg:pb-10">
       <div className="flex items-center gap-2 mb-2">
         <span className="w-1.5 h-1.5 rounded-full bg-brand-400" />
-        <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Your account</span>
+        <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Customer Portal</span>
       </div>
-      <h1 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white mb-8">Account</h1>
+      <h1 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white mb-8">My Account</h1>
 
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="rounded-3xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 mb-5"
-      >
-        <div className="flex items-center gap-4">
-          {profile.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt=""
-              className="w-14 h-14 rounded-full object-cover ring-2 ring-brand-400/30"
-            />
-          ) : (
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-400 to-brand-500 text-white font-bold text-lg flex items-center justify-center shadow-amber-glow">
-              {initials}
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="text-dark-800 dark:text-white font-semibold truncate">
-              {profile.display_name || 'Signed in'}
-            </p>
-            <p className="text-dark-800/55 dark:text-white/50 text-sm truncate flex items-center gap-1.5">
-              <EnvelopeSimple size={13} /> {profile.email}
-            </p>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* Store Setup / Manager Card */}
-      {!storeLoading && (
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-3xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 mb-5"
-        >
-          {store ? (
-            <div className="flex items-start gap-3">
-              <Storefront size={18} weight="duotone" className="text-brand-400 mt-0.5" />
-              <div className="flex-1">
-                <h2 className="text-dark-800 dark:text-white font-semibold">Your Store: {store.name}</h2>
-                <p className="text-dark-800/55 dark:text-white/50 text-sm mt-1.5">
-                  You are a registered merchant! Manage products, check orders, and view sales stats.
-                </p>
-                <div className="flex items-center gap-4 mt-3">
-                  <Link
-                    to="/admin"
-                    className="text-brand-400 hover:text-brand-500 text-sm font-semibold"
-                  >
-                    Go to Admin Dashboard →
-                  </Link>
-                  <a
-                    href={`/s/${store.slug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-dark-800/60 dark:text-white/55 hover:text-brand-400 text-sm font-semibold flex items-center gap-1"
-                  >
-                    View Storefront <ArrowSquareOut size={13} />
-                  </a>
-                </div>
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        {/* Navigation Sidebar */}
+        <aside className="w-full lg:w-64 bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 rounded-3xl p-4 space-y-1.5 shadow-sm sticky top-24">
+          <div className="flex items-center gap-3 px-3 py-3 border-b border-cream-100 dark:border-white/5 mb-3">
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt=""
+                className="w-10 h-10 rounded-full object-cover ring-2 ring-brand-400/30"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-400 to-brand-500 text-white font-bold text-sm flex items-center justify-center">
+                {initials}
               </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-dark-800 dark:text-white font-semibold text-sm truncate">
+                {profile.display_name || 'Customer'}
+              </p>
+              <p className="text-dark-800/40 dark:text-white/40 text-[11px] truncate">
+                {profile.email}
+              </p>
             </div>
-          ) : (
-            <div>
-              {showCreateWizard ? (
-                <StoreCreationWizard
-                  onCancel={() => setShowCreateWizard(false)}
-                  onSuccess={() => {
-                    setShowCreateWizard(false)
-                    qc.invalidateQueries({ queryKey: ['user-store', user?.id] })
+          </div>
+
+          <nav className="space-y-1">
+            {sidebarItems.map(item => {
+              const active = activeTab === item.id || (item.id === 'recently-viewed' && activeTab === 'recent')
+              const Icon = item.icon
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    if (item.id === 'recently-viewed') {
+                      setActiveTab('recent')
+                    } else {
+                      setActiveTab(item.id)
+                    }
                   }}
-                />
-              ) : (
-                <div className="flex items-start gap-3">
-                  <Storefront size={18} weight="duotone" className="text-brand-400 mt-0.5" />
-                  <div className="flex-1">
-                    <h2 className="text-dark-800 dark:text-white font-semibold">Start Selling</h2>
-                    <p className="text-dark-800/55 dark:text-white/50 text-sm mt-1.5">
-                      Create your own storefront in minutes, upload products, and share your link to start selling.
-                    </p>
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-left text-sm font-semibold transition-all group ${
+                    active
+                      ? 'bg-brand-400/10 text-brand-400'
+                      : 'text-dark-800/60 dark:text-white/60 hover:bg-cream-50 dark:hover:bg-dark-700/30 hover:text-dark-800 dark:hover:text-white'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Icon size={16} weight={active ? 'fill' : 'bold'} className="flex-shrink-0" />
+                    {item.label}
+                  </span>
+                  {'count' in item && item.count !== undefined && item.count > 0 && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${
+                      active ? 'bg-brand-400 text-white' : 'bg-cream-100 dark:bg-dark-700 text-dark-800/50 dark:text-white/50 group-hover:bg-cream-200 dark:group-hover:bg-dark-600'
+                    }`}>
+                      {item.count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </nav>
+
+          <div className="pt-3 mt-3 border-t border-cream-100 dark:border-white/5">
+            <button
+              onClick={signOut}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl text-left text-sm font-semibold text-red-500 hover:bg-red-500/5 transition-colors"
+            >
+              <SignOut size={16} weight="bold" />
+              Sign Out
+            </button>
+          </div>
+        </aside>
+
+        {/* Dynamic Display Panel */}
+        <div className="flex-1 w-full min-w-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25 }}
+              className="space-y-6"
+            >
+              {/* ── Tab: Overview ────────────────────────────────────────── */}
+              {activeTab === 'overview' && (
+                <div className="space-y-6">
+                  {/* Greeting Banner */}
+                  <div className="bg-gradient-to-br from-brand-400 to-brand-500 rounded-3xl p-6 text-white shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_60%)] pointer-events-none" />
+                    <div>
+                      <h2 className="text-xl sm:text-2xl font-bold font-display">Hello, {profile.display_name || 'User'}!</h2>
+                      <p className="text-white/80 text-xs mt-1">Welcome back. Manage your address book, check orders, and discover active coupons.</p>
+                    </div>
                     <button
-                      onClick={() => setShowCreateWizard(true)}
-                      className="mt-3 bg-brand-400 hover:bg-brand-500 text-white font-semibold px-4 py-2 rounded-xl text-xs transition-colors shadow-sm"
+                      onClick={() => setActiveTab('address')}
+                      className="bg-white/15 hover:bg-white/25 text-white border border-white/20 text-xs font-semibold px-4 py-2 rounded-xl transition-all"
                     >
-                      Create Storefront
+                      Quick Update Address
                     </button>
+                  </div>
+
+                  {/* Overview Cards Grid */}
+                  <div className="grid md:grid-cols-2 gap-5">
+                    {/* Account Details */}
+                    <div className="card p-5 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/35 mb-4">Account Details</h3>
+                        <p className="text-dark-800 dark:text-white font-semibold">{profile.display_name}</p>
+                        <p className="text-dark-800/60 dark:text-white/50 text-xs mt-1 truncate flex items-center gap-1.5">
+                          <EnvelopeSimple size={13} /> {profile.email}
+                        </p>
+                      </div>
+                      <Link to="/settings" className="text-brand-400 hover:text-brand-500 text-xs font-bold mt-4 flex items-center gap-1">
+                        Edit Profile →
+                      </Link>
+                    </div>
+
+                    {/* Store Credit Holographic Card */}
+                    <div className="relative h-44 rounded-3xl bg-gradient-to-br from-[#1a1c22] via-[#2d323f] to-[#121318] p-5 text-white flex flex-col justify-between overflow-hidden shadow-lg border border-white/5 group hover:shadow-2xl transition-all duration-500">
+                      {/* Ambient Holographic Reflection Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-tr from-brand-400/0 via-brand-400/10 to-brand-400/20 mix-blend-overlay pointer-events-none group-hover:translate-x-12 transition-transform duration-1000" />
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-[10px] text-white/40 uppercase tracking-widest font-extrabold font-mono">Catalog Store Credit</span>
+                          <h4 className="text-xs text-white/70 font-semibold mt-1">GIFT CARD</h4>
+                        </div>
+                        <div className="w-8 h-8 rounded-lg bg-brand-400/20 border border-brand-400/30 flex items-center justify-center text-brand-400">
+                          <Ticket size={18} weight="fill" />
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-white/30 font-mono tracking-widest">CARD BALANCE</p>
+                        <p className="text-2xl font-bold font-mono text-brand-400 mt-0.5">{formatPrice(profile.store_credit || 0)}</p>
+                      </div>
+                      <div className="flex justify-between items-end border-t border-white/5 pt-2">
+                        <span className="text-[9px] font-mono text-white/40 tracking-wider">**** **** **** {user?.id?.slice(-4) || '0000'}</span>
+                        <span className="text-[8px] font-mono text-white/35 uppercase">ACTIVE MEMBER</span>
+                      </div>
+                    </div>
+
+                    {/* Address Book Widget */}
+                    <div className="card p-5 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/35 mb-4">Default Address</h3>
+                        {address ? (
+                          <div className="space-y-1.5 text-xs text-dark-800/80 dark:text-white/80 leading-relaxed">
+                            <p className="font-semibold text-dark-800 dark:text-white">{profile.display_name}</p>
+                            <p className="font-mono">{phone}</p>
+                            <p className="italic">"{address}"</p>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-dark-800/40 dark:text-white/30 italic">No default address saved. Setup your address book for faster checkouts.</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setActiveTab('address')}
+                        className="text-brand-400 hover:text-brand-500 text-xs font-bold mt-4 text-left flex items-center gap-1"
+                      >
+                        {address ? 'Edit Address Book →' : 'Add Shipping Details →'}
+                      </button>
+                    </div>
+
+                    {/* Newsletter preferences widget */}
+                    <div className="card p-5 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/35 mb-4">Newsletter Settings</h3>
+                        <p className="text-xs text-dark-800/60 dark:text-white/50 leading-relaxed">
+                          Receive notifications about discount offers and brand launches. Push alerts are currently: <span className="font-semibold text-brand-400">{pushSubscribed ? 'ON' : 'OFF'}</span>.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setActiveTab('alerts')}
+                        className="text-brand-400 hover:text-brand-500 text-xs font-bold mt-4 text-left flex items-center gap-1"
+                      >
+                        Manage Alerts Preferences →
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
-            </div>
-          )}
-        </motion.section>
-      )}
 
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-        className="rounded-3xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 mb-5"
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              {pushSubscribed ? (
-                <Bell size={18} weight="fill" className="text-brand-400" />
-              ) : (
-                <BellSlash size={18} weight="duotone" className="text-dark-800/40 dark:text-white/40" />
+              {/* ── Tab: Orders ──────────────────────────────────────────── */}
+              {activeTab === 'orders' && (
+                <div className="space-y-5">
+                  <h3 className="text-lg font-bold text-dark-800 dark:text-white mb-2">My Order History</h3>
+                  {ordersLoading ? (
+                    <div className="space-y-3">
+                      <div className="h-32 bg-cream-100 dark:bg-dark-700 animate-pulse rounded-3xl" />
+                      <div className="h-32 bg-cream-100 dark:bg-dark-700 animate-pulse rounded-3xl" />
+                    </div>
+                  ) : !orders || orders.length === 0 ? (
+                    <div className="card p-10 text-center">
+                      <Package size={48} className="text-brand-400/50 mx-auto mb-4" />
+                      <h4 className="font-bold text-dark-800 dark:text-white text-base">No orders yet</h4>
+                      <p className="text-xs text-dark-800/55 dark:text-white/50 mt-1 max-w-xs mx-auto mb-4">Your order log is currently empty. Shop storefront products to track status.</p>
+                      <Link to="/" className="inline-block bg-brand-400 hover:bg-brand-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm">
+                        Start Browsing
+                      </Link>
+                    </div>
+                  ) : (
+                    orders.map(order => {
+                      const currentStepIndex = STATUS_STEPS.indexOf(order.status)
+                      const isCancelled = order.status === 'cancelled'
+                      const orderShort = order.id.split('-')[0].toUpperCase()
+
+                      return (
+                        <div key={order.id} className="card p-5 space-y-4">
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-cream-100 dark:border-white/5 pb-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-sm text-dark-800 dark:text-white">ORDER #{orderShort}</span>
+                                {isCancelled && (
+                                  <span className="bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold px-2 py-0.5 rounded-full">CANCELLED</span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-dark-800/40 dark:text-white/45 mt-0.5">Placed: {new Date(order.created_at).toLocaleDateString()}</p>
+                            </div>
+                            <div className="text-left sm:text-right">
+                              <span className="text-sm font-bold text-brand-400 block">{formatPrice(order.total)}</span>
+                              <span className="text-[10px] text-dark-800/50 dark:text-white/50">{order.items.length} item{order.items.length !== 1 ? 's' : ''}</span>
+                            </div>
+                          </div>
+
+                          {/* Steps progress */}
+                          {!isCancelled && (
+                            <div className="grid grid-cols-5 gap-2 relative">
+                              {STATUS_STEPS.map((step, i) => {
+                                const done = i <= currentStepIndex
+                                const current = i === currentStepIndex
+                                return (
+                                  <div key={step} className="flex flex-col items-center">
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center border text-[10px] font-bold ${
+                                      done ? 'bg-brand-400 border-brand-400 text-white' : 'bg-cream-50 dark:bg-dark-700 border-cream-200 dark:border-white/5 text-dark-800/30 dark:text-white/30'
+                                    } ${current ? 'ring-2 ring-brand-400/20' : ''}`}>
+                                      {done ? '✓' : i + 1}
+                                    </div>
+                                    <span className={`text-[8px] uppercase tracking-wider font-bold mt-1.5 truncate max-w-full ${
+                                      done ? 'text-dark-800 dark:text-white' : 'text-dark-800/30 dark:text-white/30'
+                                    }`}>{step}</span>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+
+                          {/* Items details */}
+                          <div className="bg-cream-50/50 dark:bg-white/5 rounded-2xl p-3.5 space-y-2 border border-cream-100 dark:border-white/5">
+                            {order.items.map((item: any, i: number) => (
+                              <div key={i} className="flex justify-between items-center text-xs">
+                                <span className="text-dark-800/80 dark:text-white/80 font-medium truncate flex-1 pr-4">{item.product_title} (x{item.quantity})</span>
+                                <span className="font-bold text-dark-800 dark:text-white">{formatPrice(item.price)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
               )}
-              <h2 className="text-dark-800 dark:text-white font-semibold">New-arrival notifications</h2>
-            </div>
-            <p className="text-dark-800/55 dark:text-white/50 text-sm mt-1.5">
-              {!supported
-                ? 'Push notifications aren\'t available here. On iPhone, add the app to your home screen first, then come back.'
-                : pushSubscribed === null
-                  ? 'Checking this device…'
-                  : 'Get a push notification whenever a new product goes live. We\'ll only ping you about real new arrivals — not promos or noise.'}
-            </p>
-            {pushError && <p className="text-red-500 text-xs mt-2">{pushError}</p>}
-          </div>
-          <button
-            type="button"
-            onClick={toggle}
-            disabled={pushWorking || !supported || pushSubscribed === null}
-            aria-label="Toggle new-arrival notifications"
-            className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors ${
-              pushSubscribed ? 'bg-brand-400' : 'bg-cream-200 dark:bg-dark-700'
-            } disabled:opacity-50`}
-          >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                pushSubscribed ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-        </div>
-        {pushSubscribed && (
-          <p className="text-green-600 dark:text-green-400 text-xs font-medium mt-3 inline-flex items-center gap-1">
-            <CheckCircle size={12} weight="fill" /> You'll be notified about new arrivals
-          </p>
-        )}
-      </motion.section>
 
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-        className="rounded-3xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 mb-5"
-      >
-        <div className="flex items-start gap-3">
-          <Package size={18} weight="duotone" className="text-brand-400 mt-0.5" />
-          <div className="flex-1">
-            <h2 className="text-dark-800 dark:text-white font-semibold">My Orders</h2>
-            <p className="text-dark-800/55 dark:text-white/50 text-sm mt-1.5">
-              View your order history and track the delivery status of your recent purchases.
-            </p>
-            <Link
-              to="/account/orders"
-              className="inline-block mt-3 text-brand-400 hover:text-brand-500 text-sm font-semibold"
-            >
-              Track orders →
-            </Link>
-          </div>
-        </div>
-      </motion.section>
+              {/* ── Tab: Inbox ───────────────────────────────────────────── */}
+              {activeTab === 'inbox' && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-dark-800 dark:text-white">Message Centre</h3>
+                  <div className="space-y-3">
+                    {notifications.map(n => (
+                      <div key={n.id} className="card p-5 flex items-start gap-4">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                          n.type === 'success' ? 'bg-green-500/10 text-green-500' : 'bg-brand-400/10 text-brand-400'
+                        }`}>
+                          <Bell size={16} weight="bold" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex justify-between items-start gap-3 flex-wrap">
+                            <h4 className="font-semibold text-sm text-dark-800 dark:text-white">{n.title}</h4>
+                            <span className="text-[10px] text-dark-800/40 dark:text-white/45">{n.time.toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-xs text-dark-800/60 dark:text-white/50 mt-1.5 leading-relaxed">{n.body}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-        className="rounded-3xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 mb-5"
-      >
-        <div className="flex items-start gap-3">
-          <UserIcon size={18} weight="duotone" className="text-brand-400 mt-0.5" />
-          <div className="flex-1">
-            <h2 className="text-dark-800 dark:text-white font-semibold">Saved items</h2>
-            <p className="text-dark-800/55 dark:text-white/50 text-sm mt-1.5">
-              Your wishlist lives in your browser right now. Synced wishlist across devices is coming soon — once that ships, your local items will offer to migrate into your account.
-            </p>
-            <Link
-              to="/wishlist"
-              className="inline-block mt-3 text-brand-400 hover:text-brand-500 text-sm font-semibold"
-            >
-              Open wishlist →
-            </Link>
-          </div>
-        </div>
-      </motion.section>
+              {/* ── Tab: Vouchers ────────────────────────────────────────── */}
+              {activeTab === 'vouchers' && (
+                <div className="space-y-5">
+                  <h3 className="text-lg font-bold text-dark-800 dark:text-white mb-2">Available Coupons</h3>
+                  {vouchersLoading ? (
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="h-28 bg-cream-100 dark:bg-dark-700 animate-pulse rounded-3xl" />
+                      <div className="h-28 bg-cream-100 dark:bg-dark-700 animate-pulse rounded-3xl" />
+                    </div>
+                  ) : !vouchers || vouchers.length === 0 ? (
+                    <div className="card p-10 text-center text-dark-800/40 dark:text-white/30 text-sm">
+                      No active store coupons found at this time.
+                    </div>
+                  ) : (
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {vouchers.map(v => (
+                        <div key={v.id} className="relative overflow-hidden border-2 border-dashed border-brand-400/40 bg-white dark:bg-dark-800 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+                          {/* Circular notch cutouts for coupon style */}
+                          <div className="absolute top-1/2 -left-3.5 w-6 h-6 rounded-full bg-cream-50 dark:bg-dark-900 border-r border-brand-400/20 -translate-y-1/2" />
+                          <div className="absolute top-1/2 -right-3.5 w-6 h-6 rounded-full bg-cream-50 dark:bg-dark-900 border-l border-brand-400/20 -translate-y-1/2" />
 
-      <button
-        type="button"
-        onClick={signOut}
-        className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-red-500/30 text-red-500 hover:bg-red-500/10 px-4 py-3 text-sm font-semibold transition-colors"
-      >
-        <SignOut size={16} weight="bold" /> Sign out
-      </button>
+                          <div>
+                            <div className="flex justify-between items-start mb-2">
+                              <span className="text-[10px] bg-brand-400/10 text-brand-400 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wide">
+                                {v.store?.name || 'Catalog General'}
+                              </span>
+                              <span className="text-xs font-bold text-brand-400">
+                                {v.discount_type === 'percentage' ? `${Math.round(v.value)}% OFF` : `${formatPrice(v.value)} OFF`}
+                              </span>
+                            </div>
+                            <p className="text-xs font-bold text-dark-800 dark:text-white">Valid Storewide</p>
+                            <p className="text-[10px] text-dark-800/50 dark:text-white/45 mt-1">Min. order: {formatPrice(v.min_order_amount || 0)}</p>
+                          </div>
+
+                          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-cream-100 dark:border-white/5">
+                            <span className="font-mono font-bold text-xs bg-cream-100 dark:bg-dark-700 px-3 py-1.5 rounded-xl text-dark-800 dark:text-white flex-1 text-center select-all">{v.code}</span>
+                            <button
+                              onClick={() => handleCopyCode(v.code)}
+                              className="bg-brand-400 hover:bg-brand-500 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Tab: Wishlist ────────────────────────────────────────── */}
+              {activeTab === 'wishlist' && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-dark-800 dark:text-white">My Wishlist</h3>
+                  {wishlistItems.length === 0 ? (
+                    <div className="card p-10 text-center text-dark-800/40 dark:text-white/30 text-sm">
+                      Your saved list is empty. Tap the heart icon on products to add items here.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {wishlistItems.map((product, i) => (
+                        <ProductCard key={product.id} product={product} index={i} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Tab: Followed Sellers ────────────────────────────────── */}
+              {activeTab === 'followed' && (
+                <div className="space-y-5">
+                  <h3 className="text-lg font-bold text-dark-800 dark:text-white mb-2">Followed Merchants</h3>
+                  {followedStoresLoading ? (
+                    <div className="space-y-3">
+                      <div className="h-20 bg-cream-100 dark:bg-dark-700 animate-pulse rounded-2xl" />
+                      <div className="h-20 bg-cream-100 dark:bg-dark-700 animate-pulse rounded-2xl" />
+                    </div>
+                  ) : !followedStores || followedStores.length === 0 ? (
+                    <div className="card p-10 text-center text-dark-800/40 dark:text-white/30 text-sm">
+                      You aren't following any merchant shops yet. Visit stores and follow to see updates here!
+                    </div>
+                  ) : (
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {followedStores.map(fStore => (
+                        <div key={fStore.id} className="card p-4 flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3 min-w-0">
+                            {fStore.logo_url ? (
+                              <img
+                                src={fStore.logo_url}
+                                alt={fStore.name}
+                                className="w-12 h-12 rounded-xl object-cover border border-cream-200 dark:border-white/10 flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-xl bg-brand-400/10 flex items-center justify-center text-brand-400 flex-shrink-0">
+                                <Storefront size={20} weight="duotone" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <h4 className="text-sm font-bold text-dark-800 dark:text-white truncate">{fStore.name}</h4>
+                              <p className="text-[10px] text-dark-800/50 dark:text-white/45 truncate mt-0.5">{fStore.tagline || 'Merchant vendor storefront'}</p>
+                            </div>
+                          </div>
+                          <Link
+                            to={`/s/${fStore.slug}`}
+                            className="bg-cream-100 dark:bg-dark-700 hover:bg-cream-200 dark:hover:bg-dark-600 text-dark-800 dark:text-white border border-cream-200 dark:border-white/10 text-xs font-semibold px-4 py-2 rounded-xl transition-all flex-shrink-0"
+                          >
+                            Visit Shop
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Tab: Recently Viewed ─────────────────────────────────── */}
+              {activeTab === 'recent' && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-dark-800 dark:text-white">Recently Viewed</h3>
+                  {recentProducts.length === 0 ? (
+                    <div className="card p-10 text-center text-dark-800/40 dark:text-white/30 text-sm">
+                      Products you view will be compiled here.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {recentProducts.map((product, i) => (
+                        <ProductCard key={product.id} product={product} index={i} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Tab: Address Book ────────────────────────────────────── */}
+              {activeTab === 'address' && (
+                <div className="card p-6">
+                  <h3 className="text-lg font-bold text-dark-800 dark:text-white mb-4">Edit Address Book</h3>
+                  <form onSubmit={handleSaveAddress} className="space-y-4">
+                    <div>
+                      <label className="block text-dark-800/60 dark:text-white/50 text-xs font-bold uppercase tracking-wider mb-1.5">Phone Number</label>
+                      <input
+                        type="tel"
+                        required
+                        value={phone}
+                        onChange={e => setPhone(e.target.value)}
+                        placeholder="e.g. 024XXXXXXX"
+                        className="input w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-dark-800/60 dark:text-white/50 text-xs font-bold uppercase tracking-wider mb-1.5">Shipping Address</label>
+                      <textarea
+                        required
+                        value={address}
+                        onChange={e => setAddress(e.target.value)}
+                        placeholder="Street details, building number, region, landmarks..."
+                        rows={4}
+                        className="input w-full resize-none"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('overview')}
+                        className="btn-ghost"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={savingAddress}
+                        className="btn-primary"
+                      >
+                        {savingAddress ? 'Saving...' : 'Save Default Address'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* ── Tab: Notification Settings ───────────────────────────── */}
+              {activeTab === 'alerts' && (
+                <div className="card p-6 space-y-4">
+                  <h3 className="text-lg font-bold text-dark-800 dark:text-white">Push Alert Preferences</h3>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        {pushSubscribed ? (
+                          <Bell size={18} weight="fill" className="text-brand-400" />
+                        ) : (
+                          <BellSlash size={18} weight="duotone" className="text-dark-800/40 dark:text-white/40" />
+                        )}
+                        <h4 className="text-dark-800 dark:text-white font-semibold">New-arrival notifications</h4>
+                      </div>
+                      <p className="text-dark-800/55 dark:text-white/50 text-xs mt-1.5 leading-relaxed">
+                        {!supported
+                          ? 'Push notifications are not supported on this device. If you are on an iPhone, please add this app to your Home Screen first.'
+                          : pushSubscribed === null
+                            ? 'Verifying device support...'
+                            : 'Enable push alerts to get notified instantly whenever a new collection goes live.'}
+                      </p>
+                      {pushError && <p className="text-red-500 text-[10px] mt-2 font-medium">{pushError}</p>}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={toggle}
+                      disabled={pushWorking || !supported || pushSubscribed === null}
+                      aria-label="Toggle notifications"
+                      className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors ${
+                        pushSubscribed ? 'bg-brand-400' : 'bg-cream-200 dark:bg-dark-700'
+                      } disabled:opacity-50`}
+                    >
+                      <span
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                          pushSubscribed ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  {pushSubscribed && (
+                    <p className="text-green-600 dark:text-green-400 text-xs font-semibold mt-3 inline-flex items-center gap-1.5">
+                      <CheckCircle size={13} weight="fill" /> You will be notified of new product arrivals
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* ── Tab: Store Setup ─────────────────────────────────────── */}
+              {activeTab === 'store' && (
+                <div className="card p-6">
+                  {storeLoading ? (
+                    <div className="animate-pulse h-32 bg-cream-100 dark:bg-dark-700 rounded-3xl" />
+                  ) : store ? (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-bold text-dark-800 dark:text-white flex items-center gap-2">
+                        <Storefront size={20} className="text-brand-400" />
+                        Merchant Storefront Status
+                      </h3>
+                      <p className="text-xs text-dark-800/60 dark:text-white/50 leading-relaxed">
+                        You have successfully registered the merchant storefront: <span className="font-semibold text-brand-400">{store.name}</span>. Click below to manage settings, load products, and inspect orders on your Admin Dashboard.
+                      </p>
+                      <div className="flex flex-wrap gap-3 pt-2">
+                        <Link to="/admin" className="bg-brand-400 hover:bg-brand-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm">
+                          Manage Store Admin Dashboard
+                        </Link>
+                        <a href={`/s/${store.slug}`} target="_blank" rel="noreferrer" className="bg-cream-100 dark:bg-dark-700 text-dark-800 dark:text-white hover:bg-cream-200 dark:hover:bg-dark-600 text-xs font-semibold px-4 py-2.5 rounded-xl border border-cream-200 dark:border-white/10 transition-all flex items-center gap-1.5">
+                          View Storefront <ArrowSquareOut size={13} />
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      {showCreateWizard ? (
+                        <StoreCreationWizard
+                          onCancel={() => setShowCreateWizard(false)}
+                          onSuccess={() => {
+                            setShowCreateWizard(false)
+                            qc.invalidateQueries({ queryKey: ['user-store', user?.id] })
+                          }}
+                        />
+                      ) : (
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-bold text-dark-800 dark:text-white">Become a Merchant</h3>
+                          <p className="text-xs text-dark-800/60 dark:text-white/50 leading-relaxed">
+                            Create your own online catalog store in minutes. Upload listings, configure custom currencies, and accept orders directly on WhatsApp.
+                          </p>
+                          <button
+                            onClick={() => setShowCreateWizard(true)}
+                            className="bg-brand-400 hover:bg-brand-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm"
+                          >
+                            Launch Store Setup
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
     </main>
   )
 }
@@ -324,7 +873,8 @@ function StoreCreationWizard({ onCancel, onSuccess }: { onCancel: () => void; on
       setSlugAvailable(!data)
       setSlugChecking(false)
     }, 500)
-    setSlugTimer(t)
+    const timerId = t as unknown as ReturnType<typeof setTimeout>
+    setSlugTimer(timerId)
   }
 
   const canProceedStep1 = name.trim().length >= 2 && slug.length >= 3 && slugAvailable === true
@@ -351,19 +901,16 @@ function StoreCreationWizard({ onCancel, onSuccess }: { onCancel: () => void; on
     }
   }
 
-  // ── Success state ────────────────────────────────────────────────────────────
   if (done) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="text-center py-6 space-y-4"
       >
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.1 }}
           className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-lg"
         >
           <CheckCircle size={32} weight="fill" className="text-white" />
@@ -398,7 +945,6 @@ function StoreCreationWizard({ onCancel, onSuccess }: { onCancel: () => void; on
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-bold text-dark-800 dark:text-white text-base">Create Your Storefront</h3>
@@ -413,7 +959,6 @@ function StoreCreationWizard({ onCancel, onSuccess }: { onCancel: () => void; on
         </button>
       </div>
 
-      {/* Step progress bar */}
       <div className="flex items-center gap-1.5">
         {steps.map((_s, i) => (
           <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
@@ -422,20 +967,17 @@ function StoreCreationWizard({ onCancel, onSuccess }: { onCancel: () => void; on
         ))}
       </div>
 
-      {/* Error banner */}
       {error && (
         <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-medium border border-red-200 dark:border-red-800/30">
           {error}
         </div>
       )}
 
-      {/* ── Step 1: Identity ─────────────────────────────────────────────────── */}
       {step === 1 && (
         <motion.div
           key="step1"
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.2 }}
           className="space-y-4"
         >
           <div>
@@ -517,13 +1059,11 @@ function StoreCreationWizard({ onCancel, onSuccess }: { onCancel: () => void; on
         </motion.div>
       )}
 
-      {/* ── Step 2: Contact ──────────────────────────────────────────────────── */}
       {step === 2 && (
         <motion.div
           key="step2"
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.2 }}
           className="space-y-4"
         >
           <div>
@@ -585,13 +1125,11 @@ function StoreCreationWizard({ onCancel, onSuccess }: { onCancel: () => void; on
         </motion.div>
       )}
 
-      {/* ── Step 3: Review ───────────────────────────────────────────────────── */}
       {step === 3 && (
         <motion.div
           key="step3"
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.2 }}
           className="space-y-4"
         >
           <div className="bg-cream-50 dark:bg-dark-700/50 border border-cream-200 dark:border-white/8 rounded-2xl p-4 space-y-2.5">

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ShoppingCart, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck, Lightning, Clock, Heart } from '@phosphor-icons/react'
+import { ArrowLeft, ShoppingCart, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck, Lightning, Clock, Heart, Check, Storefront } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useProduct } from '../hooks/useProducts'
 import { useCartStore } from '../store/cartStore'
 import { useWishlistStore } from '../store/wishlistStore'
@@ -18,6 +18,7 @@ import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { trackProductView, trackCartInteraction } from '../components/ui/AppReviewPrompt'
 import { useStoreContext } from '../contexts/StoreContext'
+import { toast } from 'sonner'
 
 export default function ProductDetail() {
   const formatPrice = useCurrencyFormatter()
@@ -82,8 +83,50 @@ export default function ProductDetail() {
     }
   }, [product, addRecent])
 
-  const { session } = useCustomerSession()
+  const { session, profile, isLoggedIn } = useCustomerSession()
   const openSignInModal = useSignInStore(s => s.openModal)
+  const qc = useQueryClient()
+  const [followingWorking, setFollowingWorking] = useState(false)
+  const isFollowing = !!product?.store_id && !!profile?.followed_stores?.includes(product.store_id)
+
+  const handleFollowToggle = async () => {
+    if (!isLoggedIn) {
+      openSignInModal('Sign in to follow stores.')
+      return
+    }
+    if (!profile || !product?.store_id) return
+    setFollowingWorking(true)
+
+    try {
+      const currentFollows = profile.followed_stores || []
+      let newFollows: string[]
+      if (currentFollows.includes(product.store_id)) {
+        newFollows = currentFollows.filter(id => id !== product.store_id)
+      } else {
+        newFollows = [...currentFollows, product.store_id]
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ followed_stores: newFollows })
+        .eq('id', profile.id)
+
+      if (error) {
+        localStorage.setItem(`catalog_follows_${profile.id}`, JSON.stringify(newFollows))
+        profile.followed_stores = newFollows
+        qc.invalidateQueries({ queryKey: ['customer-profile'] })
+        toast.success(currentFollows.includes(product.store_id) ? 'Unfollowed store' : 'Followed store!')
+      } else {
+        qc.invalidateQueries({ queryKey: ['customer-profile'] })
+        toast.success(currentFollows.includes(product.store_id) ? 'Unfollowed store' : 'Followed store!')
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to update follow status')
+    } finally {
+      setFollowingWorking(false)
+    }
+  }
 
   const handleWishlist = () => {
     if (!product) return
@@ -467,6 +510,62 @@ export default function ProductDetail() {
                       return parts[0]
                     })()}
               </motion.button>
+            </div>
+          )}
+
+          {/* Seller / Merchant Info Card */}
+          {product.store_id && product.store && (
+            <div className="card p-4 mt-6 border border-cream-200 dark:border-white/10 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                {product.store.logo_url ? (
+                  <img
+                    src={product.store.logo_url}
+                    alt={product.store.name}
+                    className="w-12 h-12 rounded-xl object-cover border border-cream-200 dark:border-white/10 flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-brand-400/10 flex items-center justify-center text-brand-400 flex-shrink-0">
+                    <Storefront size={20} weight="duotone" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <span className="text-[10px] text-dark-800/40 dark:text-white/35 font-bold uppercase tracking-wider block">Seller</span>
+                  <Link
+                    to={`/s/${product.store.slug}`}
+                    className="text-sm font-bold text-dark-800 dark:text-white hover:text-brand-400 transition-colors truncate block"
+                  >
+                    {product.store.name}
+                  </Link>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={handleFollowToggle}
+                  disabled={followingWorking}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all ${
+                    isFollowing
+                      ? 'bg-cream-100 dark:bg-dark-700 text-dark-800/80 dark:text-white/80 border border-cream-200 dark:border-white/10'
+                      : 'bg-brand-400 hover:bg-brand-500 text-white shadow-sm'
+                  }`}
+                >
+                  {isFollowing ? (
+                    <>
+                      <Check size={12} weight="bold" />
+                      Following
+                    </>
+                  ) : (
+                    '+ Follow'
+                  )}
+                </button>
+                <Link
+                  to={`/s/${product.store.slug}`}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-cream-100 dark:bg-dark-700 hover:bg-cream-200 dark:hover:bg-dark-600 border border-cream-200 dark:border-white/10 text-dark-800/80 dark:text-white/80 transition-colors"
+                >
+                  Visit Shop
+                </Link>
+              </div>
             </div>
           )}
 

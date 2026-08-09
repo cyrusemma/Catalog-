@@ -18,6 +18,9 @@ import { useNavigate } from 'react-router-dom'
 import type { Product } from '../types'
 import ShopLoader from '../components/ui/ShopLoader'
 import { formatPrice } from '../lib/utils'
+import { useQuery } from '@tanstack/react-query'
+import { useCustomerSession } from '../hooks/useCustomerSession'
+import { supabase } from '../lib/supabase'
 
 function useDebouncedValue<T>(value: T, delay = 250): T {
   const [debounced, setDebounced] = useState(value)
@@ -30,6 +33,26 @@ function useDebouncedValue<T>(value: T, delay = 250): T {
 
 export default function Home() {
   useDocumentTitle('Home')
+  const { profile } = useCustomerSession()
+  const followedStoreIds = profile?.followed_stores || []
+
+  const { data: followedProducts } = useQuery({
+    queryKey: ['followed-shops-products', followedStoreIds],
+    queryFn: async () => {
+      if (followedStoreIds.length === 0) return []
+      const { data, error } = await supabase
+        .from('products')
+        .select('*, store:stores(markup_percentage, name, slug)')
+        .in('store_id', followedStoreIds)
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .limit(8)
+      if (error) throw error
+      return data || []
+    },
+    enabled: followedStoreIds.length > 0
+  })
+
   const { data: featured, isError: featuredIsError, error: featuredError, isLoading: featuredLoading } = useProducts({ featured: true })
   const { data: newProducts, isError: newProductsIsError, error: newProductsError, isLoading: newProductsLoading } = useNewProducts(7)
   const { isError: allProductsIsError, error: allProductsError } = useProducts()
@@ -265,6 +288,41 @@ export default function Home() {
             </p>
           </div>
         </section>
+      )}
+
+      {/* ── From Shops You Follow ──────────────────────────────────────────── */}
+      {followedProducts && followedProducts.length > 0 && (
+        <motion.section
+          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          className="py-10 sm:py-16"
+        >
+          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between mb-6 sm:mb-10">
+            <div>
+              <span className="block text-[var(--hero-accent)] text-[11px] uppercase tracking-[0.28em] font-semibold mb-2.5 flex items-center gap-2">
+                <Storefront size={12} weight="fill" /> Followed Sellers
+              </span>
+              <h2 className="text-3xl sm:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
+                From Shops You Follow
+              </h2>
+            </div>
+            <Link
+              to="/account"
+              className="group inline-flex items-center gap-1.5 text-sm font-medium text-dark-800/70 dark:text-white/70 hover:text-[var(--hero-accent)] transition-colors"
+            >
+              Manage sellers <ArrowRight size={14} weight="bold" className="transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {(followedProducts as any[]).slice(0, 8).map((p, i) => (
+                <ProductCard key={p.id} product={p} index={i} />
+              ))}
+            </div>
+          </div>
+        </motion.section>
       )}
 
       {/* New Arrivals */}

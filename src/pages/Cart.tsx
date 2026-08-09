@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Trash, Plus, Minus, ShoppingBag, CheckCircle, Heart } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -25,7 +25,7 @@ export default function Cart() {
   const formatPrice = useCurrencyFormatter()
   const { items, removeItem, updateQuantity, setItems, clearCart } = useCartStore()
   const settings = useStoreSettings()
-  const { user } = useCustomerSession()
+  const { user, profile } = useCustomerSession()
   const storeContext = useStoreContext()
   const currentStoreId = storeContext.storeId
   const toggleWishlist = useWishlistStore(s => s.toggle)
@@ -234,11 +234,31 @@ export default function Cart() {
   }
 
   const [isCheckingOut, setIsCheckingOut] = useState(false)
-  const [customerName, setCustomerName] = useState('')
-  const [customerPhone, setCustomerPhone] = useState('')
-  const [customerAddress, setCustomerAddress] = useState('')
+  const [customerName, setCustomerName] = useState(() => {
+    if (profile?.display_name) return profile.display_name
+    if (user?.id) return localStorage.getItem(`catalog_name_${user.id}`) || ''
+    return ''
+  })
+  const [customerPhone, setCustomerPhone] = useState(() => {
+    if (profile?.phone) return profile.phone
+    if (user?.id) return localStorage.getItem(`catalog_phone_${user.id}`) || ''
+    return ''
+  })
+  const [customerAddress, setCustomerAddress] = useState(() => {
+    if (profile?.address) return profile.address
+    if (user?.id) return localStorage.getItem(`catalog_address_${user.id}`) || ''
+    return ''
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+
+  // Backfill checkout fields when profile loads asynchronously (e.g. slow Supabase fetch)
+  useEffect(() => {
+    if (!profile) return
+    setCustomerName(prev => prev || profile.display_name || '')
+    setCustomerPhone(prev => prev || profile.phone || '')
+    setCustomerAddress(prev => prev || profile.address || '')
+  }, [profile])
 
   const detectedNetwork = detectGhanaNetwork(customerPhone)
 
