@@ -14,12 +14,7 @@ import {
   Eye,
   MapPin,
   Ticket,
-  ClipboardText,
-  Clock,
-  Truck,
-  Check,
-  XCircle,
-  Plus
+  ClipboardText
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
