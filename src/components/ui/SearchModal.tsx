@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   MagnifyingGlass,
   X,
@@ -8,7 +8,6 @@ import {
   Tag,
   Package,
   CaretRight,
-  Sparkle,
   ArrowRight,
   Flame,
   Eye
@@ -32,7 +31,13 @@ interface SearchModalProps {
 
 export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const formatPrice = useCurrencyFormatter()
+
+  // Auto-close search modal whenever route changes
+  useEffect(() => {
+    if (isOpen) onClose()
+  }, [location.pathname])
   const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -312,10 +317,9 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                               onClose()
                               navigate(`/product/${p.slug}`)
                             }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cream-50 dark:bg-white/5 hover:bg-brand-400 text-dark-800 dark:text-white hover:text-white border border-cream-200/70 dark:border-white/5 text-xs font-medium transition-all shadow-xs group"
+                            className="flex items-center px-3 py-1.5 rounded-xl bg-cream-50 dark:bg-white/5 hover:bg-brand-400 text-dark-800 dark:text-white hover:text-white border border-cream-200/70 dark:border-white/5 text-xs font-medium transition-all shadow-xs group"
                           >
-                            <Sparkle size={12} weight="fill" className="text-brand-400 group-hover:text-white" />
-                            <span className="truncate max-w-[140px]">{p.title}</span>
+                            <span className="truncate max-w-[150px]">{p.title}</span>
                           </button>
                         ))}
                       </div>
