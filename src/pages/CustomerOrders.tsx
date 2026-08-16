@@ -273,7 +273,6 @@ export default function CustomerOrders() {
       <AnimatePresence>
         {reviewModalOpen && reviewTarget && (
           <ReviewModal 
-            isOpen={reviewModalOpen} 
             onClose={() => {
               setReviewModalOpen(false)
               setTimeout(() => setReviewTarget(null), 300)
@@ -290,14 +289,12 @@ export default function CustomerOrders() {
 }
 
 function ReviewModal({ 
-  isOpen, 
   onClose, 
   item, 
   userName,
   userEmail,
   onSuccess 
 }: { 
-  isOpen: boolean, 
   onClose: () => void, 
   item: any, 
   userName: string,
