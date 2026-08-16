@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ShoppingCart, Storefront, UserCircle, Gear, SquaresFour } from '@phosphor-icons/react'
+import { ShoppingCart, Storefront, UserCircle, Gear, SquaresFour, MagnifyingGlass } from '@phosphor-icons/react'
 import { useQuery } from '@tanstack/react-query'
 import { useCartStore } from '../../store/cartStore'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
@@ -9,6 +9,7 @@ import { useSignInStore } from '../../store/signInStore'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
 import ThemeToggle from '../ui/ThemeToggle'
 import NotificationButton from '../ui/NotificationButton'
+import SearchModal from '../ui/SearchModal'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import { effectivePrice } from '../../lib/utils'
@@ -26,6 +27,8 @@ export default function Navbar() {
   const [hidden, setHidden] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [showMiniCart, setShowMiniCart] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+
   const lastY = useRef(0)
   const miniCartTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -141,7 +144,32 @@ export default function Navbar() {
             {navLink('/gallery', 'Gallery')}
           </div>
 
-          <div className="flex items-center gap-1">
+          {/* Desktop Search Trigger */}
+          <button
+            type="button"
+            onClick={() => setIsSearchOpen(true)}
+            className="hidden md:flex items-center justify-between w-full max-w-[200px] lg:max-w-[270px] mx-3 px-3 py-1.5 rounded-xl bg-white/40 dark:bg-dark-900/40 border border-cream-200/60 dark:border-white/10 text-dark-800/50 dark:text-white/40 hover:border-brand-400/40 hover:bg-white/60 dark:hover:bg-dark-900/60 transition-all text-xs font-medium group"
+          >
+            <div className="flex items-center gap-2 truncate">
+              <MagnifyingGlass size={15} className="text-dark-800/40 dark:text-white/40 group-hover:text-brand-400 transition-colors flex-shrink-0" />
+              <span className="truncate">Search catalog...</span>
+            </div>
+            <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-mono font-semibold text-dark-800/40 dark:text-white/40 bg-cream-100 dark:bg-white/10 rounded border border-cream-200 dark:border-white/5 flex-shrink-0">
+              ⌘K
+            </kbd>
+          </button>
+
+          <div className="flex items-center gap-1 ml-auto md:ml-0">
+            {/* Mobile Search Icon Button */}
+            <button
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
+              aria-label="Search catalog"
+              className="md:hidden w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white"
+            >
+              <MagnifyingGlass size={18} weight="duotone" />
+            </button>
+
             <ThemeToggle />
             <NotificationButton />
 
@@ -261,6 +289,9 @@ export default function Navbar() {
           </div>
         </nav>
       </div>
+
+      {/* Global Spotlight Search Modal */}
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </div>
   )
 }
