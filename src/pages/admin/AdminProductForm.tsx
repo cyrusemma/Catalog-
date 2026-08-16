@@ -939,52 +939,56 @@ export default function AdminProductForm() {
           </div>
 
           {/* Sidebar / Sticky Actions */}
-          <div className="lg:col-span-1 space-y-5">
-
-            <div className="space-y-2">
-              {saveError && (
-                <p className="text-red-500 text-xs bg-red-50 border border-red-100 rounded-xl px-3 py-2">{saveError}</p>
-              )}
-              <button onClick={() => handleSave(true)} disabled={saving || !form.title || !form.selling_price} className="w-full bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2">
-                {saving ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : 'Save & Publish'}
-              </button>
-              <button onClick={() => handleSave(false)} disabled={saving || !form.title} className="w-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-semibold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2">
-                {saving ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : 'Save as Draft'}
-              </button>
-
-              {/* Push fan-out. Only meaningful for products that already exist
-                  and have been published — otherwise nothing exists for the
-                  subscriber to open. */}
-              {isEdit && form.is_published && (
-                <div className="pt-2 mt-2 border-t border-gray-100">
-                  <button
-                    type="button"
-                    onClick={notifySubscribers}
-                    disabled={notifying}
-                    className="w-full bg-white border border-brand-400/40 hover:bg-brand-400/5 text-brand-500 font-semibold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {notifying ? 'Sending…' : 'Notify subscribers'}
+          <div className="lg:col-span-1">
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-40 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:p-0 lg:bg-transparent lg:border-0 lg:shadow-none lg:z-auto space-y-3">
+              <div className="max-w-4xl mx-auto w-full space-y-3">
+                {saveError && (
+                  <p className="text-red-500 text-xs bg-red-50 border border-red-100 rounded-xl px-3 py-2">{saveError}</p>
+                )}
+                
+                <div className="flex gap-2 lg:flex-col">
+                  <button onClick={() => handleSave(true)} disabled={saving || !form.title || !form.selling_price} className="flex-1 w-full bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2">
+                    {saving ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : 'Save & Publish'}
                   </button>
-                  {notifyMessage && (
-                    <p className={`text-xs mt-2 ${notifyMessage.kind === 'ok' ? 'text-green-600' : 'text-red-500'}`}>
-                      {notifyMessage.text}
-                    </p>
-                  )}
-                  <p className="text-gray-400 text-[11px] mt-2 leading-snug">
-                    Sends a Web Push to every customer who opted in for new-arrival alerts. Safe to tap repeatedly — duplicate notifications collapse into one on the customer's device.
-                  </p>
+                  <button onClick={() => handleSave(false)} disabled={saving || !form.title} className="flex-1 w-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-semibold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2">
+                    {saving ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : 'Save as Draft'}
+                  </button>
                 </div>
-              )}
+
+                {/* Push fan-out. Only meaningful for products that already exist
+                    and have been published — otherwise nothing exists for the
+                    subscriber to open. */}
+                {isEdit && form.is_published && (
+                  <div className="pt-2 mt-2 border-t border-gray-100 hidden lg:block">
+                    <button
+                      type="button"
+                      onClick={notifySubscribers}
+                      disabled={notifying}
+                      className="w-full bg-white border border-brand-400/40 hover:bg-brand-400/5 text-brand-500 font-semibold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {notifying ? 'Sending…' : 'Notify subscribers'}
+                    </button>
+                    {notifyMessage && (
+                      <p className={`text-xs mt-2 ${notifyMessage.kind === 'ok' ? 'text-green-600' : 'text-red-500'}`}>
+                        {notifyMessage.text}
+                      </p>
+                    )}
+                    <p className="text-gray-400 text-[11px] mt-2 leading-snug">
+                      Sends a Web Push to every customer who opted in for new-arrival alerts. Safe to tap repeatedly — duplicate notifications collapse into one on the customer's device.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

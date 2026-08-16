@@ -246,6 +246,7 @@ export default function AdminDashboard() {
                 onChange={(e) => setTimeframe(Number(e.target.value))}
                 className="bg-white border border-gray-200 text-gray-900 text-sm font-semibold rounded-xl pl-10 pr-8 py-2 outline-none focus:border-brand-400 appearance-none cursor-pointer shadow-sm"
               >
+                <option value={1}>Today</option>
                 <option value={7}>Last 7 Days</option>
                 <option value={30}>Last 30 Days</option>
                 <option value={90}>Last 90 Days</option>
