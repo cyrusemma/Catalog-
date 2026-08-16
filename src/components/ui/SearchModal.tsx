@@ -10,27 +10,20 @@ import {
   CaretRight,
   Sparkle,
   ArrowRight,
-  Flame
+  Flame,
+  Eye
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { useCategoryTree } from '../../hooks/useProducts'
+import { useCategoryTree, useProducts } from '../../hooks/useProducts'
+import { useRecentStore } from '../../store/recentStore'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
 import { effectivePrice } from '../../lib/utils'
 import type { Product } from '../../types'
 
 const RECENT_SEARCHES_KEY = 'catalog_recent_searches_v1'
 const MAX_RECENT = 6
-
-const POPULAR_TAGS = [
-  'Earbuds',
-  'iPhone',
-  'Sneakers',
-  'Smartwatches',
-  'Laptops',
-  'Perfumes'
-]
 
 interface SearchModalProps {
   isOpen: boolean
@@ -44,8 +37,9 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [recentSearches, setRecentSearches] = useState<string[]>([])
-
   const { data: categoryTree } = useCategoryTree()
+  const recentViewedProducts = useRecentStore(s => s.recent)
+  const { data: featuredProducts = [] } = useProducts({ featured: true }, { enabled: isOpen })
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -229,7 +223,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
               {/* Empty Query State */}
               {!debouncedQuery && (
                 <div className="space-y-5">
-                  {/* Recent Searches */}
+                  {/* User's Recent Searches */}
                   {recentSearches.length > 0 && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -265,31 +259,74 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                     </div>
                   )}
 
-                  {/* Popular Topics */}
-                  <div className="space-y-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 flex items-center gap-1.5">
-                      <Flame size={13} weight="bold" className="text-amber-500" /> Popular Suggestions
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {POPULAR_TAGS.map((tag, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => handleSearchSubmit(tag)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cream-50 dark:bg-white/5 hover:bg-brand-400 text-dark-800 dark:text-white hover:text-white border border-cream-200/70 dark:border-white/5 text-xs font-medium transition-all shadow-xs group"
-                        >
-                          <Sparkle size={12} weight="fill" className="text-brand-400 group-hover:text-white" />
-                          <span>{tag}</span>
-                        </button>
-                      ))}
+                  {/* User's Recently Viewed Products */}
+                  {recentViewedProducts.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 flex items-center gap-1.5">
+                        <Eye size={13} weight="bold" className="text-brand-400" /> Products You Viewed Recently
+                      </span>
+                      <div className="grid sm:grid-cols-2 gap-2">
+                        {recentViewedProducts.slice(0, 4).map(p => {
+                          const priceVal = effectivePrice(p)
+                          return (
+                            <div
+                              key={p.id}
+                              onClick={() => {
+                                onClose()
+                                navigate(`/product/${p.slug}`)
+                              }}
+                              className="flex items-center gap-3 p-2 rounded-2xl bg-cream-50/70 dark:bg-white/5 hover:bg-brand-400/10 border border-cream-200/60 dark:border-white/5 cursor-pointer transition-all group"
+                            >
+                              <img
+                                src={p.images?.[0] || 'https://placehold.co/40x40/f3f4f6/9ca3af?text=?'}
+                                alt=""
+                                className="w-10 h-10 rounded-xl object-cover bg-cream-100 dark:bg-dark-700 flex-shrink-0"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-dark-800 dark:text-white truncate group-hover:text-brand-500 dark:group-hover:text-brand-400 transition-colors">
+                                  {p.title}
+                                </p>
+                                <p className="text-[11px] font-bold text-brand-400 mt-0.5">
+                                  {formatPrice(priceVal)}
+                                </p>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Quick Category Browsing */}
+                  {/* Real Featured / Trending Items in Catalog */}
+                  {featuredProducts.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 flex items-center gap-1.5">
+                        <Flame size={13} weight="bold" className="text-amber-500" /> Trending Products in Store
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {featuredProducts.slice(0, 6).map(p => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              onClose()
+                              navigate(`/product/${p.slug}`)
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cream-50 dark:bg-white/5 hover:bg-brand-400 text-dark-800 dark:text-white hover:text-white border border-cream-200/70 dark:border-white/5 text-xs font-medium transition-all shadow-xs group"
+                          >
+                            <Sparkle size={12} weight="fill" className="text-brand-400 group-hover:text-white" />
+                            <span className="truncate max-w-[140px]">{p.title}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Category Shortcuts */}
                   {categoryTree && categoryTree.length > 0 && (
                     <div className="space-y-2 pt-1 border-t border-cream-100 dark:border-white/5">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 flex items-center gap-1.5">
-                        <Tag size={13} weight="bold" /> Popular Categories
+                        <Tag size={13} weight="bold" /> Browse Categories
                       </span>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {categoryTree.filter(c => !c.parent_id).slice(0, 6).map(cat => (
