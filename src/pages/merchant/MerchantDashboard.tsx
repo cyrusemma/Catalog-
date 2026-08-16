@@ -24,6 +24,8 @@ import {
   Warning,
   ArrowRight,
   ShareNetwork,
+  UsersThree,
+  UserList,
 } from '@phosphor-icons/react'
 import { supabase } from '../../lib/supabase'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
@@ -193,6 +195,33 @@ export default function MerchantDashboard() {
     enabled: !!store?.id,
   })
 
+  // Follower count — how many profiles include this store id in followed_stores
+  const { data: followerCount } = useQuery({
+    queryKey: ['merchant-follower-count', store?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .contains('followed_stores', [store!.id])
+      return count ?? 0
+    },
+    enabled: !!store?.id,
+  })
+
+  // Fetch follower profiles (display names + avatars) — up to 10
+  const { data: followerProfiles } = useQuery({
+    queryKey: ['merchant-followers', store?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url, email')
+        .contains('followed_stores', [store!.id])
+        .limit(10)
+      return data || []
+    },
+    enabled: !!store?.id && (followerCount ?? 0) > 0,
+  })
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     window.location.href = '/'
@@ -338,7 +367,7 @@ export default function MerchantDashboard() {
           <h2 className="text-sm font-bold uppercase tracking-wider text-dark-800/50 dark:text-white/40 mb-4 flex items-center gap-2">
             <ChartBar size={16} weight="duotone" /> Overview
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <StatCard
               label="Total Products"
               value={products?.length ?? 0}
@@ -356,6 +385,12 @@ export default function MerchantDashboard() {
               value={pendingApproval}
               icon={Star}
               color="bg-gradient-to-br from-amber-400 to-amber-500"
+            />
+            <StatCard
+              label="Followers"
+              value={followerCount ?? 0}
+              icon={UsersThree}
+              color="bg-gradient-to-br from-purple-400 to-purple-500"
             />
           </div>
         </motion.section>
@@ -491,6 +526,60 @@ export default function MerchantDashboard() {
                   </span>
                 </div>
               ))}
+            </div>
+          )}
+        </motion.section>
+
+        {/* Followers section */}
+        <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-dark-800/50 dark:text-white/40 flex items-center gap-2">
+              <UserList size={16} weight="duotone" /> Followers
+              {(followerCount ?? 0) > 0 && (
+                <span className="ml-1 text-[10px] font-bold bg-purple-500/10 text-purple-500 dark:text-purple-400 px-2 py-0.5 rounded-full">
+                  {followerCount}
+                </span>
+              )}
+            </h2>
+          </div>
+
+          {(followerCount ?? 0) === 0 ? (
+            <div className="card p-8 text-center bg-gray-50/50 dark:bg-dark-800/20 border-dashed border-2 border-gray-200 dark:border-white/5">
+              <UsersThree size={36} className="text-brand-400/50 mx-auto mb-3" />
+              <p className="text-dark-800/50 dark:text-white/40 text-sm font-medium">
+                No followers yet. Share your store link to grow your audience!
+              </p>
+            </div>
+          ) : (
+            <div className="card p-4 space-y-3">
+              <p className="text-xs text-dark-800/50 dark:text-white/40">
+                <span className="font-bold text-dark-800 dark:text-white">{followerCount}</span> {(followerCount ?? 0) === 1 ? 'person follows' : 'people follow'} your store.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {(followerProfiles || []).map(fp => {
+                  const initials = (fp.display_name || fp.email || '?')
+                    .split(/\s+/).map((p: string) => p.charAt(0).toUpperCase()).slice(0, 2).join('')
+                  return (
+                    <div key={fp.id} className="flex items-center gap-2 bg-cream-50 dark:bg-white/5 rounded-xl px-3 py-2 border border-cream-200 dark:border-white/5">
+                      {fp.avatar_url ? (
+                        <img src={fp.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-400 to-brand-500 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                          {initials}
+                        </div>
+                      )}
+                      <span className="text-xs font-semibold text-dark-800 dark:text-white truncate max-w-[100px]">
+                        {fp.display_name || fp.email?.split('@')[0] || 'Customer'}
+                      </span>
+                    </div>
+                  )
+                })}
+                {(followerCount ?? 0) > 10 && (
+                  <div className="flex items-center gap-2 bg-cream-50 dark:bg-white/5 rounded-xl px-3 py-2 border border-cream-200 dark:border-white/5">
+                    <span className="text-xs font-semibold text-dark-800/50 dark:text-white/40">+{(followerCount ?? 0) - 10} more</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </motion.section>

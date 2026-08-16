@@ -14,7 +14,10 @@ import {
   Eye,
   MapPin,
   Ticket,
-  ClipboardText
+  ClipboardText,
+  ShoppingCartSimple,
+  UserPlus,
+  MagnifyingGlass
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -124,6 +127,86 @@ export default function Account() {
     },
     enabled: !!profile?.followed_stores && profile.followed_stores.length > 0,
   })
+
+  // 4b. Fetch all discoverable stores (for the "Discover" section)
+  const { data: allStores, isLoading: allStoresLoading } = useQuery({
+    queryKey: ['all-stores-discover'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('id, name, slug, tagline, logo_url')
+        .eq('approval_status', 'approved')
+      if (error) throw error
+      return data || []
+    },
+    enabled: activeTab === 'followed',
+  })
+
+  // 4c. Fetch product stock statuses for all unique product_ids in orders (Buy Again)
+  const allOrderProductIds = useMemo(() => {
+    if (!orders) return []
+    const ids = new Set<string>()
+    orders.forEach(order => {
+      order.items?.forEach((item: any) => {
+        if (item.product_id) ids.add(item.product_id)
+        if (item.product_slug) ids.add(item.product_slug) // use id still
+      })
+    })
+    return [...ids]
+  }, [orders])
+
+  const { data: productStockMap } = useQuery({
+    queryKey: ['order-products-stock', allOrderProductIds],
+    queryFn: async () => {
+      if (allOrderProductIds.length === 0) return {}
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, slug, stock_status')
+        .in('id', allOrderProductIds)
+      if (error) return {}
+      const map: Record<string, { slug: string; stock_status: string }> = {}
+      data?.forEach(p => { map[p.id] = { slug: p.slug, stock_status: p.stock_status } })
+      return map
+    },
+    enabled: allOrderProductIds.length > 0,
+  })
+
+  // Follow / unfollow a store (used in Discover section)
+  const [followingInProgress, setFollowingInProgress] = useState<string | null>(null)
+
+  const handleToggleFollow = async (storeId: string, storeName: string) => {
+    if (!user || !profile) return
+    setFollowingInProgress(storeId)
+    try {
+      const currentFollows: string[] = profile.followed_stores || []
+      const isNowFollowing = currentFollows.includes(storeId)
+      const newFollows = isNowFollowing
+        ? currentFollows.filter(id => id !== storeId)
+        : [...currentFollows, storeId]
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ followed_stores: newFollows })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      // Optimistic local mutation
+      profile.followed_stores = newFollows
+      qc.invalidateQueries({ queryKey: ['customer-profile', user.id] })
+      qc.invalidateQueries({ queryKey: ['followed-stores'] })
+
+      if (isNowFollowing) {
+        toast.success(`Unfollowed ${storeName}`)
+      } else {
+        toast.success(`Now following ${storeName}! 🎉`)
+      }
+    } catch {
+      toast.error('Could not update follow status. Please try again.')
+    } finally {
+      setFollowingInProgress(null)
+    }
+  }
 
   // 5. Gather Zustand stores data (Recently viewed, Wishlist)
   const recentProducts = useRecentStore(s => s.recent)
@@ -457,6 +540,9 @@ export default function Account() {
                                 {isCancelled && (
                                   <span className="bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold px-2 py-0.5 rounded-full">CANCELLED</span>
                                 )}
+                                {order.status === 'delivered' && (
+                                  <span className="bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-[10px] font-bold px-2 py-0.5 rounded-full">DELIVERED</span>
+                                )}
                               </div>
                               <p className="text-[10px] text-dark-800/40 dark:text-white/45 mt-0.5">Placed: {new Date(order.created_at).toLocaleDateString()}</p>
                             </div>
@@ -488,14 +574,44 @@ export default function Account() {
                             </div>
                           )}
 
-                          {/* Items details */}
-                          <div className="bg-cream-50/50 dark:bg-white/5 rounded-2xl p-3.5 space-y-2 border border-cream-100 dark:border-white/5">
-                            {order.items.map((item: any, i: number) => (
-                              <div key={i} className="flex justify-between items-center text-xs">
-                                <span className="text-dark-800/80 dark:text-white/80 font-medium truncate flex-1 pr-4">{item.product_title} (x{item.quantity})</span>
-                                <span className="font-bold text-dark-800 dark:text-white">{formatPrice(item.price)}</span>
-                              </div>
-                            ))}
+                          {/* Items with images + Buy Again */}
+                          <div className="bg-cream-50/50 dark:bg-white/5 rounded-2xl p-3.5 space-y-3 border border-cream-100 dark:border-white/5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-dark-800/35 dark:text-white/30">Items</p>
+                            {order.items.map((item: any, i: number) => {
+                              const stock = productStockMap?.[item.product_id]
+                              const isOutOfStock = stock?.stock_status === 'out_of_stock'
+                              const productSlug = stock?.slug || item.product_slug
+                              return (
+                                <div key={i} className="flex items-center gap-3">
+                                  {/* Product image */}
+                                  <img
+                                    src={item.product_image || 'https://placehold.co/48x48/f3f4f6/9ca3af?text=?'}
+                                    alt={item.product_title}
+                                    className="w-12 h-12 rounded-xl object-cover flex-shrink-0 bg-cream-100 dark:bg-dark-700 border border-cream-200 dark:border-white/5"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-semibold text-dark-800 dark:text-white truncate">{item.product_title}</p>
+                                    <p className="text-[10px] text-dark-800/50 dark:text-white/45 mt-0.5">Qty: {item.quantity} · {formatPrice(item.price)}</p>
+                                  </div>
+                                  {/* Buy Again button */}
+                                  {productSlug ? (
+                                    isOutOfStock ? (
+                                      <span className="flex-shrink-0 text-[10px] font-bold px-3 py-1.5 rounded-lg bg-cream-100 dark:bg-white/5 text-dark-800/30 dark:text-white/30 border border-cream-200 dark:border-white/5 cursor-not-allowed select-none">
+                                        Out of Stock
+                                      </span>
+                                    ) : (
+                                      <Link
+                                        to={`/product/${productSlug}`}
+                                        className="flex-shrink-0 flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-lg bg-brand-400/10 hover:bg-brand-400/20 text-brand-500 dark:text-brand-400 border border-brand-400/20 transition-colors"
+                                      >
+                                        <ShoppingCartSimple size={12} weight="bold" />
+                                        Buy Again
+                                      </Link>
+                                    )
+                                  ) : null}
+                                </div>
+                              )
+                            })}
                           </div>
                         </div>
                       )
@@ -599,48 +715,120 @@ export default function Account() {
 
               {/* ── Tab: Followed Sellers ────────────────────────────────── */}
               {activeTab === 'followed' && (
-                <div className="space-y-5">
-                  <h3 className="text-lg font-bold text-dark-800 dark:text-white mb-2">Followed Merchants</h3>
-                  {followedStoresLoading ? (
-                    <div className="space-y-3">
-                      <div className="h-20 bg-cream-100 dark:bg-dark-700 animate-pulse rounded-2xl" />
-                      <div className="h-20 bg-cream-100 dark:bg-dark-700 animate-pulse rounded-2xl" />
-                    </div>
-                  ) : !followedStores || followedStores.length === 0 ? (
-                    <div className="card p-10 text-center text-dark-800/40 dark:text-white/30 text-sm">
-                      You aren't following any merchant shops yet. Visit stores and follow to see updates here!
-                    </div>
-                  ) : (
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      {followedStores.map(fStore => (
-                        <div key={fStore.id} className="card p-4 flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-3 min-w-0">
-                            {fStore.logo_url ? (
-                              <img
-                                src={fStore.logo_url}
-                                alt={fStore.name}
-                                className="w-12 h-12 rounded-xl object-cover border border-cream-200 dark:border-white/10 flex-shrink-0"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-xl bg-brand-400/10 flex items-center justify-center text-brand-400 flex-shrink-0">
-                                <Storefront size={20} weight="duotone" />
+                <div className="space-y-6">
+                  {/* Following */}
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-bold text-dark-800 dark:text-white">Following</h3>
+                    {followedStoresLoading ? (
+                      <div className="space-y-3">
+                        <div className="h-20 bg-cream-100 dark:bg-dark-700 animate-pulse rounded-2xl" />
+                        <div className="h-20 bg-cream-100 dark:bg-dark-700 animate-pulse rounded-2xl" />
+                      </div>
+                    ) : !followedStores || followedStores.length === 0 ? (
+                      <div className="card p-8 text-center text-dark-800/40 dark:text-white/30 text-sm">
+                        <Storefront size={40} className="text-brand-400/30 mx-auto mb-3" weight="duotone" />
+                        <p>You aren't following any merchant shops yet.</p>
+                        <p className="text-xs mt-1">Discover merchants below and tap Follow!</p>
+                      </div>
+                    ) : (
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        {followedStores.map(fStore => (
+                          <div key={fStore.id} className="card p-4 flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                              {fStore.logo_url ? (
+                                <img
+                                  src={fStore.logo_url}
+                                  alt={fStore.name}
+                                  className="w-11 h-11 rounded-xl object-cover border border-cream-200 dark:border-white/10 flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="w-11 h-11 rounded-xl bg-brand-400/10 flex items-center justify-center text-brand-400 flex-shrink-0">
+                                  <Storefront size={20} weight="duotone" />
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <h4 className="text-sm font-bold text-dark-800 dark:text-white truncate">{fStore.name}</h4>
+                                <p className="text-[10px] text-dark-800/50 dark:text-white/45 truncate mt-0.5">{fStore.tagline || 'Merchant store'}</p>
                               </div>
-                            )}
-                            <div className="min-w-0">
-                              <h4 className="text-sm font-bold text-dark-800 dark:text-white truncate">{fStore.name}</h4>
-                              <p className="text-[10px] text-dark-800/50 dark:text-white/45 truncate mt-0.5">{fStore.tagline || 'Merchant vendor storefront'}</p>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <button
+                                onClick={() => handleToggleFollow(fStore.id, fStore.name)}
+                                disabled={followingInProgress === fStore.id}
+                                className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-cream-100 dark:bg-white/5 hover:bg-red-50 dark:hover:bg-red-950/20 text-dark-800/60 dark:text-white/50 hover:text-red-500 border border-cream-200 dark:border-white/10 transition-all disabled:opacity-50"
+                              >
+                                {followingInProgress === fStore.id ? '...' : 'Unfollow'}
+                              </button>
+                              <Link
+                                to={`/s/${fStore.slug}`}
+                                className="flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-lg bg-brand-400/10 hover:bg-brand-400/20 text-brand-500 dark:text-brand-400 border border-brand-400/20 transition-colors"
+                              >
+                                <ArrowSquareOut size={11} /> Visit
+                              </Link>
                             </div>
                           </div>
-                          <Link
-                            to={`/s/${fStore.slug}`}
-                            className="bg-cream-100 dark:bg-dark-700 hover:bg-cream-200 dark:hover:bg-dark-600 text-dark-800 dark:text-white border border-cream-200 dark:border-white/10 text-xs font-semibold px-4 py-2 rounded-xl transition-all flex-shrink-0"
-                          >
-                            Visit Shop
-                          </Link>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Discover merchants */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <MagnifyingGlass size={16} className="text-brand-400" weight="bold" />
+                      <h3 className="text-base font-bold text-dark-800 dark:text-white">Discover Merchants</h3>
                     </div>
-                  )}
+                    {allStoresLoading ? (
+                      <div className="space-y-3">
+                        {[1,2,3].map(i => <div key={i} className="h-16 bg-cream-100 dark:bg-dark-700 animate-pulse rounded-2xl" />)}
+                      </div>
+                    ) : (() => {
+                      const followedIds = new Set(profile?.followed_stores || [])
+                      const unfollowed = (allStores || []).filter(s => !followedIds.has(s.id))
+                      if (unfollowed.length === 0) return (
+                        <div className="card p-6 text-center text-dark-800/40 dark:text-white/30 text-xs">
+                          You're following all available stores! 🎉
+                        </div>
+                      )
+                      return (
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          {unfollowed.map(s => (
+                            <div key={s.id} className="card p-4 flex items-center gap-3">
+                              {s.logo_url ? (
+                                <img src={s.logo_url} alt={s.name} className="w-11 h-11 rounded-xl object-cover border border-cream-200 dark:border-white/10 flex-shrink-0" />
+                              ) : (
+                                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-400/15 to-brand-400/5 flex items-center justify-center text-brand-400 flex-shrink-0">
+                                  <Storefront size={20} weight="duotone" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-bold text-dark-800 dark:text-white truncate">{s.name}</h4>
+                                <p className="text-[10px] text-dark-800/50 dark:text-white/40 truncate mt-0.5">{s.tagline || 'Merchant store'}</p>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <button
+                                  onClick={() => handleToggleFollow(s.id, s.name)}
+                                  disabled={followingInProgress === s.id}
+                                  className="flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-lg bg-brand-400 hover:bg-brand-500 text-white transition-colors disabled:opacity-50"
+                                >
+                                  {followingInProgress === s.id
+                                    ? <span className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin inline-block" />
+                                    : <UserPlus size={11} weight="bold" />}
+                                  {followingInProgress === s.id ? '' : 'Follow'}
+                                </button>
+                                <Link
+                                  to={`/s/${s.slug}`}
+                                  className="flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-lg bg-cream-100 dark:bg-white/5 hover:bg-cream-200 dark:hover:bg-white/10 text-dark-800/60 dark:text-white/50 border border-cream-200 dark:border-white/10 transition-colors"
+                                >
+                                  <ArrowSquareOut size={11} /> View
+                                </Link>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })()}
+                  </div>
                 </div>
               )}
 
