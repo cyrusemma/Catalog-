@@ -80,8 +80,8 @@ const emptyForm: SettingsForm = {
   maintenance_message: "We're currently updating our store. Check back soon!",
   operating_hours: "",
   payment_methods: ["momo", "cod"],
-  seo_meta_title: "",
-  seo_meta_description: "",
+  seo_meta_title: "Catalog by Cyrus | Premium Marketplace",
+  seo_meta_description: "Discover the best products curated just for you. Shop our premium catalog for exclusive deals and amazing finds.",
   seo_og_image: "",
   analytics_google_id: "",
   analytics_pixel_id: "",
@@ -650,7 +650,7 @@ export default function AdminSettings() {
                 <Field label="Meta Title" value={form.seo_meta_title} onChange={v => set("seo_meta_title", v)} placeholder="Catalog | Buy Best Products" />
                 <div>
                   <label className="block text-gray-700 text-sm font-medium mb-1.5">Meta Description</label>
-                  <textarea aria-label="Meta Description" value={form.seo_meta_description} onChange={e => set("seo_meta_description", e.target.value)} rows={3} className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 outline-none text-sm bg-gray-50 focus:bg-white resize-none transition-colors" />
+                  <textarea aria-label="Meta Description" value={form.seo_meta_description} onChange={e => set("seo_meta_description", e.target.value)} rows={3} placeholder="Discover the best products curated just for you. Shop our premium catalog for exclusive deals and amazing finds." className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-4 py-2.5 text-gray-900 outline-none text-sm bg-gray-50 focus:bg-white resize-none transition-colors" />
                 </div>
               </section>
 
