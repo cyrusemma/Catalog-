@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Package, CheckCircle, Truck, Clock, ShoppingBag } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { ArrowLeft, Package, CheckCircle, Truck, Clock, ShoppingBag, Star, X, Edit3 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 const sectionMotion = {
   initial: { opacity: 0, y: 12 },
@@ -34,12 +35,31 @@ export default function CustomerOrders() {
   const { user, isLoggedIn, loading } = useCustomerSession()
   const navigate = useNavigate()
   const formatPrice = useCurrencyFormatter()
+  const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [reviewTarget, setReviewTarget] = useState<{ item: any, orderId: string } | null>(null)
+  
+  // Track reviewed items using localStorage
+  const [reviewedItems, setReviewedItems] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('customer_reviewed_items')
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  })
 
   useEffect(() => {
     if (!loading && !isLoggedIn) {
       navigate('/', { replace: true })
     }
   }, [loading, isLoggedIn, navigate])
+
+  const markAsReviewed = (orderId: string, productId: string) => {
+    const key = `${orderId}_${productId}`
+    const newSet = [...reviewedItems, key]
+    setReviewedItems(newSet)
+    localStorage.setItem('customer_reviewed_items', JSON.stringify(newSet))
+  }
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ['customer-orders', user?.id],
@@ -118,9 +138,18 @@ export default function CustomerOrders() {
                         </span>
                       )}
                     </div>
-                    <p className="text-dark-800/50 dark:text-white/50 text-sm font-medium">
-                      Placed on {new Date(order.created_at).toLocaleDateString('en-GH', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </p>
+                    <div className="text-dark-800/50 dark:text-white/50 text-sm font-medium mt-1 space-y-0.5">
+                      <p>
+                        Placed: {new Date(order.created_at).toLocaleDateString('en-GH', { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(order.created_at).toLocaleTimeString('en-GH', { hour: 'numeric', minute: '2-digit' })}
+                      </p>
+                      {order.status === 'delivered' && (
+                        <p className="text-green-600 dark:text-green-400">
+                          Delivered: {order.delivered_at 
+                            ? `${new Date(order.delivered_at).toLocaleDateString('en-GH', { day: 'numeric', month: 'short', year: 'numeric' })} at ${new Date(order.delivered_at).toLocaleTimeString('en-GH', { hour: 'numeric', minute: '2-digit' })}` 
+                            : 'Order completed'}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="text-left sm:text-right">
                     <p className="text-2xl font-bold text-brand-400">{formatPrice(order.total)}</p>
@@ -179,18 +208,43 @@ export default function CustomerOrders() {
                 {/* Items List */}
                 <div className="bg-cream-50/50 dark:bg-white/5 rounded-2xl p-4 border border-cream-100 dark:border-white/5 space-y-3">
                   <p className="text-xs font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 mb-3">Order Items</p>
-                  {order.items.map((item: any, i: number) => (
-                    <div key={i} className="flex items-center gap-4">
-                      <img src={item.product_image || 'https://placehold.co/100x100/f3f4f6/9ca3af?text=?'} alt="" className="w-12 h-12 rounded-xl object-cover bg-white dark:bg-dark-800" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-dark-800 dark:text-white text-sm font-semibold truncate">{item.product_title}</p>
-                        <p className="text-dark-800/50 dark:text-white/50 text-xs mt-0.5">Qty: {item.quantity}</p>
+                  {order.items.map((item: any, i: number) => {
+                    const reviewKey = `${order.id}_${item.product_id}`
+                    const isReviewed = reviewedItems.includes(reviewKey)
+                    
+                    return (
+                      <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                          <img src={item.product_image || 'https://placehold.co/100x100/f3f4f6/9ca3af?text=?'} alt="" className="w-12 h-12 rounded-xl object-cover bg-white dark:bg-dark-800 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-dark-800 dark:text-white text-sm font-semibold truncate">{item.product_title}</p>
+                            <p className="text-dark-800/50 dark:text-white/50 text-xs mt-0.5">Qty: {item.quantity}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between sm:justify-end gap-4 pl-16 sm:pl-0">
+                          <span className="text-dark-800 dark:text-white text-sm font-bold">{formatPrice(item.price)}</span>
+                          {order.status === 'delivered' && (
+                            <button
+                              type="button"
+                              disabled={isReviewed}
+                              onClick={() => {
+                                setReviewTarget({ item, orderId: order.id })
+                                setReviewModalOpen(true)
+                              }}
+                              className={`text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+                                isReviewed 
+                                  ? 'bg-cream-100 dark:bg-white/5 text-dark-800/30 dark:text-white/30 cursor-not-allowed'
+                                  : 'bg-brand-50 hover:bg-brand-100 text-brand-600 dark:bg-brand-500/10 dark:hover:bg-brand-500/20 dark:text-brand-400'
+                              }`}
+                            >
+                              {isReviewed ? <CheckCircle size={14} /> : <Edit3 size={14} />}
+                              {isReviewed ? 'Reviewed' : 'Review'}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-right pl-2">
-                        <span className="text-dark-800 dark:text-white text-sm font-bold">{formatPrice(item.price)}</span>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
                 
                 {/* Financial Breakdown (compact) */}
@@ -214,6 +268,150 @@ export default function CustomerOrders() {
           })}
         </div>
       )}
+
+      {/* Review Modal */}
+      <AnimatePresence>
+        {reviewModalOpen && reviewTarget && (
+          <ReviewModal 
+            isOpen={reviewModalOpen} 
+            onClose={() => {
+              setReviewModalOpen(false)
+              setTimeout(() => setReviewTarget(null), 300)
+            }} 
+            item={reviewTarget.item}
+            userName={user?.user_metadata?.full_name || 'Customer'}
+            userEmail={user?.email || ''}
+            onSuccess={() => markAsReviewed(reviewTarget.orderId, reviewTarget.item.product_id)}
+          />
+        )}
+      </AnimatePresence>
     </main>
+  )
+}
+
+function ReviewModal({ 
+  isOpen, 
+  onClose, 
+  item, 
+  userName,
+  userEmail,
+  onSuccess 
+}: { 
+  isOpen: boolean, 
+  onClose: () => void, 
+  item: any, 
+  userName: string,
+  userEmail: string,
+  onSuccess: () => void
+}) {
+  const [rating, setRating] = useState(0)
+  const [hoverRating, setHoverRating] = useState(0)
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async () => {
+    if (rating === 0) {
+      toast.error('Please select a rating')
+      return
+    }
+    
+    setSubmitting(true)
+    try {
+      // We store the product URL or identifier in page_url so it can be tied back if needed
+      const productUrl = `/product/${item.product_slug || item.product_id}`
+      
+      const { error } = await supabase.from('site_reviews').insert({
+        name: userName,
+        email: userEmail,
+        rating,
+        message: comment.trim() || `Rated ${rating} stars.`,
+        page_url: productUrl,
+      })
+
+      if (error) throw error
+
+      toast.success('Review submitted successfully! Thank you.')
+      onSuccess()
+      onClose()
+    } catch (err: any) {
+      toast.error('Failed to submit review: ' + err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 z-[100] bg-dark-900/40 backdrop-blur-sm pointer-events-auto"
+      />
+      <motion.div
+        initial={{ opacity: 0, y: '100%', scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: '100%', scale: 0.95 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="fixed bottom-0 left-0 right-0 sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-[110] w-full sm:max-w-md bg-white dark:bg-dark-800 sm:rounded-3xl rounded-t-3xl border border-cream-200 dark:border-white/10 shadow-2xl p-6 pointer-events-auto"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center text-dark-800/40 dark:text-white/40 hover:bg-cream-100 dark:hover:bg-white/10 transition-colors"
+        >
+          <X size={18} />
+        </button>
+
+        <h3 className="text-xl font-display font-bold text-dark-800 dark:text-white mb-1">
+          Review Product
+        </h3>
+        <p className="text-sm text-dark-800/60 dark:text-white/60 mb-6 truncate pr-8">
+          {item.product_title}
+        </p>
+
+        <div className="flex flex-col items-center gap-6">
+          {/* Star picker */}
+          <div className="flex items-center gap-2">
+            {[1, 2, 3, 4, 5].map(star => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => setRating(star)}
+                onMouseEnter={() => setHoverRating(star)}
+                onMouseLeave={() => setHoverRating(0)}
+                className="outline-none transition-transform hover:scale-110 focus:scale-110"
+              >
+                <Star
+                  size={40}
+                  className={`transition-colors ${
+                    (hoverRating || rating) >= star
+                      ? 'text-brand-400 fill-brand-400 drop-shadow-sm'
+                      : 'text-cream-300 dark:text-white/20'
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+
+          <textarea
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            placeholder="Tell us what you liked (or didn't like) about this product..."
+            rows={4}
+            className="w-full bg-cream-50 dark:bg-dark-900 border border-cream-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-dark-800 dark:text-white placeholder-dark-800/40 dark:placeholder-white/30 outline-none focus:border-brand-400 transition-colors resize-none"
+          />
+
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={rating === 0 || submitting}
+            className="w-full bg-brand-400 hover:bg-brand-500 disabled:bg-cream-200 disabled:text-dark-800/40 dark:disabled:bg-white/5 dark:disabled:text-white/30 text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center"
+          >
+            {submitting ? 'Submitting...' : 'Submit Review'}
+          </button>
+        </div>
+      </motion.div>
+    </>
   )
 }
