@@ -38,6 +38,7 @@ import WishlistSync from './components/ui/WishlistSync'
 import { useSignInStore } from './store/signInStore'
 import { useCustomerSession } from './hooks/useCustomerSession'
 import { applyTheme, initialColor, useThemeStore, type ColorTheme } from './store/themeStore'
+import PushPromptModal from './components/ui/PushPromptModal'
 
 const Home = lazy(() => import('./pages/Home'))
 const Shop = lazy(() => import('./pages/Shop'))
@@ -626,6 +627,7 @@ export default function App() {
         >
           <AnimatedRoutes />
         </Suspense>
+        <PushPromptModal />
       </BrowserRouter>
     </QueryClientProvider>
   )
