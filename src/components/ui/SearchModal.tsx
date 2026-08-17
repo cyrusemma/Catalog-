@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import {
   MagnifyingGlass,
   X,
@@ -175,7 +175,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-12 sm:pt-20 px-3 sm:px-4">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-0 sm:pt-16 px-0 sm:px-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -183,16 +183,16 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/65 backdrop-blur-xl"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xl"
           />
 
           {/* Modal Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            initial={{ opacity: 0, scale: 0.96, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            exit={{ opacity: 0, scale: 0.96, y: -10 }}
             transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-            className="relative w-full max-w-2xl bg-white/95 dark:bg-dark-900/95 backdrop-blur-2xl border border-cream-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[82vh]"
+            className="relative w-full sm:max-w-2xl bg-white/95 dark:bg-dark-900/95 backdrop-blur-2xl border-b sm:border border-cream-200 dark:border-white/10 rounded-b-3xl sm:rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[92vh] sm:max-h-[84vh]"
           >
             {/* Top Bar / Search Input */}
             <div className="p-3.5 sm:p-4 border-b border-cream-100 dark:border-white/10 flex items-center gap-3">
@@ -274,12 +274,10 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                         {recentViewedProducts.slice(0, 4).map(p => {
                           const priceVal = effectivePrice(p)
                           return (
-                            <div
+                            <Link
                               key={p.id}
-                              onClick={() => {
-                                onClose()
-                                navigate(`/product/${p.slug}`)
-                              }}
+                              to={`/product/${p.slug}`}
+                              onClick={onClose}
                               className="flex items-center gap-3 p-2 rounded-2xl bg-cream-50/70 dark:bg-white/5 hover:bg-brand-400/10 border border-cream-200/60 dark:border-white/5 cursor-pointer transition-all group"
                             >
                               <img
@@ -295,7 +293,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                                   {formatPrice(priceVal)}
                                 </p>
                               </div>
-                            </div>
+                            </Link>
                           )
                         })}
                       </div>
@@ -310,17 +308,14 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       </span>
                       <div className="flex flex-wrap gap-2">
                         {featuredProducts.slice(0, 6).map(p => (
-                          <button
+                          <Link
                             key={p.id}
-                            type="button"
-                            onClick={() => {
-                              onClose()
-                              navigate(`/product/${p.slug}`)
-                            }}
+                            to={`/product/${p.slug}`}
+                            onClick={onClose}
                             className="flex items-center px-3 py-1.5 rounded-xl bg-cream-50 dark:bg-white/5 hover:bg-brand-400 text-dark-800 dark:text-white hover:text-white border border-cream-200/70 dark:border-white/5 text-xs font-medium transition-all shadow-xs group"
                           >
                             <span className="truncate max-w-[150px]">{p.title}</span>
-                          </button>
+                          </Link>
                         ))}
                       </div>
                     </div>
@@ -334,18 +329,15 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       </span>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {categoryTree.filter(c => !c.parent_id).slice(0, 6).map(cat => (
-                          <button
+                          <Link
                             key={cat.id}
-                            type="button"
-                            onClick={() => {
-                              onClose()
-                              navigate(`/shop/${cat.slug}`)
-                            }}
+                            to={`/shop/${cat.slug}`}
+                            onClick={onClose}
                             className="flex items-center justify-between p-2.5 rounded-xl bg-cream-50/60 dark:bg-white/5 hover:bg-brand-400/10 text-dark-800 dark:text-white text-xs font-semibold border border-cream-200/60 dark:border-white/5 transition-all text-left group"
                           >
                             <span className="truncate">{cat.name}</span>
                             <CaretRight size={12} weight="bold" className="text-dark-800/30 dark:text-white/30 group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
-                          </button>
+                          </Link>
                         ))}
                       </div>
                     </div>
@@ -388,12 +380,10 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       </span>
                       <div className="grid sm:grid-cols-3 gap-2">
                         {storesResult.map(s => (
-                          <div
+                          <Link
                             key={s.id}
-                            onClick={() => {
-                              onClose()
-                              navigate(`/s/${s.slug}`)
-                            }}
+                            to={`/s/${s.slug}`}
+                            onClick={onClose}
                             className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-cream-50 dark:bg-white/5 hover:bg-brand-400/10 text-dark-800 dark:text-white border border-cream-200 dark:border-white/5 cursor-pointer transition-all"
                           >
                             {s.logo_url ? (
@@ -407,7 +397,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                               <p className="text-xs font-bold truncate">{s.name}</p>
                               <p className="text-[10px] text-dark-800/50 dark:text-white/40 truncate">{s.tagline || 'Merchant Store'}</p>
                             </div>
-                          </div>
+                          </Link>
                         ))}
                       </div>
                     </div>
@@ -421,18 +411,15 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       </span>
                       <div className="flex flex-wrap gap-2">
                         {matchingCategories.map(c => (
-                          <button
+                          <Link
                             key={c.id}
-                            type="button"
-                            onClick={() => {
-                              onClose()
-                              navigate(`/shop/${c.slug}`)
-                            }}
+                            to={`/shop/${c.slug}`}
+                            onClick={onClose}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-400/10 text-brand-500 dark:text-brand-400 border border-brand-400/20 text-xs font-bold hover:bg-brand-400/20 transition-all"
                           >
                             <span>{c.name}</span>
                             <CaretRight size={12} weight="bold" />
-                          </button>
+                          </Link>
                         ))}
                       </div>
                     </div>
@@ -451,12 +438,10 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                           const priceVal = effectivePrice(p)
                           const isOutOfStock = p.stock_status === 'out_of_stock'
                           return (
-                            <div
+                            <Link
                               key={p.id}
-                              onClick={() => {
-                                onClose()
-                                navigate(`/product/${p.slug}`)
-                              }}
+                              to={`/product/${p.slug}`}
+                              onClick={onClose}
                               className="flex items-center gap-3 p-2.5 rounded-2xl bg-cream-50/70 dark:bg-white/5 hover:bg-brand-400/10 dark:hover:bg-brand-400/20 border border-cream-200/70 dark:border-white/5 hover:border-brand-400/30 cursor-pointer transition-all group"
                             >
                               <img
@@ -492,7 +477,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                               ) : (
                                 <CaretRight size={14} weight="bold" className="text-dark-800/30 dark:text-white/30 group-hover:text-brand-400 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
                               )}
-                            </div>
+                            </Link>
                           )
                         })}
                       </div>
