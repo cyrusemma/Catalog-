@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { House, Storefront, Images, ShoppingCart, Heart } from '@phosphor-icons/react'
+import { House, Storefront, UserCircle, ShoppingCart, Heart } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
@@ -10,9 +10,9 @@ type NavItem = { to: string; label: string; Icon: PhosphorIcon; badgeKind?: 'car
 const items: NavItem[] = [
   { to: '/', label: 'Home', Icon: House },
   { to: '/shop', label: 'Shop', Icon: Storefront },
-  { to: '/gallery', label: 'Gallery', Icon: Images },
   { to: '/wishlist', label: 'Saved', Icon: Heart, badgeKind: 'wishlist' },
   { to: '/cart', label: 'Cart', Icon: ShoppingCart, badgeKind: 'cart' },
+  { to: '/account', label: 'Account', Icon: UserCircle },
 ]
 
 export default function BottomNav() {

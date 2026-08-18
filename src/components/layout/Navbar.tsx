@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ShoppingCart, Storefront, UserCircle, Gear, SquaresFour, MagnifyingGlass } from '@phosphor-icons/react'
+import { ShoppingCart, Storefront, UserCircle, SquaresFour, MagnifyingGlass } from '@phosphor-icons/react'
 import { useQuery } from '@tanstack/react-query'
 import { useCartStore } from '../../store/cartStore'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
 import { useSignInStore } from '../../store/signInStore'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
-import ThemeToggle from '../ui/ThemeToggle'
+
 import NotificationButton from '../ui/NotificationButton'
 import SearchModal from '../ui/SearchModal'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -172,7 +172,6 @@ export default function Navbar() {
               <MagnifyingGlass size={18} weight="duotone" />
             </button>
 
-            <ThemeToggle />
             <NotificationButton />
 
             {showDashboardLink && showDashboardShortcut && (
@@ -185,14 +184,6 @@ export default function Navbar() {
                 <SquaresFour size={18} weight="duotone" />
               </Link>
             )}
-
-            <Link
-              to="/settings"
-              aria-label="Settings"
-              className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white"
-            >
-              <Gear size={17} weight="duotone" />
-            </Link>
 
             {/* Cart Preview Hover Wrapper */}
             <div
