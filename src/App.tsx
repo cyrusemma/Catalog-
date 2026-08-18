@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Link, useParams } from 'react-router-dom'
 
 // Scrolls to the top of the page on every route change.
@@ -220,8 +220,10 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
   const signInOpen = useSignInStore(s => s.open)
   const closeSignIn = useSignInStore(s => s.closeModal)
   const signInReason = useSignInStore(s => s.reason)
+  const constraintsRef = useRef(null)
+  const mode = useThemeStore(s => s.mode)
   return (
-    <div className="flex flex-col min-h-dvh overflow-x-hidden">
+    <div ref={constraintsRef} className="flex flex-col min-h-dvh overflow-x-hidden relative">
       <AnnouncementBanner />
       <Navbar />
       <div className="pt-20 flex flex-col flex-1 relative overflow-x-hidden">
@@ -245,33 +247,38 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
       {location.pathname !== '/gallery' && (
         <motion.div
           drag
-          dragElastic={0.1}
+          dragElastic={0.6}
           dragMomentum={false}
-          dragConstraints={{ left: -220, right: 10, top: -450, bottom: 10 }}
+          dragConstraints={constraintsRef}
+          dragTransition={{ bounceStiffness: 400, bounceDamping: 18 }}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ 
             opacity: 1, 
             scale: 1,
-            y: [0, -5, 0]
+            y: [0, -6, 0]
           }}
           transition={{
             y: {
               repeat: Infinity,
-              duration: 2.2,
+              duration: 2.5,
               ease: "easeInOut"
             },
             default: { type: "spring", stiffness: 260, damping: 20 }
           }}
-          className="sm:hidden fixed bottom-20 right-4 z-[99] touch-none"
+          className="sm:hidden fixed bottom-24 right-4 z-[99] touch-none"
         >
           <Link
             to="/gallery"
             aria-label="Open lookbook gallery"
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-brand-400 to-brand-500 text-white font-bold text-[11px] shadow-[0_8px_20px_rgba(212,130,10,0.3)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.5)] border border-brand-400/20 active:scale-95 pointer-events-auto"
+            className={`flex items-center gap-1.5 px-4 py-3 rounded-full font-bold text-[11px] backdrop-blur-md border shadow-lg transition-all active:scale-95 pointer-events-auto ${
+              mode === 'dark'
+                ? 'bg-dark-900/80 border-brand-400/30 text-brand-400 shadow-black/50 hover:bg-dark-900/90'
+                : 'bg-white/80 border-brand-400/20 text-brand-500 shadow-brand-400/10 hover:bg-white/90'
+            }`}
           >
-            <Images size={15} weight="fill" className="animate-pulse" />
+            <Images size={16} weight="fill" className="animate-pulse" />
             <span>Gallery</span>
           </Link>
         </motion.div>
