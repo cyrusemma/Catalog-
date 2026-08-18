@@ -13,6 +13,7 @@ import SearchModal from '../ui/SearchModal'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import { effectivePrice } from '../../lib/utils'
+import { useThemeStore } from '../../store/themeStore'
 
 export default function Navbar() {
   const location = useLocation()
@@ -89,6 +90,7 @@ export default function Navbar() {
   })
 
   const showDashboardLink = isPlatformAdmin || !!merchantStore
+  const showDashboardShortcut = useThemeStore(s => s.showDashboardShortcut)
 
   const navLink = (to: string, label: string) => {
     const active = location.pathname === to
@@ -173,7 +175,7 @@ export default function Navbar() {
             <ThemeToggle />
             <NotificationButton />
 
-            {showDashboardLink && (
+            {showDashboardLink && showDashboardShortcut && (
               <Link
                 to="/admin"
                 aria-label="Merchant Dashboard"

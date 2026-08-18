@@ -29,6 +29,8 @@ export default function Settings() {
   const setColor = useThemeStore(s => s.setColor)
   const mode = useThemeStore(s => s.mode)
   const setMode = useThemeStore(s => s.setMode)
+  const showDashboardShortcut = useThemeStore(s => s.showDashboardShortcut)
+  const setShowDashboardShortcut = useThemeStore(s => s.setShowDashboardShortcut)
   const { isLoggedIn, profile } = useCustomerSession()
   const { pushSubscribed, pushWorking, pushError, supported, toggle } = useNotificationPreferences()
   const openSignIn = useSignInStore(s => s.openModal)
@@ -140,6 +142,39 @@ export default function Settings() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-800/50 dark:text-white/40 mb-2">Display Currency</p>
             <CurrencySelector />
           </div>
+        </div>
+      </motion.section>
+
+      {/* Shortcut preferences. */}
+      <motion.section
+        {...sectionMotion(0.03)}
+        className="rounded-3xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 mb-5"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">⚡</span>
+              <h2 className="text-dark-800 dark:text-white font-semibold">Quick Shortcuts</h2>
+            </div>
+            <p className="text-dark-800/55 dark:text-white/50 text-sm mt-1.5">
+              Enable the Merchant Dashboard button shortcut directly in your navigation bar. By default, it is hidden to keep the navbar clean.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowDashboardShortcut(!showDashboardShortcut)}
+            aria-label="Toggle merchant dashboard shortcut in navbar"
+            className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors ${
+              showDashboardShortcut ? 'bg-brand-400' : 'bg-cream-200 dark:bg-dark-700'
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                showDashboardShortcut ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
       </motion.section>
 

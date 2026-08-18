@@ -81,17 +81,27 @@ export function initialMode(): Mode {
   return 'light'
 }
 
+const SHORTCUT_KEY = 'catalog-show-dashboard-shortcut'
+
+export function initialShortcut(): boolean {
+  if (typeof window === 'undefined') return false
+  return localStorage.getItem(SHORTCUT_KEY) === 'true'
+}
+
 interface ThemeState {
   color: ColorTheme
   mode: Mode
+  showDashboardShortcut: boolean
   setColor: (color: ColorTheme) => void
   setMode: (mode: Mode) => void
+  setShowDashboardShortcut: (show: boolean) => void
   toggleMode: () => void
 }
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
   color: initialColor(),
   mode: initialMode(),
+  showDashboardShortcut: initialShortcut(),
   setColor: (color) => {
     localStorage.setItem(COLOR_KEY, color)
     applyTheme(color, get().mode)
@@ -101,6 +111,10 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     localStorage.setItem(MODE_KEY, mode)
     applyTheme(get().color, mode)
     set({ mode })
+  },
+  setShowDashboardShortcut: (show) => {
+    localStorage.setItem(SHORTCUT_KEY, show ? 'true' : 'false')
+    set({ showDashboardShortcut: show })
   },
   toggleMode: () => get().setMode(get().mode === 'dark' ? 'light' : 'dark'),
 }))
