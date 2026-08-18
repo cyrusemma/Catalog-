@@ -17,7 +17,8 @@ import {
   ClipboardText,
   ShoppingCartSimple,
   UserPlus,
-  MagnifyingGlass
+  MagnifyingGlass,
+  CaretLeft
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -43,6 +44,7 @@ export default function Account() {
   const [signedOut, setSignedOut] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'inbox' | 'vouchers' | 'wishlist' | 'followed' | 'recent' | 'address' | 'alerts' | 'store'>('overview')
   const [showCreateWizard, setShowCreateWizard] = useState(false)
+  const [mobileView, setMobileView] = useState<'menu' | 'content'>('menu')
 
   // Address form fields
   const [phone, setPhone] = useState('')
@@ -328,7 +330,9 @@ export default function Account() {
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         {/* Navigation Sidebar */}
-        <aside className="w-full lg:w-64 bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 rounded-3xl p-4 space-y-1.5 shadow-sm sticky top-24">
+        <aside className={`w-full lg:w-64 bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 rounded-3xl p-4 space-y-1.5 shadow-sm sticky top-24 ${
+          mobileView === 'menu' ? 'block' : 'hidden lg:block'
+        }`}>
           <div className="flex items-center gap-3 px-3 py-3 border-b border-cream-100 dark:border-white/5 mb-3">
             {profile.avatar_url ? (
               <img
@@ -364,6 +368,7 @@ export default function Account() {
                     } else {
                       setActiveTab(item.id)
                     }
+                    setMobileView('content')
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-left text-sm font-semibold transition-all group ${
                     active
@@ -399,7 +404,19 @@ export default function Account() {
         </aside>
 
         {/* Dynamic Display Panel */}
-        <div className="flex-1 w-full min-w-0">
+        <div className={`flex-1 w-full min-w-0 ${
+          mobileView === 'content' ? 'block' : 'hidden lg:block'
+        }`}>
+          {mobileView === 'content' && (
+            <button
+              type="button"
+              onClick={() => setMobileView('menu')}
+              className="lg:hidden flex items-center gap-1.5 mb-6 text-xs font-bold text-brand-400 hover:text-brand-500 bg-brand-400/10 px-3.5 py-2 rounded-xl border border-brand-400/20 active:scale-95 transition-all"
+            >
+              <CaretLeft size={14} weight="bold" className="flex-shrink-0" />
+              <span>Back to Account Menu</span>
+            </button>
+          )}
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}

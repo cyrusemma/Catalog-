@@ -3,6 +3,8 @@ import { House, Storefront, UserCircle, ShoppingCart, Heart } from '@phosphor-ic
 import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
+import { useCustomerSession } from '../../hooks/useCustomerSession'
+import { useSignInStore } from '../../store/signInStore'
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
 
 type NavItem = { to: string; label: string; Icon: PhosphorIcon; badgeKind?: 'cart' | 'wishlist' }
@@ -19,6 +21,8 @@ export default function BottomNav() {
   const location = useLocation()
   const totalItems = useCartStore(s => s.totalItems())
   const wishlistCount = useWishlistStore(s => s.count())
+  const { isLoggedIn } = useCustomerSession()
+  const openSignIn = useSignInStore(s => s.openModal)
 
   return (
     <nav className="sm:hidden fixed bottom-2 pb-[env(safe-area-inset-bottom,0px)] left-[calc(1rem+env(safe-area-inset-left,0px))] right-[calc(1rem+env(safe-area-inset-right,0px))] z-50 pointer-events-none">
@@ -27,6 +31,14 @@ export default function BottomNav() {
           // Strict exact match for home so we don't accidentally highlight it on nested routes
           const active = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
           const badgeValue = badgeKind === 'cart' ? totalItems : badgeKind === 'wishlist' ? wishlistCount : 0
+
+          const isAccountTab = to === '/account'
+          const handleTabClick = (e: React.MouseEvent) => {
+            if (isAccountTab && !isLoggedIn) {
+              e.preventDefault()
+              openSignIn('Sign in to view your account.')
+            }
+          }
 
           return (
             <motion.div
@@ -37,6 +49,7 @@ export default function BottomNav() {
             >
               <Link
                 to={to}
+                onClick={handleTabClick}
                 className={`relative flex items-center justify-center transition-all duration-300 ${active ? 'px-4 py-2.5' : 'w-10 h-10'
                   }`}
               >
