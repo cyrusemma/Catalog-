@@ -36,7 +36,7 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className={`admin-shell admin-theme-${adminTheme} min-h-dvh bg-[#f8f4ef] flex items-center justify-center px-4`}>
+    <div className={`admin-shell admin-theme-${adminTheme} min-h-dvh bg-[var(--admin-bg)] flex items-center justify-center px-4`}>
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">

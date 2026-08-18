@@ -243,7 +243,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   )
 
   return (
-    <div className={`admin-shell admin-theme-${adminTheme} min-h-dvh bg-[#f8f4ef]`}>
+    <div className={`admin-shell admin-theme-${adminTheme} min-h-dvh bg-[var(--admin-bg)] overflow-x-hidden`}>
       {/* Mobile top bar */}
       <header className="lg:hidden sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-gray-100 safe-top">
         <div className="h-14 px-4 flex items-center justify-between">

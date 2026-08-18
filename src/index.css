@@ -1081,3 +1081,34 @@ html.theme-turquoise-light .fill-brand-400,
 html.theme-turquoise-dark .fill-brand-400 {
   fill: #0c8577 !important;
 }
+
+/* ReactQuill Mobile Toolbar wrap and styling overrides */
+.ql-toolbar.ql-snow {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 2px !important;
+  padding: 6px !important;
+  border-color: var(--admin-border) !important;
+  background-color: var(--admin-panel-soft) !important;
+}
+.ql-toolbar.ql-snow .ql-formats {
+  margin-right: 4px !important;
+  margin-bottom: 2px !important;
+}
+.ql-container.ql-snow {
+  border-color: var(--admin-border) !important;
+  background-color: var(--admin-panel) !important;
+}
+.ql-snow .ql-stroke {
+  stroke: var(--admin-text) !important;
+}
+.ql-snow .ql-fill {
+  fill: var(--admin-text) !important;
+}
+.ql-snow .ql-picker {
+  color: var(--admin-text) !important;
+}
+.ql-snow .ql-picker-options {
+  background-color: var(--admin-panel-strong) !important;
+  border-color: var(--admin-border) !important;
+}
