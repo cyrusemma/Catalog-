@@ -405,6 +405,37 @@ export default function Home() {
         </section>
       )}
 
+      {/* Visual Lookbook / Gallery CTA Section */}
+      <motion.section
+        initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+        whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="py-12 sm:py-16 bg-cream-50/30 dark:bg-white/2"
+      >
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="rounded-[2rem] bg-gradient-to-br from-brand-400/5 to-brand-500/10 border border-brand-400/10 p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+            <div className="space-y-2 text-center md:text-left">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-400/10 border border-brand-400/20 text-[10px] font-bold uppercase tracking-wider text-brand-400">
+                ✨ LOOKBOOK
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-dark-800 dark:text-white">
+                Explore the Visual Gallery
+              </h2>
+              <p className="text-xs sm:text-sm text-dark-800/60 dark:text-white/60 max-w-xl">
+                Prefer a high-density, image-first catalog view? Browse the collection in grid, magazine, or compact list layouts to find inspiration.
+              </p>
+            </div>
+            <Link
+              to="/gallery"
+              className="w-full md:w-auto px-6 py-3 bg-brand-400 hover:bg-brand-500 text-white font-semibold rounded-xl text-sm text-center shadow-md transition-colors whitespace-nowrap"
+            >
+              Open Gallery View
+            </Link>
+          </div>
+        </div>
+      </motion.section>
+
       {/* Become a Seller Banner CTA */}
       <motion.section
         initial={reduceMotion ? false : { opacity: 0, y: 24 }}
