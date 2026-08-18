@@ -16,6 +16,7 @@ import { StoreContext } from './contexts/StoreContext'
 import type { StoreContextValue } from './contexts/StoreContext'
 import { useDynamicPWA } from './hooks/useDynamicPWA'
 import { Store } from 'lucide-react'
+import { Images } from '@phosphor-icons/react'
 
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
@@ -239,6 +240,43 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
       </div>
       <Footer />
       <BottomNav />
+      
+      {/* Floating lookbook/gallery trigger on mobile storefront views */}
+      {location.pathname !== '/gallery' && (
+        <motion.div
+          drag
+          dragElastic={0.1}
+          dragMomentum={false}
+          dragConstraints={{ left: -220, right: 10, top: -450, bottom: 10 }}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ 
+            opacity: 1, 
+            scale: 1,
+            y: [0, -5, 0]
+          }}
+          transition={{
+            y: {
+              repeat: Infinity,
+              duration: 2.2,
+              ease: "easeInOut"
+            },
+            default: { type: "spring", stiffness: 260, damping: 20 }
+          }}
+          className="sm:hidden fixed bottom-20 right-4 z-[99] touch-none"
+        >
+          <Link
+            to="/gallery"
+            aria-label="Open lookbook gallery"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-brand-400 to-brand-500 text-white font-bold text-[11px] shadow-[0_8px_20px_rgba(212,130,10,0.3)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.5)] border border-brand-400/20 active:scale-95 pointer-events-auto"
+          >
+            <Images size={15} weight="fill" className="animate-pulse" />
+            <span>Gallery</span>
+          </Link>
+        </motion.div>
+      )}
+
       <SignInModal open={signInOpen} onClose={closeSignIn} reason={signInReason ?? undefined} />
       <OfflineIndicator />
       <ToastContainer />
