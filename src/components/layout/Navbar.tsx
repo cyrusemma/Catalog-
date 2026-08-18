@@ -7,6 +7,7 @@ import { useStoreSettings } from '../../hooks/useStoreSettings'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
 import { useSignInStore } from '../../store/signInStore'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
+import ThemeToggle from '../ui/ThemeToggle'
 
 import NotificationButton from '../ui/NotificationButton'
 import SearchModal from '../ui/SearchModal'
@@ -172,6 +173,7 @@ export default function Navbar() {
               <MagnifyingGlass size={18} weight="duotone" />
             </button>
 
+            <ThemeToggle />
             <NotificationButton />
 
             {showDashboardLink && showDashboardShortcut && (
