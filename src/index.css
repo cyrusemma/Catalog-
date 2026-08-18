@@ -1112,3 +1112,18 @@ html.theme-turquoise-dark .fill-brand-400 {
   background-color: var(--admin-panel-strong) !important;
   border-color: var(--admin-border) !important;
 }
+
+/* Hide scrollbar utility (for tab strips, horizontal scroll containers etc.) */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Prevent admin main content from overflowing horizontally on mobile */
+.admin-shell > main {
+  overflow-x: hidden;
+  min-width: 0;
+}

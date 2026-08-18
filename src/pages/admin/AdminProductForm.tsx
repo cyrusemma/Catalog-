@@ -509,7 +509,7 @@ export default function AdminProductForm() {
 
   return (
     <AdminLayout>
-      <div className="p-4 sm:p-6 lg:p-8 max-w-4xl pb-32 lg:pb-8">
+      <div className="p-3 sm:p-6 lg:p-8 w-full max-w-4xl overflow-x-hidden pb-32 lg:pb-8">
         <div className="flex items-center justify-between gap-3 mb-5 lg:mb-8">
           <div className="flex items-center gap-3">
             <button
@@ -538,8 +538,8 @@ export default function AdminProductForm() {
           </button>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-5 lg:gap-8">
-          <div className="lg:col-span-3 space-y-5">
+        <div className="grid lg:grid-cols-4 gap-4 lg:gap-8">
+          <div className="lg:col-span-3 space-y-4 min-w-0">
             {/* Desktop and Mobile Stepper / Tab Navigation */}
             <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
               {/* Mobile Quick Stepper View */}
@@ -567,8 +567,8 @@ export default function AdminProductForm() {
                 />
               </div>
 
-              {/* Scrollable Step list for both */}
-              <div className="flex gap-2 overflow-x-auto hide-scrollbar py-1">
+              {/* Scrollable Step list */}
+              <div className="flex gap-1.5 overflow-x-auto hide-scrollbar pb-1" style={{WebkitOverflowScrolling: 'touch'}}>
                 {TABS.map((tab) => {
                   const TabIcon = tab.icon
                   const isActive = activeTab === tab.id
@@ -578,17 +578,17 @@ export default function AdminProductForm() {
                       key={tab.id}
                       type="button"
                       onClick={() => setActiveTab(tab.id as any)}
-                      className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border ${
+                      className={`flex items-center gap-1 px-2.5 py-2 rounded-xl text-[11px] font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${
                         isActive
                           ? 'bg-brand-400 text-white border-brand-400 shadow-md shadow-brand-400/20'
                           : 'bg-gray-50 text-gray-600 border-gray-100 hover:bg-gray-100'
                       }`}
                     >
-                      <TabIcon size={14} className={isActive ? 'text-white' : 'text-gray-400'} />
+                      <TabIcon size={13} className={isActive ? 'text-white' : 'text-gray-400'} />
                       <span>{tab.label}</span>
                       {isDone && (
-                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${isActive ? 'bg-white text-brand-500' : 'bg-green-100 text-green-600'}`}>
-                          <Check size={8} strokeWidth={3} />
+                        <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] flex-shrink-0 ${isActive ? 'bg-white text-brand-500' : 'bg-green-100 text-green-600'}`}>
+                          <Check size={7} strokeWidth={3} />
                         </span>
                       )}
                     </button>
@@ -857,7 +857,7 @@ export default function AdminProductForm() {
             {activeTab === 'pricing' && (
             <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
               <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400">Pricing</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-gray-700 text-xs font-semibold mb-1.5 uppercase tracking-wide">Selling Price (GHS) *</label>
                   <input 
@@ -1020,7 +1020,7 @@ export default function AdminProductForm() {
             )}
 
             {activeTab === 'variants' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 gap-4">
               {/* Sizes Container */}
               <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
                 <div>
@@ -1284,28 +1284,25 @@ export default function AdminProductForm() {
 
           {/* Sidebar / Sticky Actions */}
           <div className="lg:col-span-1">
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-40 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:p-0 lg:bg-transparent lg:border-0 lg:shadow-none lg:z-auto space-y-3">
-              <div className="max-w-4xl mx-auto w-full space-y-3">
+            <div className="fixed bottom-0 left-0 right-0 z-40 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:z-auto">
+              <div className="bg-white border-t border-gray-100 shadow-[0_-4px_10px_rgba(0,0,0,0.06)] lg:bg-transparent lg:border-0 lg:shadow-none p-3 sm:p-4 lg:p-0 space-y-2">
                 {saveError && (
                   <p className="text-red-500 text-xs bg-red-50 border border-red-100 rounded-xl px-3 py-2">{saveError}</p>
                 )}
-                
                 <div className="flex gap-2 lg:flex-col">
-                  <button onClick={() => handleSave(true)} disabled={saving || !form.title || !form.selling_price} className="flex-1 w-full bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2">
-                    {saving ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        <span>Saving...</span>
-                      </>
-                    ) : 'Save & Publish'}
+                  <button
+                    onClick={() => handleSave(true)}
+                    disabled={saving || !form.title || !form.selling_price}
+                    className="flex-1 bg-brand-400 hover:bg-brand-500 active:scale-95 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all text-sm flex items-center justify-center gap-2 min-w-0"
+                  >
+                    {saving ? <><Loader2 size={16} className="animate-spin flex-shrink-0" /><span>Saving...</span></> : <span className="truncate">Save &amp; Publish</span>}
                   </button>
-                  <button onClick={() => handleSave(false)} disabled={saving || !form.title} className="flex-1 w-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 font-semibold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2">
-                    {saving ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        <span>Saving...</span>
-                      </>
-                    ) : 'Save as Draft'}
+                  <button
+                    onClick={() => handleSave(false)}
+                    disabled={saving || !form.title}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 active:scale-95 disabled:opacity-50 text-gray-700 font-semibold py-3 rounded-xl transition-all text-sm flex items-center justify-center gap-2 min-w-0"
+                  >
+                    {saving ? <><Loader2 size={16} className="animate-spin flex-shrink-0" /><span>Saving...</span></> : <span className="truncate">Save as Draft</span>}
                   </button>
                 </div>
               </div>
