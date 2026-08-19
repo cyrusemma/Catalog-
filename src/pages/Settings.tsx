@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Palette,
@@ -10,8 +11,9 @@ import {
   SlidersHorizontal,
   CaretRight,
 } from '@phosphor-icons/react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
+import { toast } from 'sonner'
 import { COLOR_THEMES, useThemeStore } from '../store/themeStore'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useNotificationPreferences } from '../hooks/useNotificationPreferences'
@@ -36,9 +38,35 @@ export default function Settings() {
   const openSignIn = useSignInStore(s => s.openModal)
   const navigate = useNavigate()
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
   const signOut = async () => {
     await supabase.auth.signOut()
     navigate('/', { replace: true })
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!profile || !isLoggedIn) return
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ deletion_requested_at: new Date().toISOString() })
+        .eq('id', profile.id)
+
+      if (error) throw error
+
+      toast.success('Account deletion scheduled. You have been signed out.')
+      await supabase.auth.signOut()
+      navigate('/', { replace: true })
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to request deletion.')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const initials = (profile?.display_name || profile?.email || '?')
@@ -274,6 +302,18 @@ export default function Settings() {
                 <SignOut size={16} weight="bold" /> Sign out
               </button>
             </div>
+            <div className="mt-4 pt-4 border-t border-cream-100 dark:border-white/5 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteError('')
+                  setShowDeleteModal(true)
+                }}
+                className="text-xs text-red-500/70 hover:text-red-500 hover:underline font-semibold transition-colors"
+              >
+                Delete Account
+              </button>
+            </div>
           </>
         ) : (
           <div className="flex items-start gap-3">
@@ -294,6 +334,75 @@ export default function Settings() {
           </div>
         )}
       </motion.section>
+
+      <AnimatePresence>
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => !deleting && setShowDeleteModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-md bg-white dark:bg-dark-800 rounded-3xl shadow-2xl p-6 overflow-hidden border border-cream-200 dark:border-brand-400/15"
+            >
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-red-500 to-amber-500" />
+              
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                <span>⚠️</span> Request Account Deletion
+              </h2>
+              
+              <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400 my-4 leading-relaxed">
+                <p>
+                  You are scheduling your account for permanent deletion.
+                </p>
+                <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-3.5 space-y-2 text-xs text-red-500/90 dark:text-red-400/95">
+                  <p className="font-bold flex items-center gap-1.5">
+                    <span>⏳</span> 14-Day Grace Period
+                  </p>
+                  <p>
+                    Your account will be deactivated immediately and any owned vendor store will be placed in maintenance mode. 
+                    You have <strong>14 days</strong> to log back in and cancel this request. After 14 days, your data will be permanently erased.
+                  </p>
+                </div>
+                <p>
+                  All active orders, followed stores, gift card balances, and shopping preferences will eventually be lost.
+                </p>
+              </div>
+
+              {deleteError && (
+                <p className="text-xs text-red-500 bg-red-50 dark:bg-red-500/10 p-2.5 rounded-xl w-full mb-4">
+                  {deleteError}
+                </p>
+              )}
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 bg-cream-100 dark:bg-white/5 hover:bg-cream-200 dark:hover:bg-white/10 text-gray-700 dark:text-white font-semibold py-3 rounded-2xl transition-colors disabled:opacity-50 text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={handleDeleteAccount}
+                  className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold py-3 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 text-sm"
+                >
+                  {deleting ? 'Processing...' : 'Confirm Deletion'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </main>
   )
