@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { 
   Users, 
   Search, 
@@ -46,6 +47,7 @@ function getBrowserName(ua: string | null) {
 }
 
 export default function AdminSubscribers() {
+  const qc = useQueryClient()
   const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -57,7 +59,43 @@ export default function AdminSubscribers() {
   }, [searchInput])
   const [subscriptionFilter, setSubscriptionFilter] = useState<'all' | 'subscribed' | 'unsubscribed'>('all')
   const [cartFilter, setCartFilter] = useState<'all' | 'has_items'>('all')
+  const [deletionFilter, setDeletionFilter] = useState<'all' | 'pending_deletion'>('all')
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null)
+
+  const handleAdminRestoreUser = async (userId: string) => {
+    if (!window.confirm("Are you sure you want to cancel the deletion request and restore this user's account?")) {
+      return
+    }
+    setActionInProgress(userId)
+    try {
+      const { error } = await supabase.rpc('restore_user_by_admin', { target_user_id: userId })
+      if (error) throw error
+      toast.success("User account restored successfully.")
+      qc.invalidateQueries({ queryKey: ['admin-profiles'] })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to restore user.")
+    } finally {
+      setActionInProgress(null)
+    }
+  }
+
+  const handleAdminDeleteUser = async (userId: string) => {
+    if (!window.confirm("WARNING: This will permanently delete this user, their profile, their store, and all associated products/orders. THIS ACTION CANNOT BE UNDONE.\n\nAre you sure you want to proceed?")) {
+      return
+    }
+    setActionInProgress(userId)
+    try {
+      const { error } = await supabase.rpc('delete_user_by_admin', { target_user_id: userId })
+      if (error) throw error
+      toast.success("User account deleted permanently.")
+      qc.invalidateQueries({ queryKey: ['admin-profiles'] })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to hard-delete user.")
+    } finally {
+      setActionInProgress(null)
+    }
+  }
 
   const [pushTitles, setPushTitles] = useState<Record<string, string>>({})
   const [pushBodies, setPushBodies] = useState<Record<string, string>>({})
@@ -216,7 +254,11 @@ export default function AdminSubscribers() {
       cartFilter === 'all' ||
       (cartFilter === 'has_items' && user.cartItems.length > 0)
 
-    return matchesSearch && matchesSub && matchesCart
+    const matchesDeletion = 
+      deletionFilter === 'all' ||
+      (deletionFilter === 'pending_deletion' && user.deletion_requested_at)
+
+    return matchesSearch && matchesSub && matchesCart && matchesDeletion
   })
 
   const [page, setPage] = useState(0)
@@ -225,7 +267,7 @@ export default function AdminSubscribers() {
   // Reset page when search or filter changes
   useEffect(() => {
     setPage(0)
-  }, [searchQuery, subscriptionFilter, cartFilter])
+  }, [searchQuery, subscriptionFilter, cartFilter, deletionFilter])
 
   const paginatedSubscribers = useMemo(() => {
     const from = page * pageSize
@@ -333,6 +375,16 @@ export default function AdminSubscribers() {
               <option value="all">All Cart States</option>
               <option value="has_items">Has Items in Cart</option>
             </select>
+
+            <select
+              title="Deletion Request Filter"
+              value={deletionFilter}
+              onChange={e => setDeletionFilter(e.target.value as any)}
+              className="border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2.5 text-sm text-gray-700 bg-gray-50 outline-none cursor-pointer"
+            >
+              <option value="all">All Account States</option>
+              <option value="pending_deletion">Pending Deletion</option>
+            </select>
           </div>
         </div>
 
@@ -377,7 +429,14 @@ export default function AdminSubscribers() {
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <p className="font-semibold text-gray-900 truncate">{user.display_name}</p>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="font-semibold text-gray-900 truncate">{user.display_name}</p>
+                                  {user.deletion_requested_at && (
+                                    <span className="inline-flex bg-red-50 text-red-600 text-[9px] font-extrabold px-1.5 py-0.5 rounded border border-red-200 animate-pulse flex-shrink-0">
+                                      Pending Deletion
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="text-xs text-gray-400 truncate flex items-center gap-1.5 mt-0.5">
                                   <Mail size={12} /> {user.email}
                                 </p>
@@ -429,6 +488,39 @@ export default function AdminSubscribers() {
                         {isExpanded && (
                           <tr className="bg-gray-50/20">
                             <td colSpan={5} className="py-6 px-6 border-b border-gray-100">
+                              {/* Deletion Request Admin Action Panel */}
+                              {user.deletion_requested_at && (
+                                <div className="mb-6 bg-red-50 dark:bg-red-950/25 border border-red-200 dark:border-red-500/25 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                  <div>
+                                    <h4 className="text-red-800 dark:text-red-400 font-bold text-sm flex items-center gap-1.5">
+                                      <AlertCircle size={16} /> Account Deletion Requested
+                                    </h4>
+                                    <p className="text-red-700/80 dark:text-red-400/80 text-xs mt-1">
+                                      Requested on {new Date(user.deletion_requested_at).toLocaleDateString()} {new Date(user.deletion_requested_at).toLocaleTimeString()}.
+                                      Grace period ends on <span className="font-semibold text-red-600">{new Date(new Date(user.deletion_requested_at).getTime() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString()}</span>.
+                                    </p>
+                                  </div>
+                                  <div className="flex gap-2.5 flex-shrink-0 w-full md:w-auto">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); handleAdminRestoreUser(user.id); }}
+                                      disabled={actionInProgress === user.id}
+                                      className="flex-1 md:flex-none text-xs font-bold px-4 py-2.5 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 text-gray-700 dark:text-white transition-colors disabled:opacity-50"
+                                    >
+                                      Cancel & Restore User
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); handleAdminDeleteUser(user.id); }}
+                                      disabled={actionInProgress === user.id}
+                                      className="flex-1 md:flex-none text-xs font-bold px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors shadow-sm disabled:opacity-50"
+                                    >
+                                      Approve & Delete Permanently
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+
                               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 {/* Left Side: Cart details */}
                                 <div className="space-y-4">
