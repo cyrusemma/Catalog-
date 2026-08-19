@@ -455,9 +455,14 @@ export default function Account() {
                           <EnvelopeSimple size={13} /> {profile.email}
                         </p>
                       </div>
-                      <Link to="/settings" className="text-brand-400 hover:text-brand-500 text-xs font-bold mt-4 flex items-center gap-1">
-                        Edit Profile →
-                      </Link>
+                      <div className="flex justify-between items-center mt-4">
+                        <Link to="/settings" className="text-brand-400 hover:text-brand-500 text-xs font-bold flex items-center gap-1">
+                          Edit Profile →
+                        </Link>
+                        <Link to="/settings" className="text-red-500/70 hover:text-red-500 text-[11px] font-semibold transition-colors">
+                          Delete Account
+                        </Link>
+                      </div>
                     </div>
 
                     {/* Store Credit Holographic Card */}
