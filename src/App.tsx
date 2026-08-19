@@ -40,6 +40,7 @@ import { useSignInStore } from './store/signInStore'
 import { useCustomerSession } from './hooks/useCustomerSession'
 import { applyTheme, initialColor, useThemeStore, type ColorTheme } from './store/themeStore'
 import PushPromptModal from './components/ui/PushPromptModal'
+import AccountDeletionRestoreModal from './components/ui/AccountDeletionRestoreModal'
 
 const Home = lazy(() => import('./pages/Home'))
 const Shop = lazy(() => import('./pages/Shop'))
@@ -673,6 +674,7 @@ export default function App() {
           <AnimatedRoutes />
         </Suspense>
         <PushPromptModal />
+        <AccountDeletionRestoreModal />
       </BrowserRouter>
     </QueryClientProvider>
   )
