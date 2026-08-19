@@ -86,11 +86,12 @@ export interface StoreSettings {
 
 export interface SiteReview {
   id: string
-  name?: string
-  email?: string
+  name?: string | null
+  email?: string | null
   rating: number
   message: string
-  page_url?: string
+  page_url?: string | null
+  survey_responses?: Record<string, number | string> | null
   created_at: string
 }
 
