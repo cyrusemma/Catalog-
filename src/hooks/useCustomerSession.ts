@@ -16,6 +16,7 @@ export interface CustomerProfile {
   store_credit?: number
   followed_stores?: string[]
   created_at: string
+  deletion_requested_at?: string | null
 }
 
 function deriveProfileFromUser(user: User): CustomerProfile {
@@ -39,6 +40,7 @@ function deriveProfileFromUser(user: User): CustomerProfile {
     store_credit: 0,
     followed_stores: [],
     created_at: new Date().toISOString(),
+    deletion_requested_at: null,
   }
 }
 
@@ -75,6 +77,10 @@ function normalizeProfileRow(row: any, fallback: CustomerProfile): CustomerProfi
     store_credit: typeof row?.store_credit === 'number' ? row.store_credit : 0,
     followed_stores: Array.isArray(row?.followed_stores) ? row.followed_stores : [],
     created_at: typeof row?.created_at === 'string' ? row.created_at : fallback.created_at,
+    deletion_requested_at:
+      typeof row?.deletion_requested_at === 'string' || row?.deletion_requested_at === null
+        ? row.deletion_requested_at
+        : null,
   }
 }
 
@@ -87,9 +93,9 @@ async function fetchProfileWithFallback(user: User): Promise<CustomerProfile> {
   const fallback = deriveProfileFromUser(user)
 
   const projections = [
-    'id, email, display_name, avatar_url, notify_new_arrivals, cart, wishlist, phone, address, store_credit, followed_stores, created_at',
-    'id, email, display_name, avatar_url, notify_new_arrivals, cart, wishlist, created_at',
-    'id, email, display_name, avatar_url, notify_new_arrivals, cart, created_at',
+    'id, email, display_name, avatar_url, notify_new_arrivals, cart, wishlist, phone, address, store_credit, followed_stores, created_at, deletion_requested_at',
+    'id, email, display_name, avatar_url, notify_new_arrivals, cart, wishlist, created_at, deletion_requested_at',
+    'id, email, display_name, avatar_url, notify_new_arrivals, cart, created_at, deletion_requested_at',
     'id, email, display_name, avatar_url, created_at',
     'id, email, display_name, avatar_url',
   ]
