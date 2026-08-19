@@ -54,6 +54,7 @@ const Settings = lazy(() => import('./pages/Settings'))
 const Privacy = lazy(() => import('./pages/Privacy'))
 const Terms = lazy(() => import('./pages/Terms'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const Feedback = lazy(() => import('./pages/Feedback'))
 const StoreFront = lazy(() => import('./pages/store/StoreFront'))
 const BecomeMerchant = lazy(() => import('./pages/BecomeMerchant'))
 import OfflineGame from './pages/OfflineGame'
@@ -554,6 +555,7 @@ function AnimatedRoutes() {
         <Route path="/privacy" element={<StorefrontLayout><Privacy /></StorefrontLayout>} />
         <Route path="/terms" element={<StorefrontLayout><Terms /></StorefrontLayout>} />
         <Route path="/reset-password" element={<StorefrontLayout><ResetPassword /></StorefrontLayout>} />
+        <Route path="/feedback" element={<StorefrontLayout><Feedback /></StorefrontLayout>} />
         {/* Merchant storefronts — fully isolated tenant surface, no global nav */}
         <Route path="/s/:storeSlug" element={<MerchantStorefrontLayout><StoreFront /></MerchantStorefrontLayout>} />
         <Route path="/s/:storeSlug/product/:id" element={<MerchantStorefrontLayout><ProductDetail /></MerchantStorefrontLayout>} />
