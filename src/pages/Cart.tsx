@@ -8,7 +8,7 @@ import { useCartStore, getCartItemUnitPrice, getCartItemKey } from '../store/car
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
-import { buildWhatsAppUrl, buildCartWhatsAppMessage, effectivePrice, formatPhoneNumber, detectGhanaNetwork, validateGhanaPhoneNumber } from '../lib/utils'
+import { buildWhatsAppUrl, buildCartWhatsAppMessage, formatPhoneNumber, detectGhanaNetwork, validateGhanaPhoneNumber } from '../lib/utils'
 import { supabase } from '../lib/supabase'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useProducts } from '../hooks/useProducts'

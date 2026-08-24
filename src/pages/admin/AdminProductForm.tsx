@@ -6,7 +6,7 @@ import {
   ArrowLeft, Loader2, Plus, X, ImagePlus, Upload, 
   ChevronLeft, ChevronRight, Eye, Sparkles, 
   Calculator, Maximize2, Check, Search, 
-  AlertCircle, ShoppingBag
+  AlertCircle, ShoppingBag, Trash2
 } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase, supabaseUrl } from '../../lib/supabase'
@@ -1079,7 +1079,7 @@ export default function AdminProductForm() {
                     }}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-600 text-xs font-semibold transition-colors"
                   >
-                    <Plus size={14} weight="bold" /> Add Custom Variant
+                    <Plus size={14} /> Add Custom Variant
                   </button>
                 </div>
 
@@ -1164,7 +1164,7 @@ export default function AdminProductForm() {
                             className="text-gray-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition-colors"
                             title="Remove variation"
                           >
-                            <Trash size={14} />
+                            <Trash2 size={14} />
                           </button>
                         </div>
 

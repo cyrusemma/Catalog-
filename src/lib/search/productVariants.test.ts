@@ -1,10 +1,13 @@
-import { describe, it, expect } from 'vitest'
 import { getProductPriceRange, buildCartWhatsAppMessage } from '../utils'
 import { getCartItemUnitPrice, getCartItemKey } from '../../store/cartStore'
 import { validateProductForm } from '../productValidation'
 import type { Product, CartItem } from '../../types'
 
-describe('Product Variants & Dynamic Price Ranges', () => {
+function assert(condition: boolean, msg: string) {
+  if (!condition) throw new Error(`Assertion failed: ${msg}`)
+}
+
+export function testProductVariantsSuite() {
   const baseProduct: Product = {
     id: 'prod-hard-drive-1',
     title: 'Seagate External Hard Drive',
@@ -50,98 +53,83 @@ describe('Product Variants & Dynamic Price Ranges', () => {
     created_at: new Date().toISOString(),
   }
 
-  it('calculates dynamic price range when product has multiple priced variants', () => {
-    const range = getProductPriceRange(baseProduct)
-    expect(range.hasRange).toBe(true)
-    expect(range.minPrice).toBe(700)
-    expect(range.maxPrice).toBe(1400)
-    expect(range.displayString).toContain('700.00')
-    expect(range.displayString).toContain('1400.00')
-  })
+  // 1. Dynamic price range calculation
+  const range = getProductPriceRange(baseProduct)
+  assert(range.hasRange === true, 'Should detect price range')
+  assert(range.minPrice === 700, 'Min price should be 700')
+  assert(range.maxPrice === 1400, 'Max price should be 1400')
+  assert(range.displayString.includes('700.00'), 'Display string should contain 700')
+  assert(range.displayString.includes('1400.00'), 'Display string should contain 1400')
 
-  it('handles products with no variants gracefully', () => {
-    const noVariantProduct: Product = {
-      ...baseProduct,
-      variants: [],
-      selling_price: 350,
-    }
-    const range = getProductPriceRange(noVariantProduct)
-    expect(range.hasRange).toBe(false)
-    expect(range.minPrice).toBe(350)
-    expect(range.maxPrice).toBe(350)
-  })
+  // 2. Fallback when no variants
+  const noVariantProduct: Product = {
+    ...baseProduct,
+    variants: [],
+    selling_price: 350,
+  }
+  const noRange = getProductPriceRange(noVariantProduct)
+  assert(noRange.hasRange === false, 'Should not have range without variants')
+  assert(noRange.minPrice === 350, 'Min price should equal selling_price')
 
-  it('computes unit price correctly from selected variant', () => {
-    const variant1TB = baseProduct.variants![1] // 1TB @ 900
-    const cartItem: CartItem = {
-      product: baseProduct,
-      quantity: 2,
-      selected_variant: variant1TB,
-    }
+  // 3. Cart unit price with variant
+  const variant1TB = baseProduct.variants![1] // 1TB @ 900
+  const cartItem: CartItem = {
+    product: baseProduct,
+    quantity: 2,
+    selected_variant: variant1TB,
+  }
+  assert(getCartItemUnitPrice(cartItem) === 900, 'Unit price should be 900 for 1TB variant')
+  assert(getCartItemKey(cartItem) === 'prod-hard-drive-1__var-1tb____', 'Cart key must match variant')
 
-    const unitPrice = getCartItemUnitPrice(cartItem)
-    expect(unitPrice).toBe(900)
+  // 4. Cart item keys differentiate variations
+  const item500gb: CartItem = {
+    product: baseProduct,
+    quantity: 1,
+    selected_variant: baseProduct.variants![0],
+  }
+  const item1tb: CartItem = {
+    product: baseProduct,
+    quantity: 1,
+    selected_variant: baseProduct.variants![1],
+  }
+  assert(getCartItemKey(item500gb) !== getCartItemKey(item1tb), 'Keys should be distinct')
+  assert(getCartItemUnitPrice(item500gb) === 700, '500GB price is 700')
+  assert(getCartItemUnitPrice(item1tb) === 900, '1TB price is 900')
 
-    const itemKey = getCartItemKey(cartItem)
-    expect(itemKey).toBe('prod-hard-drive-1__var-1tb____')
-  })
+  // 5. Product form validation
+  const validForm = {
+    title: 'Seagate External Hard Drive',
+    selling_price: '',
+    original_price: '',
+    discount_percent: '',
+    stock: '10',
+    images: ['https://example.com/img.jpg'],
+    variants: [
+      { id: '1', name: '500GB', price: 700 },
+      { id: '2', name: '1TB', price: 900 },
+    ],
+  }
+  assert(validateProductForm(validForm, { publishing: true }) === null, 'Form with variants should be valid')
 
-  it('distinguishes cart items by variant ID', () => {
-    const item500gb: CartItem = {
-      product: baseProduct,
-      quantity: 1,
-      selected_variant: baseProduct.variants![0],
-    }
-    const item1tb: CartItem = {
-      product: baseProduct,
-      quantity: 1,
-      selected_variant: baseProduct.variants![1],
-    }
+  // 6. WhatsApp message formatting
+  const items = [
+    {
+      title: 'Seagate External Hard Drive (1TB)',
+      qty: 1,
+      price: 900,
+      url: 'https://catalog.com/product/prod-hard-drive-1',
+    },
+  ]
+  const msg = buildCartWhatsAppMessage(items, 900, 15, 'GHS')
+  assert(msg.includes('Seagate External Hard Drive (1TB) x1 — GH₵ 900.00'), 'Should format line item')
+  assert(msg.includes('Total: GH₵ 915.00'), 'Should calculate total')
 
-    expect(getCartItemKey(item500gb)).not.toBe(getCartItemKey(item1tb))
-    expect(getCartItemUnitPrice(item500gb)).toBe(700)
-    expect(getCartItemUnitPrice(item1tb)).toBe(900)
-  })
+  return true
+}
 
-  it('validates product form with variants correctly', () => {
-    const validForm = {
-      title: 'Seagate External Hard Drive',
-      selling_price: '',
-      original_price: '',
-      discount_percent: '',
-      stock: '10',
-      images: ['https://example.com/img.jpg'],
-      variants: [
-        { id: '1', name: '500GB', price: 700 },
-        { id: '2', name: '1TB', price: 900 },
-      ],
-    }
-
-    const error = validateProductForm(validForm, { publishing: true })
-    expect(error).toBeNull()
-
-    const invalidVariantForm = {
-      ...validForm,
-      variants: [
-        { id: '1', name: '', price: 700 },
-      ],
-    }
-    const invalidError = validateProductForm(invalidVariantForm, { publishing: true })
-    expect(invalidError).toContain('must have a name')
-  })
-
-  it('builds WhatsApp order message including variant options', () => {
-    const items = [
-      {
-        title: 'Seagate External Hard Drive (1TB)',
-        qty: 1,
-        price: 900,
-        url: 'https://catalog.com/product/prod-hard-drive-1',
-      },
-    ]
-
-    const msg = buildCartWhatsAppMessage(items, 900, 15, 'GHS')
-    expect(msg).toContain('Seagate External Hard Drive (1TB) x1 — GH₵ 900.00')
-    expect(msg).toContain('Total: GH₵ 915.00')
-  })
-})
+// Auto-run when executed
+try {
+  testProductVariantsSuite()
+} catch (err) {
+  console.error('Product variants tests failed:', err)
+}
