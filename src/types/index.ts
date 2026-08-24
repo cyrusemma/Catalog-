@@ -114,3 +114,15 @@ export interface ProductReviewStats {
   avg_rating: number
 }
 
+export interface PriceRange {
+  id: string
+  name: string
+  min_price: number
+  max_price: number | null
+  label: string
+  sort_order: number
+  is_active: boolean
+  created_at?: string
+  updated_at?: string
+}
+

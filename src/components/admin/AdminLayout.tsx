@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, Store, ExternalLink, Menu, X, MessageSquareQuote, Palette, ClipboardCheck, Users, Percent } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, Store, ExternalLink, Menu, X, MessageSquareQuote, Palette, ClipboardCheck, Users, Percent, Sliders } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import { useAdminContext } from '../../hooks/useAdminContext'
@@ -13,6 +13,7 @@ const navItems = [
   { path: '/admin/approvals', label: 'Approvals', icon: ClipboardCheck },
   { path: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { path: '/admin/discounts', label: 'Discounts', icon: Percent },
+  { path: '/admin/price-ranges', label: 'Price Ranges', icon: Sliders },
   { path: '/admin/subscribers', label: 'Subscribers', icon: Users },
   { path: '/admin/reviews', label: 'Reviews', icon: MessageSquareQuote },
   { path: '/admin/settings', label: 'Settings', icon: Settings },

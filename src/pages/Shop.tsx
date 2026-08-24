@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useNavigationType, useParams } from 'react-router-dom'
-import { MagnifyingGlass, Faders, MagnifyingGlassMinus, CaretRight, ArrowRight, X, SquaresFour, GridNine, Rows } from '@phosphor-icons/react'
+import { MagnifyingGlass, Faders, MagnifyingGlassMinus, CaretRight, ArrowRight, X, SquaresFour, GridNine, Rows, Check } from '@phosphor-icons/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import ProductCard from '../components/ui/ProductCard'
 import SkeletonCard from '../components/ui/SkeletonCard'
@@ -23,8 +23,10 @@ import {
   expandCategoryIds,
 } from '../hooks/useProducts'
 import { useCatalogSearch } from '../hooks/useCatalogSearch'
+import { usePriceRanges } from '../hooks/usePriceRanges'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useStoreContext } from '../contexts/StoreContext'
+import { effectivePrice } from '../lib/utils'
 
 import type { Product } from '../types'
 
@@ -42,6 +44,7 @@ const PRODUCT_CHUNK_SIZE = 10
 
 const defaultFilters = {
   sort: 'newest' as SortOption,
+  selectedPriceRanges: [] as string[],
   minPrice: '',
   maxPrice: '',
   inStockOnly: false,
@@ -121,8 +124,11 @@ export default function Shop() {
   const [filters, setFilters] = useState(defaultFilters)
   const [filterOpen, setFilterOpen] = useState(false)
 
+  const { data: priceRanges = [] } = usePriceRanges({ onlyActive: true })
+
   const activeFilterCount =
     (filters.sort !== 'newest' ? 1 : 0) +
+    filters.selectedPriceRanges.length +
     (filters.minPrice ? 1 : 0) +
     (filters.maxPrice ? 1 : 0) +
     (filters.inStockOnly ? 1 : 0) +
@@ -159,10 +165,27 @@ export default function Shop() {
       result = result.filter(p => p.category_id && catSet.has(p.category_id))
     }
 
+    // Filter by configured price ranges (multi-select: product matches if in ANY selected bracket)
+    if (filters.selectedPriceRanges.length > 0 && priceRanges.length > 0) {
+      const activeSelectedRanges = priceRanges.filter(r => filters.selectedPriceRanges.includes(r.id))
+      if (activeSelectedRanges.length > 0) {
+        result = result.filter(p => {
+          const price = effectivePrice(p)
+          return activeSelectedRanges.some(r => {
+            const matchesMin = price >= r.min_price
+            const matchesMax = r.max_price === null || price <= r.max_price
+            return matchesMin && matchesMax
+          })
+        })
+      }
+    }
+
+    // Filter by manual min/max prices
     const min = filters.minPrice ? parseFloat(filters.minPrice) : null
     const max = filters.maxPrice ? parseFloat(filters.maxPrice) : null
-    if (min !== null && !Number.isNaN(min)) result = result.filter(p => p.selling_price >= min)
-    if (max !== null && !Number.isNaN(max)) result = result.filter(p => p.selling_price <= max)
+    if (min !== null && !Number.isNaN(min)) result = result.filter(p => effectivePrice(p) >= min)
+    if (max !== null && !Number.isNaN(max)) result = result.filter(p => effectivePrice(p) <= max)
+
     if (filters.inStockOnly) result = result.filter(p => p.stock_status !== 'out_of_stock')
     if (filters.freeDeliveryOnly) result = result.filter(p => Number(p.delivery_fee) === 0)
     if (filters.preorderOnly) result = result.filter(p => p.is_preorder)
@@ -170,10 +193,10 @@ export default function Shop() {
 
     switch (filters.sort) {
       case 'price-asc':
-        result = [...result].sort((a, b) => a.selling_price - b.selling_price)
+        result = [...result].sort((a, b) => effectivePrice(a) - effectivePrice(b))
         break
       case 'price-desc':
-        result = [...result].sort((a, b) => b.selling_price - a.selling_price)
+        result = [...result].sort((a, b) => effectivePrice(b) - effectivePrice(a))
         break
       case 'featured':
         result = [...result].sort((a, b) => Number(b.is_featured) - Number(a.is_featured))
@@ -186,7 +209,7 @@ export default function Shop() {
         break
     }
     return result
-  }, [allProducts, searchResults, query, categoryIds, filters])
+  }, [allProducts, searchResults, query, categoryIds, filters, priceRanges])
 
   // Group products by category for the "All" Netflix-style browse view
   const productsByCategory = useMemo(() => {
@@ -691,10 +714,58 @@ export default function Shop() {
                   </div>
                 </section>
 
-                {/* Price range */}
+                {/* Configured Price Ranges */}
+                {priceRanges && priceRanges.length > 0 && (
+                  <section>
+                    <div className="flex items-center justify-between mb-2.5">
+                      <h3 className="text-[10px] uppercase tracking-[0.25em] font-semibold text-dark-800/55 dark:text-white/45">
+                        Price Bracket
+                      </h3>
+                      {filters.selectedPriceRanges.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setFilters(f => ({ ...f, selectedPriceRanges: [] }))}
+                          className="text-[10px] font-semibold text-brand-400 hover:underline"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {priceRanges.map(range => {
+                        const selected = filters.selectedPriceRanges.includes(range.id)
+                        return (
+                          <button
+                            key={range.id}
+                            type="button"
+                            onClick={() => setFilters(f => {
+                              const already = f.selectedPriceRanges.includes(range.id)
+                              return {
+                                ...f,
+                                selectedPriceRanges: already
+                                  ? f.selectedPriceRanges.filter(id => id !== range.id)
+                                  : [...f.selectedPriceRanges, range.id]
+                              }
+                            })}
+                            className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all text-left flex items-center justify-between gap-1.5 ${
+                              selected
+                                ? 'bg-brand-400 text-white shadow-amber-glow'
+                                : 'glass text-dark-800/70 dark:text-white/60 hover:text-brand-400 border border-transparent hover:border-brand-400/20'
+                            }`}
+                          >
+                            <span className="truncate">{range.label}</span>
+                            {selected && <Check size={14} weight="bold" className="flex-shrink-0" />}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </section>
+                )}
+
+                {/* Custom price range */}
                 <section>
                   <h3 className="text-[10px] uppercase tracking-[0.25em] font-semibold text-dark-800/55 dark:text-white/45 mb-2.5">
-                    Price range (GHS)
+                    Custom Price Range (GH₵)
                   </h3>
                   <div className="flex items-center gap-2">
                     <input
