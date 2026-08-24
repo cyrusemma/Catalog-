@@ -8,7 +8,6 @@ import {
   DollarSign, 
   Download, 
   Search, 
-  Plus, 
   ChevronDown, 
   ChevronUp, 
   Check, 
@@ -20,7 +19,7 @@ import { supabase } from '../../lib/supabase'
 import { useAdminContext } from '../../hooks/useAdminContext'
 import { formatPrice } from '../../lib/utils'
 import { restockProduct } from '../../lib/inventory'
-import type { Product, ProductVariant } from '../../types'
+import type { Product } from '../../types'
 
 export default function AdminInventory() {
   const qc = useQueryClient()
@@ -332,7 +331,7 @@ export default function AdminInventory() {
                           }`}
                         >
                           {isOut ? (
-                            <><XCircle size={12} weight="bold" /> Out of Stock</>
+                            <><XCircle size={12} /> Out of Stock</>
                           ) : isLow ? (
                             <><AlertTriangle size={12} /> {currentStock} left</>
                           ) : (

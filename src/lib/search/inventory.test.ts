@@ -1,5 +1,5 @@
 import { computeStockStatus } from '../inventory'
-import type { Product, ProductVariant } from '../../types'
+import type { Product } from '../../types'
 
 function assert(condition: boolean, msg: string) {
   if (!condition) throw new Error(`Assertion failed: ${msg}`)
