@@ -64,6 +64,8 @@ export interface Order {
   discount_amount: number
   total: number
   status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+  stock_deducted?: boolean
+  store_id?: string | null
   notes?: string
   created_at: string
 }

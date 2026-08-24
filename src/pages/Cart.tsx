@@ -15,6 +15,7 @@ import { useProducts } from '../hooks/useProducts'
 import ProductCard from '../components/ui/ProductCard'
 import { saveOfflineOrder } from '../lib/offlineOrders'
 import { trackOrderPlaced } from '../components/ui/AppReviewPrompt'
+import { deductOrderInventory } from '../lib/inventory'
 import Image from '../components/ui/Image'
 import { useStoreContext } from '../contexts/StoreContext'
 import { useWishlistStore } from '../store/wishlistStore'
@@ -305,7 +306,8 @@ export default function Cart() {
       currency: settings.currency || 'GHS',
       payment_method: 'whatsapp',
       payment_status: 'pending',
-      status: 'pending'
+      status: 'pending',
+      stock_deducted: true
     }
 
     const orderIdShort = orderId.split('-')[0].toUpperCase()
@@ -336,6 +338,17 @@ export default function Cart() {
         }).catch(err => console.error('Push error:', err))
       }
     }
+
+    // Deduct inventory in real-time
+    deductOrderInventory(
+      orderId,
+      filteredItems.map(i => ({
+        product_id: i.product.id,
+        quantity: i.quantity,
+        variant_name: i.selected_variant?.name || null,
+        variant_id: i.selected_variant?.id || null,
+      }))
+    ).catch(err => console.error('Failed to deduct inventory:', err))
 
     setIsSubmitting(false)
 

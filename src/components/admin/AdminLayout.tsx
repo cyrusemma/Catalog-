@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, Store, ExternalLink, Menu, X, MessageSquareQuote, Palette, ClipboardCheck, Users, Percent, Sliders } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, Store, ExternalLink, Menu, X, MessageSquareQuote, Palette, ClipboardCheck, Users, Percent, Sliders, Boxes } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import { useAdminContext } from '../../hooks/useAdminContext'
@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { path: '/admin/products', label: 'Products', icon: Package },
+  { path: '/admin/inventory', label: 'Inventory', icon: Boxes },
   { path: '/admin/approvals', label: 'Approvals', icon: ClipboardCheck },
   { path: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { path: '/admin/discounts', label: 'Discounts', icon: Percent },

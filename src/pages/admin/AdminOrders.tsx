@@ -19,6 +19,7 @@ import { formatPrice } from '../../lib/utils'
 import type { Order } from '../../types'
 
 import { useAdminContext } from '../../hooks/useAdminContext'
+import { restoreOrderInventory, deductOrderInventory } from '../../lib/inventory'
 
 const STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] as const
 const STATUS_COLORS: Record<string, string> = {
@@ -62,12 +63,20 @@ export default function AdminOrders() {
   })
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status, prevStatus, items, stockDeducted }: { id: string; status: string; prevStatus?: string; items?: any[]; stockDeducted?: boolean }) => {
       const { error } = await supabase.from('orders').update({ status }).eq('id', id)
       if (error) throw error
+
+      if (status === 'cancelled' && stockDeducted !== false && items && items.length > 0) {
+        await restoreOrderInventory(id, items)
+      } else if (prevStatus === 'cancelled' && status !== 'cancelled' && items && items.length > 0) {
+        await deductOrderInventory(id, items)
+      }
     },
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ['admin-orders'] })
+      qc.invalidateQueries({ queryKey: ['admin-products'] })
+      qc.invalidateQueries({ queryKey: ['admin-inventory'] })
       toast.success(`Order status updated to ${variables.status}`)
     },
     onError: (err: any) => {
@@ -416,16 +425,16 @@ export default function AdminOrders() {
 
                       <div className="mt-6">
                         {order.status === 'pending' && (
-                          <button onClick={() => updateStatus.mutate({ id: order.id, status: 'confirmed' })} className="w-full mb-3 bg-brand-400 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-brand-500 shadow-sm transition-all cursor-pointer">Confirm Order</button>
+                          <button onClick={() => updateStatus.mutate({ id: order.id, status: 'confirmed', prevStatus: order.status, items: order.items, stockDeducted: order.stock_deducted })} className="w-full mb-3 bg-brand-400 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-brand-500 shadow-sm transition-all cursor-pointer">Confirm Order</button>
                         )}
                         {order.status === 'confirmed' && (
-                          <button onClick={() => updateStatus.mutate({ id: order.id, status: 'processing' })} className="w-full mb-3 bg-brand-400 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-brand-500 shadow-sm transition-all cursor-pointer">Start Processing</button>
+                          <button onClick={() => updateStatus.mutate({ id: order.id, status: 'processing', prevStatus: order.status, items: order.items, stockDeducted: order.stock_deducted })} className="w-full mb-3 bg-brand-400 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-brand-500 shadow-sm transition-all cursor-pointer">Start Processing</button>
                         )}
                         {order.status === 'processing' && (
-                          <button onClick={() => updateStatus.mutate({ id: order.id, status: 'shipped' })} className="w-full mb-3 bg-brand-400 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-brand-500 shadow-sm transition-all cursor-pointer">Mark Shipped</button>
+                          <button onClick={() => updateStatus.mutate({ id: order.id, status: 'shipped', prevStatus: order.status, items: order.items, stockDeducted: order.stock_deducted })} className="w-full mb-3 bg-brand-400 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-brand-500 shadow-sm transition-all cursor-pointer">Mark Shipped</button>
                         )}
                         {order.status === 'shipped' && (
-                          <button onClick={() => updateStatus.mutate({ id: order.id, status: 'delivered' })} className="w-full mb-3 bg-green-500 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-green-600 shadow-sm transition-all cursor-pointer">Mark Delivered</button>
+                          <button onClick={() => updateStatus.mutate({ id: order.id, status: 'delivered', prevStatus: order.status, items: order.items, stockDeducted: order.stock_deducted })} className="w-full mb-3 bg-green-500 text-white font-semibold py-2.5 rounded-xl text-sm hover:bg-green-600 shadow-sm transition-all cursor-pointer">Mark Delivered</button>
                         )}
 
                         <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
@@ -435,7 +444,7 @@ export default function AdminOrders() {
                           <select
                             title="Order Status"
                             value={order.status}
-                            onChange={e => updateStatus.mutate({ id: order.id, status: e.target.value })}
+                            onChange={e => updateStatus.mutate({ id: order.id, status: e.target.value, prevStatus: order.status, items: order.items, stockDeducted: order.stock_deducted })}
                             className="w-full appearance-none bg-white border border-gray-200 text-gray-900 text-sm font-bold rounded-xl pl-4 pr-10 py-3 outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400/20 cursor-pointer shadow-sm transition-all"
                           >
                             {STATUSES.map(s => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}

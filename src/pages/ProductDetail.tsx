@@ -351,28 +351,39 @@ export default function ProductDetail() {
           </div>
 
           {/* Stock */}
-          <div className="flex items-center gap-2 mb-6">
-            {product.stock_status === 'in_stock' && (
-              <>
-                <CheckCircle size={18} weight="fill" className="text-green-500" />
-                <span className="text-green-500 text-sm font-semibold">In Stock</span>
-              </>
-            )}
-            {product.stock_status === 'few_units_left' && (
-              <>
-                <CheckCircle size={18} weight="fill" className="text-amber-500" />
-                <span className="text-amber-500 text-sm font-semibold">
-                  Few units left{product.stock > 0 ? ` — only ${product.stock} remaining` : ''}
-                </span>
-              </>
-            )}
-            {product.stock_status === 'out_of_stock' && (
-              <>
-                <XCircle size={18} weight="fill" className="text-red-500" />
-                <span className="text-red-500 text-sm font-semibold">Out of Stock</span>
-              </>
-            )}
-          </div>
+          {(() => {
+            const currentStock = selectedVariant && typeof selectedVariant.stock === 'number'
+              ? selectedVariant.stock
+              : product.stock
+            const currentStatus = selectedVariant && typeof selectedVariant.stock === 'number'
+              ? (selectedVariant.stock <= 0 ? 'out_of_stock' : selectedVariant.stock <= 3 ? 'few_units_left' : 'in_stock')
+              : product.stock_status
+
+            return (
+              <div className="flex items-center gap-2 mb-6">
+                {currentStatus === 'in_stock' && (
+                  <>
+                    <CheckCircle size={18} weight="fill" className="text-green-500" />
+                    <span className="text-green-500 text-sm font-semibold">In Stock</span>
+                  </>
+                )}
+                {currentStatus === 'few_units_left' && (
+                  <>
+                    <CheckCircle size={18} weight="fill" className="text-amber-500" />
+                    <span className="text-amber-500 text-sm font-semibold">
+                      Few units left{currentStock > 0 ? ` — only ${currentStock} remaining` : ''}
+                    </span>
+                  </>
+                )}
+                {currentStatus === 'out_of_stock' && (
+                  <>
+                    <XCircle size={18} weight="fill" className="text-red-500" />
+                    <span className="text-red-500 text-sm font-semibold">Out of Stock</span>
+                  </>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Delivery info */}
           <div className="flex items-center gap-2 mb-6">
@@ -402,6 +413,7 @@ export default function ProductDetail() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {product.variants.map((v) => {
                   const isSelected = selectedVariant?.id === v.id || (!selectedVariant && product.variants![0]?.id === v.id)
+                  const isSoldOut = typeof v.stock === 'number' && v.stock <= 0
                   return (
                     <motion.button
                       key={v.id}
@@ -417,7 +429,9 @@ export default function ProductDetail() {
                       }}
                       whileTap={{ scale: 0.95 }}
                       className={`p-3 rounded-2xl border-2 text-left transition-all relative overflow-hidden flex flex-col justify-between ${
-                        isSelected
+                        isSoldOut
+                          ? 'border-gray-200 dark:border-white/5 opacity-60 bg-gray-50/50 dark:bg-dark-800/30'
+                          : isSelected
                           ? 'border-brand-400 bg-brand-400/10 shadow-amber-glow'
                           : 'border-cream-200 dark:border-white/10 glass hover:border-brand-400/40 hover:bg-brand-400/5'
                       }`}
@@ -431,9 +445,16 @@ export default function ProductDetail() {
                           />
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className={`text-xs font-bold truncate ${isSelected ? 'text-brand-500 dark:text-brand-400' : 'text-dark-800 dark:text-white'}`}>
-                            {v.name}
-                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className={`text-xs font-bold truncate ${isSelected ? 'text-brand-500 dark:text-brand-400' : 'text-dark-800 dark:text-white'}`}>
+                              {v.name}
+                            </p>
+                            {isSoldOut && (
+                              <span className="text-[9px] font-extrabold text-red-500 bg-red-50 dark:bg-red-950/40 px-1.5 py-0.2 rounded">
+                                Sold out
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs font-extrabold text-dark-800/90 dark:text-white/90 mt-0.5">
                             {formatPrice(v.price)}
                           </p>
@@ -561,37 +582,50 @@ export default function ProductDetail() {
           )}
 
           {/* Actions */}
-          {product.stock_status !== 'out_of_stock' && (
-            <div className="flex gap-3 mt-auto">
-              <motion.button
-                type="button"
-                onClick={() => {
-                  handleAddToCart()
-                  // Reset selections after adding to cart
-                  setTimeout(() => {
-                    setSelectedSize(null)
-                    setSelectedColor(null)
-                  }, 2000)
-                }}
-                whileTap={{ scale: 0.97 }}
-                className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold transition-all ${
-                  added
-                    ? 'bg-green-500 text-white shadow-lg'
-                    : 'bg-dark-800 dark:bg-dark-700 hover:bg-dark-700 dark:hover:bg-dark-600 text-white border border-dark-700 dark:border-white/10'
-                }`}
-              >
-                <ShoppingCart size={18} weight="duotone" />
-                {added
-                  ? 'Added to Cart!'
-                  : (() => {
-                      const parts = ['Add to Cart']
-                      const details = [selectedSize, selectedColor].filter(Boolean)
-                      if (details.length > 0) return `Add — ${details.join(' · ')}`
-                      return parts[0]
-                    })()}
-              </motion.button>
-            </div>
-          )}
+          {(() => {
+            const isOptionSoldOut = (selectedVariant && typeof selectedVariant.stock === 'number' && selectedVariant.stock <= 0) || product.stock_status === 'out_of_stock' || product.stock <= 0
+            if (isOptionSoldOut) {
+              return (
+                <div className="mt-auto pt-4">
+                  <div className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold bg-gray-100 dark:bg-dark-800 text-gray-400 dark:text-white/30 border border-gray-200 dark:border-white/10 cursor-not-allowed">
+                    <XCircle size={20} weight="fill" className="text-red-500" />
+                    <span>{selectedVariant && typeof selectedVariant.stock === 'number' && selectedVariant.stock <= 0 ? `Option "${selectedVariant.name}" is Out of Stock` : 'Out of Stock'}</span>
+                  </div>
+                </div>
+              )
+            }
+            return (
+              <div className="flex gap-3 mt-auto">
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    handleAddToCart()
+                    // Reset selections after adding to cart
+                    setTimeout(() => {
+                      setSelectedSize(null)
+                      setSelectedColor(null)
+                    }, 2000)
+                  }}
+                  whileTap={{ scale: 0.97 }}
+                  className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold transition-all ${
+                    added
+                      ? 'bg-green-500 text-white shadow-lg'
+                      : 'bg-dark-800 dark:bg-dark-700 hover:bg-dark-700 dark:hover:bg-dark-600 text-white border border-dark-700 dark:border-white/10'
+                  }`}
+                >
+                  <ShoppingCart size={18} weight="duotone" />
+                  {added
+                    ? 'Added to Cart!'
+                    : (() => {
+                        const parts = ['Add to Cart']
+                        const details = [selectedVariant?.name, selectedSize, selectedColor].filter(Boolean)
+                        if (details.length > 0) return `Add — ${details.join(' · ')}`
+                        return parts[0]
+                      })()}
+                </motion.button>
+              </div>
+            )
+          })()}
 
           {/* Seller / Merchant Info Card */}
           {product.store_id && product.store && (
