@@ -25,12 +25,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 
 import ImageCropper from '../../components/admin/ImageCropper'
+import type { ProductVariant } from '../../types'
+
 interface FormData {
   title: string; brand: string; description: string
   parent_category_id: string; category_id: string
   selling_price: string; original_price: string; discount_percent: string
   stock: string; stock_status: 'in_stock' | 'few_units_left' | 'out_of_stock'
   images: string[]; key_features: string[]; sizes: string[]; colors: string[]
+  variants: ProductVariant[]
   is_featured: boolean; is_published: boolean
   is_preorder: boolean
   free_delivery: boolean; delivery_fee: string
@@ -47,6 +50,7 @@ const emptyForm: FormData = {
   selling_price: '', original_price: '', discount_percent: '',
   stock: '1', stock_status: 'few_units_left',
   images: [], key_features: [], sizes: [], colors: [],
+  variants: [],
   is_featured: false, is_published: false,
   is_preorder: false,
   free_delivery: false, delivery_fee: '20',
@@ -274,6 +278,7 @@ export default function AdminProductForm() {
         key_features: existingProduct.key_features || [],
         sizes: existingProduct.sizes || [],
         colors: existingProduct.colors || [],
+        variants: (existingProduct.variants && Array.isArray(existingProduct.variants)) ? existingProduct.variants : [],
         is_featured: duplicateId ? false : (existingProduct.is_featured || false),
         is_published: duplicateId ? false : (existingProduct.is_published || false),
         is_preorder: existingProduct.is_preorder || false,
@@ -427,6 +432,15 @@ export default function AdminProductForm() {
     setSaving(true)
     try {
       const slug = await resolveUniqueSlug(form.title, isEdit ? id : undefined)
+
+      let resolvedSellingPrice = parseFloat(form.selling_price) || 0
+      if (resolvedSellingPrice === 0 && form.variants && form.variants.length > 0) {
+        const variantPrices = form.variants.map(v => Number(v.price) || 0).filter(p => p > 0)
+        if (variantPrices.length > 0) {
+          resolvedSellingPrice = Math.min(...variantPrices)
+        }
+      }
+
       const payload = {
         title: form.title.trim(),
         slug,
@@ -434,7 +448,7 @@ export default function AdminProductForm() {
         category_id: form.category_id || form.parent_category_id || null,
         category: findCategory(categoryTree, form.category_id || form.parent_category_id)?.name || null,
         description: form.description.trim() || null,
-        selling_price: parseFloat(form.selling_price) || 0,
+        selling_price: resolvedSellingPrice,
         original_price: form.original_price ? parseFloat(form.original_price) : null,
         discount_percent: form.discount_percent ? parseInt(form.discount_percent, 10) : null,
         stock: parseInt(form.stock, 10) || 0,
@@ -443,6 +457,7 @@ export default function AdminProductForm() {
         key_features: form.key_features,
         sizes: form.sizes,
         colors: form.colors,
+        variants: form.variants || [],
         is_featured: form.is_featured,
         is_published: publish ? true : form.is_published,
         is_preorder: form.is_preorder,
@@ -856,7 +871,23 @@ export default function AdminProductForm() {
 
             {activeTab === 'pricing' && (
             <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400">Pricing</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400">Pricing</h2>
+                {form.variants.length > 0 && (
+                  <span className="text-[11px] font-bold text-brand-600 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-100/40">
+                    {form.variants.length} Priced Variants Active
+                  </span>
+                )}
+              </div>
+
+              {form.variants.length > 0 && (
+                <div className="p-3 rounded-xl bg-brand-50/70 border border-brand-200/50 text-xs text-brand-900">
+                  <p className="font-medium">
+                    ✨ You have created <strong>{form.variants.length} priced variations</strong> in the Variants tab. The base selling price will automatically default to your lowest variant option if left blank.
+                  </p>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-gray-700 text-xs font-semibold mb-1.5 uppercase tracking-wide">Selling Price (GHS) *</label>
@@ -1020,11 +1051,242 @@ export default function AdminProductForm() {
             )}
 
             {activeTab === 'variants' && (
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-5">
+              {/* Priced Product Variations (e.g. 500GB @ 700 vs 1TB @ 900) */}
+              <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                  <div>
+                    <h2 className="font-bold text-sm text-gray-900 flex items-center gap-2">
+                      <ShoppingBag size={18} className="text-brand-500" />
+                      Priced Variations & Storage Options
+                    </h2>
+                    <p className="text-gray-400 text-xs mt-0.5">
+                      Configure different capacities, models, or colors with their own prices and photos (e.g. 500GB @ GH₵ 700 vs 1TB @ GH₵ 900).
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newV: ProductVariant = {
+                        id: crypto.randomUUID(),
+                        name: `Option ${form.variants.length + 1}`,
+                        price: parseFloat(form.selling_price) || 0,
+                        original_price: form.original_price ? parseFloat(form.original_price) : null,
+                        image_url: form.images[0] || null,
+                        stock: parseInt(form.stock, 10) || 10,
+                      }
+                      setForm(f => ({ ...f, variants: [...f.variants, newV] }))
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-600 text-xs font-semibold transition-colors"
+                  >
+                    <Plus size={14} weight="bold" /> Add Custom Variant
+                  </button>
+                </div>
+
+                {/* Live Customer Price Range Banner */}
+                {form.variants.length > 0 && (() => {
+                  const prices = form.variants.map(v => Number(v.price) || 0).filter(p => p > 0)
+                  const minP = prices.length > 0 ? Math.min(...prices) : 0
+                  const maxP = prices.length > 0 ? Math.max(...prices) : 0
+                  const isRanged = prices.length > 1 && minP !== maxP
+                  return (
+                    <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-brand-400/10 to-amber-500/5 border border-brand-500/20 flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">🏷️</span>
+                        <div>
+                          <p className="text-xs font-bold text-gray-900">Customer Price Preview</p>
+                          <p className="text-[11px] text-gray-500">
+                            {isRanged
+                              ? 'Customers will see a dynamic price range on product cards:'
+                              : 'All variants currently share the same price:'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="bg-white dark:bg-dark-800 px-3 py-1.5 rounded-lg border border-brand-500/30 shadow-sm">
+                        <span className="text-sm font-extrabold text-brand-600 dark:text-brand-400">
+                          {isRanged ? `GH₵ ${minP.toFixed(2)} – GH₵ ${maxP.toFixed(2)}` : `GH₵ ${minP.toFixed(2)}`}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* Quick Storage Option Presets */}
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Quick Add Storage Presets</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['128GB', '256GB', '512GB', '1TB', '2TB', '4TB'].map(preset => {
+                      const exists = form.variants.some(v => v.name.toLowerCase() === preset.toLowerCase())
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          disabled={exists}
+                          onClick={() => {
+                            const newV: ProductVariant = {
+                              id: crypto.randomUUID(),
+                              name: preset,
+                              price: parseFloat(form.selling_price) || 0,
+                              original_price: form.original_price ? parseFloat(form.original_price) : null,
+                              image_url: form.images[0] || null,
+                              stock: parseInt(form.stock, 10) || 10,
+                            }
+                            setForm(f => ({ ...f, variants: [...f.variants, newV] }))
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                            exists
+                              ? 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
+                              : 'bg-white hover:bg-brand-50 text-gray-700 hover:text-brand-600 border-gray-200 hover:border-brand-200'
+                          }`}
+                        >
+                          + {preset}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Variant rows list */}
+                {form.variants.length > 0 ? (
+                  <div className="space-y-3 pt-2">
+                    {form.variants.map((v, index) => (
+                      <div
+                        key={v.id}
+                        className="p-4 rounded-xl border border-gray-200 bg-gray-50/50 hover:bg-white transition-all space-y-3 shadow-xs"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-gray-700 bg-white px-2 py-0.5 rounded border border-gray-200 shadow-xs">
+                            Variation #{index + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setForm(f => ({ ...f, variants: f.variants.filter(item => item.id !== v.id) }))}
+                            className="text-gray-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition-colors"
+                            title="Remove variation"
+                          >
+                            <Trash size={14} />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                          {/* Option Name */}
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-600 mb-1">
+                              Option Name / Spec *
+                            </label>
+                            <input
+                              value={v.name}
+                              onChange={e => {
+                                const name = e.target.value
+                                setForm(f => ({
+                                  ...f,
+                                  variants: f.variants.map(item => item.id === v.id ? { ...item, name } : item),
+                                }))
+                              }}
+                              placeholder="e.g. 500GB or Blue / 1TB"
+                              className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-xs text-gray-900 bg-white outline-none"
+                            />
+                          </div>
+
+                          {/* Price */}
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-600 mb-1">
+                              Price (GH₵) *
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={v.price || ''}
+                              onChange={e => {
+                                const price = parseFloat(e.target.value) || 0
+                                setForm(f => ({
+                                  ...f,
+                                  variants: f.variants.map(item => item.id === v.id ? { ...item, price } : item),
+                                }))
+                              }}
+                              placeholder="e.g. 700"
+                              className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-xs text-gray-900 bg-white outline-none font-bold"
+                            />
+                          </div>
+
+                          {/* Compare-at Price */}
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                              Original Price (GH₵)
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={v.original_price || ''}
+                              onChange={e => {
+                                const original_price = e.target.value ? parseFloat(e.target.value) : null
+                                setForm(f => ({
+                                  ...f,
+                                  variants: f.variants.map(item => item.id === v.id ? { ...item, original_price } : item),
+                                }))
+                              }}
+                              placeholder="Optional strike price"
+                              className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-3 py-2 text-xs text-gray-900 bg-white outline-none"
+                            />
+                          </div>
+
+                          {/* Image Selection */}
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-600 mb-1">
+                              Variant Image
+                            </label>
+                            <div className="flex items-center gap-2">
+                              {v.image_url ? (
+                                <img
+                                  src={v.image_url}
+                                  alt={v.name}
+                                  className="w-8 h-8 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 text-[10px] flex-shrink-0">
+                                  None
+                                </div>
+                              )}
+                              <select
+                                value={v.image_url || ''}
+                                onChange={e => {
+                                  const image_url = e.target.value || null
+                                  setForm(f => ({
+                                    ...f,
+                                    variants: f.variants.map(item => item.id === v.id ? { ...item, image_url } : item),
+                                  }))
+                                }}
+                                className="w-full border border-gray-200 focus:border-brand-400 rounded-xl px-2 py-2 text-xs text-gray-900 bg-white outline-none"
+                              >
+                                <option value="">Default Image</option>
+                                {form.images.map((img, imgIdx) => (
+                                  <option key={imgIdx} value={img}>
+                                    Photo #{imgIdx + 1}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                    <p className="text-xs text-gray-500 mb-2">No priced variations created yet.</p>
+                    <p className="text-[11px] text-gray-400 max-w-sm mx-auto mb-3">
+                      If this product comes in different storage sizes or tiers, click below to add them with custom prices.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Sizes Container */}
               <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
                 <div>
-                  <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Available Sizes</h2>
+                  <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Available Sizes (Tags)</h2>
                   <p className="text-gray-400 text-[11px]">
                     Specify sizes/variants customers can select (e.g. S, M, L or shoe sizes).
                   </p>
@@ -1108,7 +1370,7 @@ export default function AdminProductForm() {
               {/* Colors Container */}
               <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
                 <div>
-                  <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Available Colors</h2>
+                  <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-1">Available Colors (Tags)</h2>
                   <p className="text-gray-400 text-[11px]">
                     Specify product colors customers can select (e.g. Red, Black).
                   </p>

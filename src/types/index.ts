@@ -1,3 +1,16 @@
+export interface ProductVariant {
+  id: string
+  name: string // e.g. "500GB", "1TB", "Midnight Blue / 256GB"
+  price: number // variant-specific selling price
+  original_price?: number | null // optional compare-at / strike price
+  stock?: number | null // optional stock count
+  sku?: string | null
+  image_url?: string | null // variant-specific image
+  color?: string | null
+  size?: string | null
+  attributes?: Record<string, string> // e.g. { "Storage": "500GB" }
+}
+
 export interface Product {
   id: string
   title: string
@@ -16,6 +29,7 @@ export interface Product {
   category_id: string | null
   sizes: string[]
   colors: string[]
+  variants?: ProductVariant[]
   brand?: string
   specs?: Record<string, string>
   key_features?: string[]
@@ -60,11 +74,15 @@ export interface OrderItem {
   product_image: string
   quantity: number
   price: number
+  variant_name?: string | null
 }
 
 export interface CartItem {
   product: Product
   quantity: number
+  selected_variant?: ProductVariant | null
+  selected_size?: string | null
+  selected_color?: string | null
 }
 
 export interface Category {

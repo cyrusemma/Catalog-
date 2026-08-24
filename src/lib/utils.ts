@@ -43,6 +43,51 @@ export function effectivePrice(product: FlashSaleFields, now: number = Date.now(
   return Math.ceil(base * (1 + markupPercentage / 100))
 }
 
+export interface ProductPriceRangeInfo {
+  minPrice: number
+  maxPrice: number
+  hasRange: boolean
+  displayPrice: number
+  displayString: string
+}
+
+/**
+ * Computes price ranges for products with variants.
+ * If a product has priced variations (e.g. 500GB @ 700 vs 1TB @ 900),
+ * returns minPrice, maxPrice, hasRange: true, and formatted range.
+ */
+export function getProductPriceRange(product: Product, now: number = Date.now(), markupPercentage: number = 0): ProductPriceRangeInfo {
+  const basePrice = effectivePrice(product, now, markupPercentage)
+  const variants = product.variants || []
+  
+  const validVariantPrices = variants
+    .map(v => typeof v.price === 'number' ? v.price : parseFloat(v.price as any))
+    .filter(p => !Number.isNaN(p) && p > 0)
+    .map(p => markupPercentage ? Math.ceil(p * (1 + markupPercentage / 100)) : p)
+
+  if (validVariantPrices.length === 0) {
+    return {
+      minPrice: basePrice,
+      maxPrice: basePrice,
+      hasRange: false,
+      displayPrice: basePrice,
+      displayString: formatPrice(basePrice),
+    }
+  }
+
+  const minPrice = Math.min(...validVariantPrices)
+  const maxPrice = Math.max(...validVariantPrices)
+  const hasRange = minPrice !== maxPrice
+
+  return {
+    minPrice,
+    maxPrice,
+    hasRange,
+    displayPrice: minPrice,
+    displayString: hasRange ? `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}` : formatPrice(minPrice),
+  }
+}
+
 export function slugify(text: string): string {
   return text
     .toString()

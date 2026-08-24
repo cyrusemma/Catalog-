@@ -38,6 +38,7 @@ export interface ProductFormValues {
   discount_percent: string
   stock: string
   images: string[]
+  variants?: { id: string; name: string; price: number; [key: string]: any }[]
 }
 
 export function validateProductForm(
@@ -46,13 +47,28 @@ export function validateProductForm(
 ): string | null {
   if (!form.title.trim()) return 'Product title is required'
 
+  const hasVariants = (form.variants && form.variants.length > 0)
   const selling = parseFloat(form.selling_price)
+  
   if (options.publishing) {
-    if (!form.selling_price.trim() || Number.isNaN(selling) || selling <= 0) {
+    if (!hasVariants && (!form.selling_price.trim() || Number.isNaN(selling) || selling <= 0)) {
       return 'Selling price must be greater than 0 to publish'
     }
   } else if (form.selling_price.trim() && (Number.isNaN(selling) || selling < 0)) {
     return 'Selling price cannot be negative'
+  }
+
+  if (hasVariants) {
+    for (let i = 0; i < form.variants!.length; i++) {
+      const v = form.variants![i]
+      if (!v.name || !v.name.trim()) {
+        return `Variant #${i + 1} must have a name (e.g. "500GB" or "Black")`
+      }
+      const vp = typeof v.price === 'number' ? v.price : parseFloat(v.price as any)
+      if (Number.isNaN(vp) || vp <= 0) {
+        return `Variant "${v.name}" must have a price greater than 0`
+      }
+    }
   }
 
   if (form.original_price.trim()) {

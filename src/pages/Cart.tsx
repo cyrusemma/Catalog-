@@ -4,7 +4,7 @@ import { ArrowLeft, Trash, Plus, Minus, ShoppingBag, CheckCircle, Heart } from '
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { useCartStore } from '../store/cartStore'
+import { useCartStore, getCartItemUnitPrice, getCartItemKey } from '../store/cartStore'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
@@ -82,7 +82,7 @@ export default function Cart() {
       }
     : merchantStore
 
-  const subtotal = useMemo(() => filteredItems.reduce((sum, i) => sum + effectivePrice(i.product) * i.quantity, 0), [filteredItems])
+  const subtotal = useMemo(() => filteredItems.reduce((sum, i) => sum + getCartItemUnitPrice(i) * i.quantity, 0), [filteredItems])
   const minimumOrderAmount = storeContext.minimumOrderAmount || 0
   const isBelowMinimum = minimumOrderAmount > 0 && subtotal < minimumOrderAmount
   // Per-product delivery: take the highest fee across all cart items (one delivery trip)
@@ -133,7 +133,7 @@ export default function Cart() {
     const autoRules = discounts.filter(d => !d.code)
 
     for (const item of filteredItems) {
-      const itemPrice = effectivePrice(item.product)
+      const itemPrice = getCartItemUnitPrice(item)
       
       const matchingRules = autoRules.filter(d => {
         if (d.min_order_amount > 0 && subtotal < d.min_order_amount) return false
@@ -185,7 +185,7 @@ export default function Cart() {
           (rule.type === 'category' && rule.target_id && item.product.category && rule.target_id.trim().toLowerCase() === item.product.category.trim().toLowerCase())
 
         if (matches) {
-          const itemPrice = effectivePrice(item.product)
+          const itemPrice = getCartItemUnitPrice(item)
           if (rule.discount_type === 'percentage') {
             discount += itemPrice * (Number(rule.value) / 100) * item.quantity
           } else {
@@ -292,10 +292,11 @@ export default function Cart() {
       customer_address: `${customerAddress}\n\n[Delivery Option: ${selectedOptionText}]`,
       items: filteredItems.map(i => ({
         product_id: i.product.id,
-        product_title: i.product.title,
-        product_image: i.product.images?.[0] || '',
-        price: effectivePrice(i.product),
+        product_title: i.selected_variant ? `${i.product.title} (${i.selected_variant.name})` : i.product.title,
+        product_image: i.selected_variant?.image_url || i.product.images?.[0] || '',
+        price: getCartItemUnitPrice(i),
         quantity: i.quantity,
+        variant_name: i.selected_variant?.name || null,
       })),
       subtotal,
       delivery_fee: deliveryFee,
@@ -343,14 +344,19 @@ export default function Cart() {
     const targetNumber = activeStore?.whatsapp_number || settings.whatsapp_number || '233000000000'
 
     const baseMessage = buildCartWhatsAppMessage(
-      filteredItems.map(i => ({ 
-        title: i.product.title, 
-        qty: i.quantity, 
-        price: effectivePrice(i.product),
-        url: currentStoreId 
-          ? `${window.location.origin}/s/${storeContext.storeSlug}/product/${i.product.id}`
-          : `${window.location.origin}/product/${i.product.id}`
-      })),
+      filteredItems.map(i => {
+        const variantText = i.selected_variant ? ` (${i.selected_variant.name})` : ''
+        const sizeText = i.selected_size ? ` [Size: ${i.selected_size}]` : ''
+        const colorText = i.selected_color ? ` [Color: ${i.selected_color}]` : ''
+        return { 
+          title: `${i.product.title}${variantText}${sizeText}${colorText}`, 
+          qty: i.quantity, 
+          price: getCartItemUnitPrice(i),
+          url: currentStoreId 
+            ? `${window.location.origin}/s/${storeContext.storeSlug}/product/${i.product.id}`
+            : `${window.location.origin}/product/${i.product.id}`
+        }
+      }),
       subtotal,
       deliveryFee,
       targetCurrency,
@@ -558,96 +564,123 @@ export default function Cart() {
               </form>
             </motion.div>
           ) : (
-            filteredItems.map((item, idx) => (
-              <motion.div
-                key={item.product.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: idx * 0.05 }}
-                className="card p-4 flex gap-4"
-              >
-                <Link to={currentStoreId ? `/s/${storeContext.storeSlug}/product/${item.product.id}` : `/product/${item.product.id}`}>
-                  <Image
-                    src={item.product.images?.[0] || 'https://placehold.co/80x80/1a1008/d4820a?text=?'}
-                    alt={item.product.title}
-                    className="w-20 h-20 object-cover rounded-xl flex-shrink-0"
-                  />
-                </Link>
-                <div className="flex-1 min-w-0">
+            filteredItems.map((item, idx) => {
+              const itemKey = getCartItemKey(item)
+              const unitPrice = getCartItemUnitPrice(item)
+              const itemImg = item.selected_variant?.image_url || item.product.images?.[0] || 'https://placehold.co/80x80/1a1008/d4820a?text=?'
+              return (
+                <motion.div
+                  key={itemKey}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: idx * 0.05 }}
+                  className="card p-4 flex gap-4"
+                >
                   <Link to={currentStoreId ? `/s/${storeContext.storeSlug}/product/${item.product.id}` : `/product/${item.product.id}`}>
-                    <h3 className="text-dark-800 dark:text-white text-sm font-medium line-clamp-2 hover:text-brand-400 transition-colors">
-                      {item.product.title}
-                    </h3>
+                    <Image
+                      src={itemImg}
+                      alt={item.product.title}
+                      className="w-20 h-20 object-cover rounded-xl flex-shrink-0"
+                    />
                   </Link>
-                  <div className="flex items-center flex-wrap gap-2 mt-1">
-                    <p className="text-brand-400 font-bold">{formatPrice(effectivePrice(item.product))}</p>
-                    <span className="text-[10px] bg-cream-100 dark:bg-dark-700 text-dark-800/60 dark:text-white/60 font-semibold px-2 py-0.5 rounded">
-                      {item.product.store_id
-                        ? (storesInfo?.find((s: any) => s.id === item.product.store_id)?.name || 'Merchant Store')
-                        : 'Platform Store'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center gap-2">
-                      {/* Minus / Remove button — morphs to trash icon at qty 1 */}
-                      <AnimatePresence mode="wait" initial={false}>
-                        {item.quantity === 1 ? (
-                          <motion.button
-                            key="remove"
-                            initial={{ scale: 0.7, rotate: -15 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            exit={{ scale: 0.7, rotate: 15 }}
-                            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                            onClick={() => removeItem(item.product.id)}
-                            aria-label="Remove item from cart"
-                            title="Remove item"
-                            className="w-8 h-8 bg-red-50 dark:bg-red-900/20 hover:bg-red-500 text-red-500 hover:text-white rounded-full flex items-center justify-center transition-colors border border-red-200 dark:border-red-800/30"
-                          >
-                            <Trash size={13} weight="bold" />
-                          </motion.button>
-                        ) : (
-                          <motion.button
-                            key="minus"
-                            initial={{ scale: 0.7 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0.7 }}
-                            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                            aria-label="Decrease quantity"
-                            className="w-8 h-8 bg-cream-100 dark:bg-dark-700 hover:bg-brand-400 hover:text-white rounded-full flex items-center justify-center transition-colors text-dark-800 dark:text-white"
-                          >
-                            <Minus size={12} weight="bold" />
-                          </motion.button>
+                  <div className="flex-1 min-w-0">
+                    <Link to={currentStoreId ? `/s/${storeContext.storeSlug}/product/${item.product.id}` : `/product/${item.product.id}`}>
+                      <h3 className="text-dark-800 dark:text-white text-sm font-medium line-clamp-2 hover:text-brand-400 transition-colors">
+                        {item.product.title}
+                      </h3>
+                    </Link>
+
+                    {/* Selected options / variant badge */}
+                    {(item.selected_variant || item.selected_size || item.selected_color) && (
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {item.selected_variant && (
+                          <span className="text-[10px] bg-brand-500/10 text-brand-600 dark:text-brand-400 font-semibold px-2 py-0.5 rounded-md border border-brand-500/20">
+                            Option: {item.selected_variant.name}
+                          </span>
                         )}
-                      </AnimatePresence>
-                      <span className="text-dark-800 dark:text-white font-semibold text-sm w-6 text-center">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                        aria-label="Increase quantity"
-                        className="w-8 h-8 bg-cream-100 dark:bg-dark-700 hover:bg-brand-400 hover:text-white rounded-full flex items-center justify-center transition-colors text-dark-800 dark:text-white"
-                      >
-                        <Plus size={12} weight="bold" />
-                      </button>
+                        {item.selected_size && (
+                          <span className="text-[10px] bg-cream-100 dark:bg-dark-700 text-dark-800/70 dark:text-white/70 font-semibold px-2 py-0.5 rounded-md">
+                            Size: {item.selected_size}
+                          </span>
+                        )}
+                        {item.selected_color && (
+                          <span className="text-[10px] bg-cream-100 dark:bg-dark-700 text-dark-800/70 dark:text-white/70 font-semibold px-2 py-0.5 rounded-md">
+                            Color: {item.selected_color}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex items-center flex-wrap gap-2 mt-1.5">
+                      <p className="text-brand-400 font-bold">{formatPrice(unitPrice)}</p>
+                      <span className="text-[10px] bg-cream-100 dark:bg-dark-700 text-dark-800/60 dark:text-white/60 font-semibold px-2 py-0.5 rounded">
+                        {item.product.store_id
+                          ? (storesInfo?.find((s: any) => s.id === item.product.store_id)?.name || 'Merchant Store')
+                          : 'Platform Store'}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-dark-800/70 dark:text-white/60 text-sm font-medium mr-1">{formatPrice(effectivePrice(item.product) * item.quantity)}</p>
-                      {/* Save for Later button */}
-                      <motion.button
-                        whileTap={{ scale: 0.85 }}
-                        onClick={() => {
-                          if (!user) {
-                            openSignIn('Sign in to save items to your wishlist.')
-                            return
-                          }
-                          if (!isWishlisted(item.product.id)) {
-                            toggleWishlist(item.product)
-                          }
-                          removeItem(item.product.id)
-                          toast.success(`"${item.product.title.slice(0, 28)}${item.product.title.length > 28 ? '…' : ''}" saved to wishlist`, {
-                            icon: '❤️',
-                          })
-                        }}
-                        aria-label="Save for later"
+
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center gap-2">
+                        {/* Minus / Remove button — morphs to trash icon at qty 1 */}
+                        <AnimatePresence mode="wait" initial={false}>
+                          {item.quantity === 1 ? (
+                            <motion.button
+                              key="remove"
+                              initial={{ scale: 0.7, rotate: -15 }}
+                              animate={{ scale: 1, rotate: 0 }}
+                              exit={{ scale: 0.7, rotate: 15 }}
+                              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                              onClick={() => removeItem(item.product.id, item.selected_variant?.id)}
+                              aria-label="Remove item from cart"
+                              title="Remove item"
+                              className="w-8 h-8 bg-red-50 dark:bg-red-900/20 hover:bg-red-500 text-red-500 hover:text-white rounded-full flex items-center justify-center transition-colors border border-red-200 dark:border-red-800/30"
+                            >
+                              <Trash size={13} weight="bold" />
+                            </motion.button>
+                          ) : (
+                            <motion.button
+                              key="minus"
+                              initial={{ scale: 0.7 }}
+                              animate={{ scale: 1 }}
+                              exit={{ scale: 0.7 }}
+                              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                              onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.selected_variant?.id)}
+                              aria-label="Decrease quantity"
+                              className="w-8 h-8 bg-cream-100 dark:bg-dark-700 hover:bg-brand-400 hover:text-white rounded-full flex items-center justify-center transition-colors text-dark-800 dark:text-white"
+                            >
+                              <Minus size={12} weight="bold" />
+                            </motion.button>
+                          )}
+                        </AnimatePresence>
+                        <span className="text-dark-800 dark:text-white font-semibold text-sm w-6 text-center">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.selected_variant?.id)}
+                          aria-label="Increase quantity"
+                          className="w-8 h-8 bg-cream-100 dark:bg-dark-700 hover:bg-brand-400 hover:text-white rounded-full flex items-center justify-center transition-colors text-dark-800 dark:text-white"
+                        >
+                          <Plus size={12} weight="bold" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-dark-800/70 dark:text-white/60 text-sm font-medium mr-1">{formatPrice(unitPrice * item.quantity)}</p>
+                        {/* Save for Later button */}
+                        <motion.button
+                          whileTap={{ scale: 0.85 }}
+                          onClick={() => {
+                            if (!user) {
+                              openSignIn('Sign in to save items to your wishlist.')
+                              return
+                            }
+                            if (!isWishlisted(item.product.id)) {
+                              toggleWishlist(item.product)
+                            }
+                            removeItem(item.product.id, item.selected_variant?.id)
+                            toast.success(`"${item.product.title.slice(0, 28)}${item.product.title.length > 28 ? '…' : ''}" saved to wishlist`, {
+                              icon: '❤️',
+                            })
+                          }}
+                          aria-label="Save for later"
                         title="Save for later"
                         className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold transition-all border ${
                           isWishlisted(item.product.id)
@@ -660,7 +693,7 @@ export default function Cart() {
                       </motion.button>
                       {/* Hard remove */}
                       <button
-                        onClick={() => removeItem(item.product.id)}
+                        onClick={() => removeItem(item.product.id, item.selected_variant?.id)}
                         aria-label="Remove item"
                         title="Remove"
                         className="text-dark-800/30 dark:text-white/20 hover:text-red-500 transition-colors"
@@ -670,8 +703,9 @@ export default function Cart() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            ))
+                </motion.div>
+              )
+            })
           )}
         </div>
 
@@ -680,16 +714,23 @@ export default function Cart() {
           <div className="glass rounded-3xl p-5 sticky top-24 border border-brand-400/20">
             <h2 className="text-dark-800 dark:text-white font-bold text-lg mb-4">Order Summary</h2>
             <div className="space-y-2 mb-4">
-              {filteredItems.map(item => (
-                <div key={item.product.id} className="flex justify-between text-sm">
-                  <span className="text-dark-800/60 dark:text-white/50 truncate pr-2">
-                    {item.product.title.length > 25 ? item.product.title.slice(0, 25) + '…' : item.product.title}
-                  </span>
-                  <span className="text-dark-800 dark:text-white flex-shrink-0 font-medium">
-                    {formatPrice(effectivePrice(item.product) * item.quantity)}
-                  </span>
-                </div>
-              ))}
+              {filteredItems.map(item => {
+                const key = getCartItemKey(item)
+                const unitPrice = getCartItemUnitPrice(item)
+                const titleWithOpt = item.selected_variant
+                  ? `${item.product.title} (${item.selected_variant.name})`
+                  : item.product.title
+                return (
+                  <div key={key} className="flex justify-between text-sm">
+                    <span className="text-dark-800/60 dark:text-white/50 truncate pr-2">
+                      {titleWithOpt.length > 28 ? titleWithOpt.slice(0, 28) + '…' : titleWithOpt}
+                    </span>
+                    <span className="text-dark-800 dark:text-white flex-shrink-0 font-medium">
+                      {formatPrice(unitPrice * item.quantity)}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
             {/* Promo Code Input */}
             {currentStoreId && !isMultiMerchantCart && (

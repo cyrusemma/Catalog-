@@ -19,6 +19,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { trackProductView, trackCartInteraction } from '../components/ui/AppReviewPrompt'
 import { useStoreContext } from '../contexts/StoreContext'
 import { toast } from 'sonner'
+import type { ProductVariant } from '../types'
 
 export default function ProductDetail() {
   const formatPrice = useCurrencyFormatter()
@@ -70,6 +71,7 @@ export default function ProductDetail() {
   const recentItems = useRecentStore(s => s.recent)
   const [activeImg, setActiveImg] = useState(0)
   const [added, setAdded] = useState(false)
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
 
@@ -77,7 +79,12 @@ export default function ProductDetail() {
     if (product) {
       addRecent(product)
       setActiveImg(0)
-      // Reset selections when product changes
+      // Reset or initialize selections when product changes
+      if (product.variants && product.variants.length > 0) {
+        setSelectedVariant(product.variants[0])
+      } else {
+        setSelectedVariant(null)
+      }
       setSelectedSize(null)
       setSelectedColor(null)
     }
@@ -139,7 +146,11 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     if (!product) return
-    addItem(product)
+    addItem(product, 1, {
+      variant: selectedVariant,
+      size: selectedSize,
+      color: selectedColor,
+    })
     setAdded(true)
     trackCartInteraction()
     setTimeout(() => setAdded(false), 2000)
@@ -192,14 +203,18 @@ export default function ProductDetail() {
     )
   }
 
-  const images = product.images?.length > 0 ? product.images : ['https://placehold.co/600x600/1a1008/d4820a?text=No+Image']
+  const variantImages = (product.variants || []).map(v => v.image_url).filter(Boolean) as string[]
+  const rawImages = product.images?.length > 0 ? product.images : ['https://placehold.co/600x600/1a1008/d4820a?text=No+Image']
+  const images = Array.from(new Set([...rawImages, ...variantImages]))
 
   const flashPrice = activeFlashSalePrice(product)
   const onFlashSale = flashPrice != null
-  const displayPrice = flashPrice ?? product.selling_price
-  const strikePrice = onFlashSale
-    ? product.selling_price
-    : (product.original_price && product.original_price > product.selling_price ? product.original_price : null)
+  const displayPrice = selectedVariant ? selectedVariant.price : (flashPrice ?? product.selling_price)
+  const strikePrice = selectedVariant
+    ? (selectedVariant.original_price && selectedVariant.original_price > selectedVariant.price ? selectedVariant.original_price : null)
+    : (onFlashSale
+        ? product.selling_price
+        : (product.original_price && product.original_price > product.selling_price ? product.original_price : null))
 
   return (
     <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-10 pb-28 lg:pb-10">
@@ -370,6 +385,71 @@ export default function ProductDetail() {
               <span className="text-green-500 text-sm font-semibold">Free delivery</span>
             )}
           </div>
+
+          {/* Available Options / Variations (e.g. 500GB, 1TB) */}
+          {product.variants && product.variants.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2.5">
+                <p className="text-dark-800/60 dark:text-white/50 text-xs uppercase tracking-[0.2em] font-semibold">
+                  Select Option / Variation
+                </p>
+                {selectedVariant && (
+                  <span className="text-xs font-bold text-brand-400">
+                    {selectedVariant.name}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {product.variants.map((v) => {
+                  const isSelected = selectedVariant?.id === v.id || (!selectedVariant && product.variants![0]?.id === v.id)
+                  return (
+                    <motion.button
+                      key={v.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedVariant(v)
+                        if (v.image_url) {
+                          const idx = images.indexOf(v.image_url)
+                          if (idx >= 0) setActiveImg(idx)
+                        }
+                        if (v.size) setSelectedSize(v.size)
+                        if (v.color) setSelectedColor(v.color)
+                      }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`p-3 rounded-2xl border-2 text-left transition-all relative overflow-hidden flex flex-col justify-between ${
+                        isSelected
+                          ? 'border-brand-400 bg-brand-400/10 shadow-amber-glow'
+                          : 'border-cream-200 dark:border-white/10 glass hover:border-brand-400/40 hover:bg-brand-400/5'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {v.image_url && (
+                          <img
+                            src={v.image_url}
+                            alt={v.name}
+                            className="w-10 h-10 rounded-xl object-cover flex-shrink-0 border border-black/10 shadow-sm"
+                          />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-xs font-bold truncate ${isSelected ? 'text-brand-500 dark:text-brand-400' : 'text-dark-800 dark:text-white'}`}>
+                            {v.name}
+                          </p>
+                          <p className="text-xs font-extrabold text-dark-800/90 dark:text-white/90 mt-0.5">
+                            {formatPrice(v.price)}
+                          </p>
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-brand-400 text-white flex items-center justify-center shadow-sm">
+                          <Check size={10} weight="bold" />
+                        </div>
+                      )}
+                    </motion.button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Available sizes */}
           {product.sizes && product.sizes.length > 0 && (

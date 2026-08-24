@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
-import { activeFlashSalePrice, isNewProduct } from '../../lib/utils'
+import { activeFlashSalePrice, isNewProduct, getProductPriceRange } from '../../lib/utils'
 import CountdownTimer from './CountdownTimer'
 import { useSignInStore } from '../../store/signInStore'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
@@ -32,6 +32,7 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
   const openSignInModal = useSignInStore(s => s.openModal)
   const [added, setAdded] = useState(false)
   
+  const priceRange = getProductPriceRange(product)
   const isNew = isNewProduct(product.created_at)
   const flashPrice = activeFlashSalePrice(product)
   const onFlashSale = flashPrice != null
@@ -169,11 +170,24 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
           {/* Price */}
           <div className={`mt-auto mb-2 sm:mb-0 sm:flex sm:items-center sm:justify-between ${compact ? 'gap-2' : ''}`}>
             <div className="min-w-0">
-              <p className={`font-bold truncate ${onFlashSale ? 'text-red-500' : 'text-brand-400'} ${compact ? 'text-sm sm:text-base' : 'text-sm sm:text-base'}`}>{formatPrice(displayPrice)}</p>
-              {strikePrice && (
-                <p className={`text-cream-400 dark:text-white/30 line-through truncate ${compact ? 'text-[9px] sm:text-xs' : 'text-[10px] sm:text-xs'}`}>
-                  {formatPrice(strikePrice)}
-                </p>
+              {priceRange.hasRange && !onFlashSale ? (
+                <div>
+                  <p className={`font-bold truncate text-brand-400 ${compact ? 'text-xs sm:text-sm' : 'text-xs sm:text-sm'}`}>
+                    {priceRange.displayString}
+                  </p>
+                  <span className="text-[10px] text-cream-400 dark:text-white/40 font-medium">
+                    {product.variants?.length} options available
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <p className={`font-bold truncate ${onFlashSale ? 'text-red-500' : 'text-brand-400'} ${compact ? 'text-sm sm:text-base' : 'text-sm sm:text-base'}`}>{formatPrice(displayPrice)}</p>
+                  {strikePrice && (
+                    <p className={`text-cream-400 dark:text-white/30 line-through truncate ${compact ? 'text-[9px] sm:text-xs' : 'text-[10px] sm:text-xs'}`}>
+                      {formatPrice(strikePrice)}
+                    </p>
+                  )}
+                </>
               )}
             </div>
 
