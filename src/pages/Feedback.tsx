@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Star, CaretLeft, CheckCircle, Heart, ArrowRight, Smiley, Trophy } from '@phosphor-icons/react'
+import { Star, CaretLeft, ArrowRight, Smiley, Trophy } from '@phosphor-icons/react'
 import { supabase } from '../lib/supabase'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { toast } from 'sonner'
@@ -35,7 +35,7 @@ const SURVEY_QUESTIONS: SurveyQuestion[] = [
 ]
 
 export default function Feedback() {
-  const { user, profile } = useCustomerSession()
+  const { profile } = useCustomerSession()
   const navigate = useNavigate()
 
   // Wizard steps: 

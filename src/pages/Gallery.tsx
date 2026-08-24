@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { MagnifyingGlass, X, SquaresFour, GridNine, Rows, ShoppingCart } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProducts } from '../hooks/useProducts'
+import { useCatalogSearch } from '../hooks/useCatalogSearch'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
 import { useCartStore } from '../store/cartStore'
 import { effectivePrice } from '../lib/utils'
@@ -29,23 +30,29 @@ export default function Gallery() {
   const [selectedCategory, setSelectedCategory] = useState('All')
   const observerTarget = useRef<HTMLDivElement>(null)
 
-  const { data: products, isLoading, isError, error } = useProducts({
-    search: query || undefined,
+  const { data: products = [], isLoading, isError, error } = useProducts()
+
+  const {
+    searchResults,
+  } = useCatalogSearch(products, {
+    initialQuery: query,
+    debounceMs: 150,
+    enableFuzzy: true,
   })
 
   // Compute categories list from products
   const categories = useMemo(() => {
-    if (!products) return ['All']
+    if (!products || products.length === 0) return ['All']
     const unique = Array.from(new Set(products.map(p => p.category).filter(Boolean)))
     return ['All', ...unique]
   }, [products])
 
   const [preorderFilter, setPreorderFilter] = useState<'all' | 'preorder' | 'ready'>('all')
 
-  // Filter products by selectedCategory and preorderFilter client-side
+  // Filter products by search results, selectedCategory and preorderFilter client-side
   const filteredProducts = useMemo(() => {
     if (!products) return []
-    let result = products
+    let result = query ? searchResults : products
     if (selectedCategory !== 'All') {
       result = result.filter(p => p.category === selectedCategory)
     }
@@ -55,7 +62,7 @@ export default function Gallery() {
       result = result.filter(p => !p.is_preorder)
     }
     return result
-  }, [products, selectedCategory, preorderFilter])
+  }, [products, searchResults, query, selectedCategory, preorderFilter])
 
   const visibleProducts = filteredProducts.slice(0, visibleCount)
   const hasMoreProducts = Boolean(filteredProducts.length > visibleCount)

@@ -16,13 +16,13 @@ const layoutButtons: { mode: LayoutMode; Icon: typeof SquaresFour; label: string
 
 import {
   useProducts,
-  useInfiniteProducts,
   useCategoryTree,
   useProductCategoryRefs,
   topLevelCategories,
   childCategories,
   expandCategoryIds,
 } from '../hooks/useProducts'
+import { useCatalogSearch } from '../hooks/useCatalogSearch'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useStoreContext } from '../contexts/StoreContext'
 
@@ -133,36 +133,32 @@ export default function Shop() {
   const storeContext = useStoreContext()
   const storeId = storeContext.storeId
 
-  const isMainShopView = !activeParent && !query && activeFilterCount === 0
-
-  const { data: allProducts, isLoading: isLoadingAll, isError: allProductsIsError, error: allProductsError } = useProducts(
-    { categoryIds: undefined, search: undefined, storeId: storeId ?? undefined },
-    { enabled: isMainShopView }
+  // Fetch product catalog
+  const { data: allProducts, isLoading, isError: productsIsError, error: productsError } = useProducts(
+    { storeId: storeId ?? undefined }
   )
 
-  const { 
-    data: infiniteData, 
-    isLoading: isInfiniteLoading, 
-    isError: infiniteIsError, 
-    error: infiniteError,
-    fetchNextPage,
-    hasNextPage
-  } = useInfiniteProducts(
-    { categoryIds, search: query || undefined, storeId: storeId ?? undefined },
-    { enabled: !isMainShopView },
-    PRODUCT_CHUNK_SIZE
-  )
+  // Trie-based search and ranking engine
+  const {
+    searchResults,
+  } = useCatalogSearch(allProducts, {
+    initialQuery: query,
+    categoryIds,
+    storeId: storeId ?? undefined,
+    debounceMs: 150,
+    enableFuzzy: true,
+  })
 
-  const isLoading = isMainShopView ? isLoadingAll : isInfiniteLoading
-  const productsIsError = isMainShopView ? allProductsIsError : infiniteIsError
-  const productsError = isMainShopView ? allProductsError : infiniteError
-  
-  const products = isMainShopView ? allProducts : infiniteData?.pages.flatMap(p => p.data)
-
-  // Apply price / stock / delivery filters then sort
+  // Apply price / stock / delivery filters then sort (preserving search ranking if newest)
   const visibleProducts = useMemo(() => {
-    if (!products) return undefined
-    let result = products
+    if (!allProducts) return undefined
+    let result = (query || (categoryIds && categoryIds.length > 0)) ? searchResults : allProducts
+
+    if (!query && categoryIds && categoryIds.length > 0) {
+      const catSet = new Set(categoryIds)
+      result = result.filter(p => p.category_id && catSet.has(p.category_id))
+    }
+
     const min = filters.minPrice ? parseFloat(filters.minPrice) : null
     const max = filters.maxPrice ? parseFloat(filters.maxPrice) : null
     if (min !== null && !Number.isNaN(min)) result = result.filter(p => p.selling_price >= min)
@@ -171,6 +167,7 @@ export default function Shop() {
     if (filters.freeDeliveryOnly) result = result.filter(p => Number(p.delivery_fee) === 0)
     if (filters.preorderOnly) result = result.filter(p => p.is_preorder)
     if (filters.excludePreorders) result = result.filter(p => !p.is_preorder)
+
     switch (filters.sort) {
       case 'price-asc':
         result = [...result].sort((a, b) => a.selling_price - b.selling_price)
@@ -181,9 +178,15 @@ export default function Shop() {
       case 'featured':
         result = [...result].sort((a, b) => Number(b.is_featured) - Number(a.is_featured))
         break
+      case 'newest':
+        // If not searching, sort newest first; if searching, retain Trie relevance score ranking
+        if (!query) {
+          result = [...result].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+        }
+        break
     }
     return result
-  }, [products, filters])
+  }, [allProducts, searchResults, query, categoryIds, filters])
 
   // Group products by category for the "All" Netflix-style browse view
   const productsByCategory = useMemo(() => {
@@ -265,6 +268,11 @@ export default function Shop() {
     setQuery(search)
   }
 
+  const handleClearSearch = () => {
+    setSearch('')
+    setQuery('')
+  }
+
   const handleParentChange = (slug: string | null) => {
     navigate(slug ? `/shop/${slug}` : '/shop')
   }
@@ -281,13 +289,12 @@ export default function Shop() {
   ]
 
   const visibleGridProducts = visibleProducts ?? []
-  const hasMoreGridProducts = isMainShopView ? false : hasNextPage
+  const hasMoreGridProducts = false
 
   const canLoadMore = hasMoreGridProducts
 
   const handleReachEnd = () => {
-    if (!canLoadMore) return
-    if (!isMainShopView) fetchNextPage()
+    // End reached
   }
 
   const gridClass = {
@@ -307,8 +314,8 @@ export default function Shop() {
         </h1>
         <p className="text-dark-800/50 dark:text-white/40 text-xs sm:text-sm mt-2 sm:mt-4">
           {visibleProducts ? `Browse ${visibleProducts.length} product${visibleProducts.length !== 1 ? 's' : ''}` : 'Loading...'}
-          {activeFilterCount > 0 && visibleProducts && products && visibleProducts.length !== products.length && (
-            <span className="text-brand-400 ml-1">({products.length - visibleProducts.length} hidden by filters)</span>
+          {activeFilterCount > 0 && visibleProducts && allProducts && visibleProducts.length !== allProducts.length && (
+            <span className="text-brand-400 ml-1">({allProducts.length - visibleProducts.length} hidden by filters)</span>
           )}
         </p>
       </div>
@@ -348,9 +355,23 @@ export default function Shop() {
               type="text"
               placeholder="Search products..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="input pl-9 py-2.5 sm:py-3 text-sm"
+              onChange={e => {
+                setSearch(e.target.value)
+                setQuery(e.target.value)
+              }}
+              className="input pl-9 pr-8 py-2.5 sm:py-3 text-sm w-full"
             />
+            {search && (
+              <button
+                type="button"
+                title="Clear search"
+                aria-label="Clear search"
+                onClick={handleClearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 hover:text-dark-800 dark:hover:text-white transition-colors"
+              >
+                <X size={15} weight="bold" />
+              </button>
+            )}
           </form>
           <button
             type="button"

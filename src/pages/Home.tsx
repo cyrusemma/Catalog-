@@ -12,6 +12,7 @@ import ProductCard from '../components/ui/ProductCard'
 import CustomerReviews from '../components/ui/CustomerReviews'
 import UnifiedHeroCarousel from '../components/ui/UnifiedHeroCarousel'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
+import { useCatalogSearch } from '../hooks/useCatalogSearch'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useNavigate } from 'react-router-dom'
@@ -21,15 +22,6 @@ import { formatPrice } from '../lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { supabase } from '../lib/supabase'
-
-function useDebouncedValue<T>(value: T, delay = 250): T {
-  const [debounced, setDebounced] = useState(value)
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay)
-    return () => clearTimeout(t)
-  }, [value, delay])
-  return debounced
-}
 
 export default function Home() {
   useDocumentTitle('Home')
@@ -55,13 +47,12 @@ export default function Home() {
 
   const { data: featured, isError: featuredIsError, error: featuredError, isLoading: featuredLoading } = useProducts({ featured: true })
   const { data: newProducts, isError: newProductsIsError, error: newProductsError, isLoading: newProductsLoading } = useNewProducts(7)
-  const { isError: allProductsIsError, error: allProductsError } = useProducts()
+  const { data: allProducts = [], isError: allProductsIsError, error: allProductsError } = useProducts()
   const productsError = allProductsError ?? featuredError ?? newProductsError
   const productsLoadFailed = allProductsIsError || featuredIsError || newProductsIsError
   const settings = useStoreSettings()
   const reduceMotion = useReducedMotion()
   const navigate = useNavigate()
-  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     // If installed as PWA and they open the default route (/), trap them to their store
@@ -75,6 +66,16 @@ export default function Home() {
     }
   }, [navigate])
 
+  const {
+    searchTerm,
+    setSearchTerm,
+    debouncedQuery,
+    searchResults,
+  } = useCatalogSearch(allProducts, {
+    debounceMs: 150,
+    enableFuzzy: true,
+  })
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     const query = searchTerm.trim()
@@ -82,15 +83,14 @@ export default function Home() {
     navigate(`/shop?q=${encodeURIComponent(query)}`)
   }
 
-  // Typeahead suggestions
-  const debouncedQuery = useDebouncedValue(searchTerm.trim(), 250)
+  // Typeahead suggestions from Trie & Fuzzy search engine
   const showSuggestions = debouncedQuery.length >= 2
-  const { data: suggestions = [], isFetching: suggestionsLoading } = useProducts(
-    { search: debouncedQuery },
-    { enabled: showSuggestions }
-  )
-  const topSuggestions = useMemo(() => (suggestions ?? []).slice(0, 6), [suggestions])
-  const hasNoResults = showSuggestions && !suggestionsLoading && topSuggestions.length === 0
+  const topSuggestions = useMemo(() => {
+    if (!showSuggestions) return []
+    return searchResults.slice(0, 6)
+  }, [showSuggestions, searchResults])
+
+  const hasNoResults = showSuggestions && topSuggestions.length === 0
   const suggestionsOpen = showSuggestions && (topSuggestions.length > 0 || hasNoResults)
 
   const [activeIndex, setActiveIndex] = useState(-1)

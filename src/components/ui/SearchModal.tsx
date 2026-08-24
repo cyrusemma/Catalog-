@@ -13,10 +13,10 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { useCategoryTree } from '../../hooks/useProducts'
+import { useProducts, useCategoryTree } from '../../hooks/useProducts'
+import { useCatalogSearch } from '../../hooks/useCatalogSearch'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
 import { effectivePrice } from '../../lib/utils'
-import type { Product } from '../../types'
 
 const RECENT_SEARCHES_KEY = 'catalog_recent_searches_v1'
 const MAX_RECENT = 6
@@ -109,23 +109,15 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     localStorage.removeItem(RECENT_SEARCHES_KEY)
   }
 
-  // Live Query: Products
-  const { data: productsResult = [], isFetching: isFetchingProducts } = useQuery({
-    queryKey: ['live-search-products', debouncedQuery],
-    queryFn: async () => {
-      if (!debouncedQuery) return []
-      const { data, error } = await supabase
-        .from('products')
-        .select('*, store:stores(markup_percentage, name, slug)')
-        .eq('is_published', true)
-        .or(`title.ilike.%${debouncedQuery}%,description.ilike.%${debouncedQuery}%,category.ilike.%${debouncedQuery}%`)
-        .order('is_featured', { ascending: false })
-        .limit(6)
-      if (error) return []
-      return (data || []) as (Product & { store?: { name: string; slug: string } })[]
-    },
-    enabled: !!debouncedQuery && isOpen,
-    staleTime: 1000 * 30,
+  // Load product catalog for fast in-memory Trie search
+  const { data: allProducts = [], isLoading: isCatalogLoading } = useProducts(undefined, { enabled: isOpen })
+
+  const {
+    searchResults: productsResult,
+  } = useCatalogSearch(allProducts, {
+    initialQuery: query,
+    debounceMs: 120,
+    enableFuzzy: true,
   })
 
   // Live Query: Stores
@@ -165,7 +157,9 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     }
   }
 
-  const totalResults = productsResult.length + storesResult.length + matchingCategories.length
+  const displayedProducts = productsResult.slice(0, 6)
+  const isFetchingProducts = isCatalogLoading && allProducts.length === 0
+  const totalResults = displayedProducts.length + storesResult.length + matchingCategories.length
 
   return (
     <AnimatePresence>
@@ -350,15 +344,15 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   )}
 
                   {/* Matching Products */}
-                  {productsResult.length > 0 && (
+                  {displayedProducts.length > 0 && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40 flex items-center gap-1.5">
-                          <Package size={13} weight="bold" /> Products ({productsResult.length})
+                          <Package size={13} weight="bold" /> Products ({displayedProducts.length})
                         </span>
                       </div>
                       <div className="space-y-1.5">
-                        {productsResult.map(p => {
+                        {displayedProducts.map(p => {
                           const priceVal = effectivePrice(p)
                           const isOutOfStock = p.stock_status === 'out_of_stock'
                           return (

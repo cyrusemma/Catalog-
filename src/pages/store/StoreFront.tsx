@@ -16,22 +16,14 @@ import {
   ChevronDown,
   Copy,
   Check,
+  X,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
 import { useStoreContext } from '../../contexts/StoreContext'
-
-interface Product {
-  id: string
-  title: string
-  category: string
-  selling_price: number
-  images: string[]
-  is_published: boolean
-  is_featured: boolean
-  stock_status: string
-}
+import { useCatalogSearch } from '../../hooks/useCatalogSearch'
+import type { Product } from '../../types'
 
 // ─── Share Store Link button ────────────────────────────────────────────────
 
@@ -187,15 +179,26 @@ export default function StoreFront() {
   const categories = ['All', ...Array.from(new Set(products?.map(p => p.category).filter(Boolean)))]
   const featuredProducts = products?.filter(p => p.is_featured) || []
 
-  const filtered = products
-    ?.filter(p => {
-      const matchesSearch = p.title?.toLowerCase().includes(search.toLowerCase())
+  const {
+    searchResults,
+    debouncedQuery,
+  } = useCatalogSearch(products, {
+    initialQuery: search,
+    debounceMs: 150,
+    enableFuzzy: true,
+  })
+
+  const filtered = (products ? ((search || debouncedQuery) ? searchResults : products) : [])
+    .filter(p => {
       const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory
-      return matchesSearch && matchesCategory
+      return matchesCategory
     })
     .sort((a, b) => {
       if (sortBy === 'price_asc') return a.selling_price - b.selling_price
       if (sortBy === 'price_desc') return b.selling_price - a.selling_price
+      if (sortBy === 'newest' && !search && !debouncedQuery) {
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      }
       return 0
     })
 
@@ -390,13 +393,26 @@ export default function StoreFront() {
           {/* Search + Sort + Category filter */}
           <div className="mb-8 space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
-              <input
-                type="text"
-                placeholder={`Search within ${store.name}...`}
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="flex-1 bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 focus:border-brand-400/60 focus:ring-2 focus:ring-brand-400/20 rounded-2xl px-5 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 outline-none transition-all shadow-sm text-sm"
-              />
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder={`Search within ${store.name}...`}
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 focus:border-brand-400/60 focus:ring-2 focus:ring-brand-400/20 rounded-2xl pl-5 pr-10 py-3.5 text-gray-900 dark:text-white placeholder-gray-400 outline-none transition-all shadow-sm text-sm"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    title="Clear search"
+                    aria-label="Clear search"
+                    onClick={() => setSearch('')}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <select
                   value={sortBy}

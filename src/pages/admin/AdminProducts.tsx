@@ -7,6 +7,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase } from '../../lib/supabase'
 import { formatPrice } from '../../lib/utils'
+import { useCatalogSearch } from '../../hooks/useCatalogSearch'
+import type { Product } from '../../types'
 
 export default function AdminProducts() {
   const [searchInput, setSearchInput] = useState('')
@@ -103,15 +105,26 @@ export default function AdminProducts() {
     },
   })
 
-  const filtered = products?.filter(p =>
-    p.title?.toLowerCase().includes(search.toLowerCase())
-  ).sort((a, b) => {
-    if (sortBy === 'price_asc') return a.selling_price - b.selling_price
-    if (sortBy === 'price_desc') return b.selling_price - a.selling_price
-    if (sortBy === 'stock_asc') return a.stock - b.stock
-    if (sortBy === 'stock_desc') return b.stock - a.stock
-    return 0 // default is newest, already sorted by DB
+  const {
+    searchResults,
+    debouncedQuery,
+  } = useCatalogSearch(products as Product[], {
+    initialQuery: searchInput,
+    debounceMs: 150,
+    enableFuzzy: true,
   })
+
+  const filtered = useMemo(() => {
+    if (!products) return []
+    let result = (searchInput.trim() || debouncedQuery) ? searchResults : products
+    return [...result].sort((a, b) => {
+      if (sortBy === 'price_asc') return a.selling_price - b.selling_price
+      if (sortBy === 'price_desc') return b.selling_price - a.selling_price
+      if (sortBy === 'stock_asc') return a.stock - b.stock
+      if (sortBy === 'stock_desc') return b.stock - a.stock
+      return 0
+    })
+  }, [products, searchResults, searchInput, debouncedQuery, sortBy])
 
   const [page, setPage] = useState(0)
   const pageSize = 15
