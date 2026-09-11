@@ -1,17 +1,20 @@
 import { supabase } from './supabase'
 import type { Product, ProductVariant } from '../types'
 
+export const DEFAULT_IN_STOCK_UNITS = 50
+export const LOW_STOCK_THRESHOLD = 3
+
 export type StockStatus = 'in_stock' | 'few_units_left' | 'out_of_stock'
 
 /**
  * Determines stock status based on unit count:
  * - 0 units: 'out_of_stock'
- * - 1 to 3 units: 'few_units_left'
+ * - 1 to 3 units: 'few_units_left' (LOW_STOCK_THRESHOLD)
  * - > 3 units: 'in_stock'
  */
 export function computeStockStatus(stock: number): StockStatus {
   if (stock <= 0) return 'out_of_stock'
-  if (stock <= 3) return 'few_units_left'
+  if (stock <= LOW_STOCK_THRESHOLD) return 'few_units_left'
   return 'in_stock'
 }
 
@@ -174,7 +177,7 @@ export async function restoreOrderInventory(
 export async function restockProduct(
   product: Product,
   addUnits: number,
-  options?: { exactStock?: number; variantId?: string }
+  options?: { exactStock?: number; variantId?: string; restockAllVariants?: boolean }
 ): Promise<boolean> {
   try {
     const currentStock = typeof product.stock === 'number' ? product.stock : 0
@@ -190,6 +193,12 @@ export async function restockProduct(
           return { ...v, stock: nextVStock }
         }
         return v
+      })
+    } else if (options?.restockAllVariants && Array.isArray(updatedVariants)) {
+      updatedVariants = updatedVariants.map(v => {
+        const vStock = typeof v.stock === 'number' ? v.stock : currentStock
+        const nextVStock = options.exactStock !== undefined ? Math.max(0, options.exactStock) : Math.max(0, vStock + addUnits)
+        return { ...v, stock: nextVStock }
       })
     }
 

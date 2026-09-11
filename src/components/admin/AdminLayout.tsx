@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, Store, ExternalLink, Menu, X, MessageSquareQuote, Palette, ClipboardCheck, Users, Percent, Sliders, Boxes } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, Store, ExternalLink, Menu, X, MessageSquareQuote, Palette, ClipboardCheck, Users, Percent, Sliders, Boxes, AlertTriangle } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import { useAdminContext } from '../../hooks/useAdminContext'
@@ -149,6 +150,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isActive = (path: string, exact?: boolean) =>
     exact ? location.pathname === path : location.pathname.startsWith(path)
 
+  // Query real-time inventory alerts (out of stock + low stock)
+  const { data: inventoryAlerts } = useQuery({
+    queryKey: ['admin-inventory-alerts', context?.storeId],
+    queryFn: async () => {
+      let query = supabase.from('products').select('id, stock, stock_status')
+      if (context?.storeId) {
+        query = query.eq('store_id', context.storeId)
+      }
+      const { data } = await query
+      if (!data) return { outOfStock: 0, lowStock: 0, totalAlerts: 0 }
+      let outOfStock = 0
+      let lowStock = 0
+      for (const p of data) {
+        const s = typeof p.stock === 'number' ? p.stock : 0
+        if (s <= 0 || p.stock_status === 'out_of_stock') {
+          outOfStock++
+        } else if (s <= 3 || p.stock_status === 'few_units_left') {
+          lowStock++
+        }
+      }
+      return { outOfStock, lowStock, totalAlerts: outOfStock + lowStock }
+    },
+    enabled: !!context,
+    refetchInterval: 30000,
+  })
+
   const filteredNavItems = navItems
     .filter(item => {
       if (item.path === '/admin/approvals' || item.path === '/admin/subscribers') {
@@ -186,20 +213,43 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       <nav className="flex-1 p-3 space-y-1">
-        {filteredNavItems.map(item => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              isActive(item.path, item.exact)
-                ? 'bg-brand-400 text-white shadow-sm'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
-          >
-            <item.icon size={17} />
-            {item.label}
-          </Link>
-        ))}
+        {filteredNavItems.map(item => {
+          const isInventory = item.path === '/admin/inventory'
+          const alertCount = isInventory ? (inventoryAlerts?.totalAlerts || 0) : 0
+          const hasOut = isInventory && (inventoryAlerts?.outOfStock || 0) > 0
+          const active = isActive(item.path, item.exact)
+
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                active
+                  ? 'bg-brand-400 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <item.icon size={17} />
+                <span>{item.label}</span>
+              </div>
+              {alertCount > 0 && (
+                <span
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                    active
+                      ? 'bg-white text-brand-600'
+                      : hasOut
+                      ? 'bg-red-500 text-white'
+                      : 'bg-amber-500 text-white'
+                  }`}
+                  title={`${alertCount} items require stock attention`}
+                >
+                  {alertCount}
+                </span>
+              )}
+            </Link>
+          )
+        })}
       </nav>
 
       <div className="p-3 border-t border-gray-100 space-y-3">
@@ -263,15 +313,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
             <span className="font-semibold text-gray-900 text-sm">{currentLabel}</span>
           </div>
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="View store"
-            className="w-10 h-10 -mr-2 rounded-xl text-gray-700 hover:bg-gray-100 flex items-center justify-center"
-          >
-            <ExternalLink size={18} />
-          </a>
+          <div className="flex items-center gap-1">
+            {(inventoryAlerts?.totalAlerts || 0) > 0 && (
+              <Link
+                to="/admin/inventory"
+                className={`p-2 rounded-xl flex items-center gap-1 text-xs font-bold ${
+                  (inventoryAlerts?.outOfStock || 0) > 0
+                    ? 'bg-red-50 text-red-600'
+                    : 'bg-amber-50 text-amber-600'
+                }`}
+                title="Stock alerts"
+              >
+                <AlertTriangle size={14} />
+                <span>{inventoryAlerts?.totalAlerts}</span>
+              </Link>
+            )}
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="View store"
+              className="w-10 h-10 -mr-2 rounded-xl text-gray-700 hover:bg-gray-100 flex items-center justify-center"
+            >
+              <ExternalLink size={18} />
+            </a>
+          </div>
         </div>
       </header>
 

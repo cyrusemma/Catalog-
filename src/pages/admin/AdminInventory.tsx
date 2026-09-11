@@ -47,17 +47,20 @@ export default function AdminInventory() {
 
   // Restock Mutation
   const restockMutation = useMutation({
-    mutationFn: async ({ product, addUnits, exactStock, variantId }: { product: Product; addUnits: number; exactStock?: number; variantId?: string }) => {
-      const ok = await restockProduct(product, addUnits, { exactStock, variantId })
+    mutationFn: async ({ product, addUnits, exactStock, variantId, restockAllVariants }: { product: Product; addUnits: number; exactStock?: number; variantId?: string; restockAllVariants?: boolean }) => {
+      const ok = await restockProduct(product, addUnits, { exactStock, variantId, restockAllVariants })
       if (!ok) throw new Error('Failed to update stock')
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['admin-inventory'] })
+      qc.invalidateQueries({ queryKey: ['admin-inventory-alerts'] })
       qc.invalidateQueries({ queryKey: ['admin-products'] })
       setEditingStockId(null)
       toast.success(
         vars.exactStock !== undefined
           ? `Stock set to ${vars.exactStock} units`
+          : vars.restockAllVariants
+          ? `Restocked all variations by +${vars.addUnits} units!`
           : `Added +${vars.addUnits} units to inventory!`
       )
     },
@@ -182,6 +185,38 @@ export default function AdminInventory() {
             </button>
           </div>
         </div>
+
+        {/* Low Stock & Out of Stock Warning Banner */}
+        {(stats.outOfStockCount > 0 || stats.lowStockCount > 0) && (
+          <div className="bg-gradient-to-r from-red-50 via-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-gray-900">
+                  {stats.outOfStockCount > 0 && stats.lowStockCount > 0
+                    ? `⚠️ ${stats.outOfStockCount} items Out of Stock & ${stats.lowStockCount} items Low on Stock`
+                    : stats.outOfStockCount > 0
+                    ? `🔴 ${stats.outOfStockCount} items are Out of Stock`
+                    : `🟡 ${stats.lowStockCount} items are Low on Stock`}
+                </h2>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  Restock these items to avoid missed orders and maintain active storefront listings.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setFilter(stats.outOfStockCount > 0 ? 'out_of_stock' : 'low_stock')}
+                className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-colors shadow-xs"
+              >
+                View Items Needing Restock
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Metrics Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -340,16 +375,20 @@ export default function AdminInventory() {
                         </span>
                       </div>
 
-                      {/* Quick Restock Buttons (+5, +10, +25) */}
+                      {/* Quick Restock Buttons (+5, +10, +50) */}
                       <div className="flex items-center gap-1">
-                        {[5, 10, 25].map(amt => (
+                        {[5, 10, 50].map(amt => (
                           <button
                             key={amt}
                             type="button"
                             onClick={() => restockMutation.mutate({ product, addUnits: amt })}
                             disabled={restockMutation.isPending}
-                            className="px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 border border-gray-200 text-gray-700 transition-colors shadow-2xs"
-                            title={`Add +${amt} units`}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all shadow-2xs ${
+                              amt === 50
+                                ? 'bg-brand-50 hover:bg-brand-100 text-brand-600 border-brand-200'
+                                : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-700'
+                            }`}
+                            title={`Add +${amt} units to stock`}
                           >
                             +{amt}
                           </button>
@@ -398,10 +437,11 @@ export default function AdminInventory() {
                         <button
                           type="button"
                           onClick={() => setExpandedId(isExpanded ? null : product.id)}
-                          className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
+                          className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors flex items-center gap-1 text-xs font-semibold"
                           title="Show variation stock"
                         >
-                          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          <span>{product.variants!.length} Variations</span>
+                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </button>
                       )}
                     </div>
@@ -409,10 +449,21 @@ export default function AdminInventory() {
 
                   {/* Expandable Variations Breakdown */}
                   {hasVariants && isExpanded && (
-                    <div className="bg-gray-50/80 border-t border-gray-100 p-4 space-y-2.5">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">
-                        Priced Variations Stock Breakdown
-                      </p>
+                    <div className="bg-gray-50/80 border-t border-gray-100 p-4 space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                          Priced Variations Stock Breakdown ({product.variants!.length} options)
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => restockMutation.mutate({ product, addUnits: 50, restockAllVariants: true })}
+                          disabled={restockMutation.isPending}
+                          className="self-start sm:self-auto text-xs font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200/60 px-3 py-1 rounded-lg transition-colors"
+                        >
+                          + Restock All Variants (+50 each)
+                        </button>
+                      </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                         {product.variants!.map(v => {
                           const vStock = typeof v.stock === 'number' ? v.stock : currentStock
@@ -427,7 +478,7 @@ export default function AdminInventory() {
                                 <p className="text-xs font-bold text-gray-800 truncate">{v.name}</p>
                                 <p className="text-[11px] text-gray-500">{formatPrice(v.price)}</p>
                               </div>
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1">
                                 <span
                                   className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${
                                     isVOut
@@ -439,14 +490,17 @@ export default function AdminInventory() {
                                 >
                                   {vStock} units
                                 </span>
-                                <button
-                                  type="button"
-                                  onClick={() => restockMutation.mutate({ product, addUnits: 5, variantId: v.id })}
-                                  className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 hover:bg-brand-50 hover:text-brand-600 border border-gray-200 transition-colors"
-                                  title="Add +5 to this variant"
-                                >
-                                  +5
-                                </button>
+                                {[5, 20].map(amt => (
+                                  <button
+                                    key={amt}
+                                    type="button"
+                                    onClick={() => restockMutation.mutate({ product, addUnits: amt, variantId: v.id })}
+                                    className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-gray-100 hover:bg-brand-50 hover:text-brand-600 border border-gray-200 transition-colors"
+                                    title={`Add +${amt} to this variant`}
+                                  >
+                                    +{amt}
+                                  </button>
+                                ))}
                               </div>
                             </div>
                           )

@@ -74,6 +74,29 @@ export default function ProductDetail() {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
+  const [waitlistContact, setWaitlistContact] = useState('')
+  const [waitlistLoading, setWaitlistLoading] = useState(false)
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false)
+
+  const handleJoinWaitlist = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!waitlistContact.trim()) return
+    setWaitlistLoading(true)
+    try {
+      await supabase.from('subscribers').insert({
+        email: waitlistContact.includes('@') ? waitlistContact.trim() : null,
+        phone: !waitlistContact.includes('@') ? waitlistContact.trim() : null,
+        store_id: product?.store_id || null,
+        source: `waitlist:${product?.id}`,
+      })
+    } catch (err) {
+      console.warn('Waitlist submission notice:', err)
+    } finally {
+      setWaitlistLoading(false)
+      setWaitlistSuccess(true)
+      toast.success("You're on the waitlist! We'll notify you as soon as this item is restocked.")
+    }
+  }
 
   useEffect(() => {
     if (product) {
@@ -583,13 +606,50 @@ export default function ProductDetail() {
 
           {/* Actions */}
           {(() => {
-            const isOptionSoldOut = (selectedVariant && typeof selectedVariant.stock === 'number' && selectedVariant.stock <= 0) || product.stock_status === 'out_of_stock' || product.stock <= 0
+            const isOptionSoldOut = (selectedVariant && typeof selectedVariant.stock === 'number')
+              ? selectedVariant.stock <= 0
+              : (product.stock_status === 'out_of_stock' || (typeof product.stock === 'number' && product.stock <= 0))
             if (isOptionSoldOut) {
               return (
-                <div className="mt-auto pt-4">
+                <div className="mt-auto pt-4 space-y-4">
                   <div className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold bg-gray-100 dark:bg-dark-800 text-gray-400 dark:text-white/30 border border-gray-200 dark:border-white/10 cursor-not-allowed">
                     <XCircle size={20} weight="fill" className="text-red-500" />
                     <span>{selectedVariant && typeof selectedVariant.stock === 'number' && selectedVariant.stock <= 0 ? `Option "${selectedVariant.name}" is Out of Stock` : 'Out of Stock'}</span>
+                  </div>
+
+                  {/* Waitlist / Backorder Box */}
+                  <div className="p-4 rounded-2xl bg-cream-50 dark:bg-dark-800/60 border border-cream-200 dark:border-white/10 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">🔔</span>
+                      <div>
+                        <h4 className="text-xs font-bold text-dark-800 dark:text-white">Notify me when restocked</h4>
+                        <p className="text-[11px] text-dark-800/60 dark:text-white/50">Leave your phone or email to receive an instant restock alert.</p>
+                      </div>
+                    </div>
+                    {waitlistSuccess ? (
+                      <div className="flex items-center gap-2 text-xs font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/40 p-2.5 rounded-xl border border-green-200 dark:border-green-800">
+                        <Check size={14} weight="bold" />
+                        <span>You're on the waitlist! We'll alert you as soon as this item is back.</span>
+                      </div>
+                    ) : (
+                      <form onSubmit={handleJoinWaitlist} className="flex gap-2">
+                        <input
+                          type="text"
+                          value={waitlistContact}
+                          onChange={e => setWaitlistContact(e.target.value)}
+                          placeholder="Enter email or phone number"
+                          required
+                          className="flex-1 bg-white dark:bg-dark-900 border border-cream-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-dark-800 dark:text-white placeholder-dark-800/40 dark:placeholder-white/40 outline-none focus:border-brand-400"
+                        />
+                        <button
+                          type="submit"
+                          disabled={waitlistLoading || !waitlistContact.trim()}
+                          className="px-4 py-2 rounded-xl bg-brand-400 hover:bg-brand-500 text-white text-xs font-bold transition-colors disabled:opacity-50"
+                        >
+                          {waitlistLoading ? 'Saving...' : 'Notify Me'}
+                        </button>
+                      </form>
+                    )}
                   </div>
                 </div>
               )

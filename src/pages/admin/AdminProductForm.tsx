@@ -42,13 +42,13 @@ interface FormData {
 
 // Default units assigned when "In Stock" is picked, so the admin never has to
 // type or clear the number for a generally-available product.
-const DEFAULT_IN_STOCK_UNITS = '10'
+const DEFAULT_IN_STOCK_UNITS = '50'
 
 const emptyForm: FormData = {
   title: '', brand: '', description: '',
   parent_category_id: '', category_id: '',
   selling_price: '', original_price: '', discount_percent: '',
-  stock: '1', stock_status: 'few_units_left',
+  stock: '50', stock_status: 'in_stock',
   images: [], key_features: [], sizes: [], colors: [],
   variants: [],
   is_featured: false, is_published: false,
@@ -297,16 +297,54 @@ export default function AdminProductForm() {
   const set = (key: keyof FormData, val: FormData[keyof FormData]) =>
     setForm(f => ({ ...f, [key]: val }))
 
-  // Picking a stock status. Choosing "In Stock" auto-fills a sensible default
-  // unit count so the number field is ready without the admin clearing/typing it.
+  // Picking a stock status. Choosing "In Stock" auto-fills 50 default units.
+  // Choosing "Few Units Left" auto-fills 3 units. Choosing "Out of Stock" sets 0 units.
   const selectStockStatus = (status: FormData['stock_status']) =>
-    setForm(f => ({
-      ...f,
-      stock_status: status,
-      stock: status === 'in_stock' && (!f.stock || f.stock === '0')
-        ? DEFAULT_IN_STOCK_UNITS
-        : f.stock,
-    }))
+    setForm(f => {
+      let nextStock = f.stock
+      if (status === 'in_stock') {
+        const currentNum = parseInt(f.stock, 10)
+        if (Number.isNaN(currentNum) || currentNum <= 3) {
+          nextStock = DEFAULT_IN_STOCK_UNITS
+        }
+      } else if (status === 'few_units_left') {
+        const currentNum = parseInt(f.stock, 10)
+        if (Number.isNaN(currentNum) || currentNum <= 0 || currentNum > 3) {
+          nextStock = '3'
+        }
+      } else if (status === 'out_of_stock') {
+        nextStock = '0'
+      }
+      return {
+        ...f,
+        stock_status: status,
+        stock: nextStock,
+      }
+    })
+
+  // Bi-directional stock count input synchronization
+  const handleStockChange = (val: string) =>
+    setForm(f => {
+      const num = parseInt(val, 10)
+      let nextStatus = f.stock_status
+      if (!val.trim()) {
+        return { ...f, stock: val }
+      }
+      if (!Number.isNaN(num)) {
+        if (num <= 0) {
+          nextStatus = 'out_of_stock'
+        } else if (num <= 3) {
+          nextStatus = 'few_units_left'
+        } else {
+          nextStatus = 'in_stock'
+        }
+      }
+      return {
+        ...f,
+        stock: val,
+        stock_status: nextStatus,
+      }
+    })
 
   const createCategory = async () => {
     const name = newCategoryName.trim()
@@ -452,7 +490,9 @@ export default function AdminProductForm() {
         original_price: form.original_price ? parseFloat(form.original_price) : null,
         discount_percent: form.discount_percent ? parseInt(form.discount_percent, 10) : null,
         stock: parseInt(form.stock, 10) || 0,
-        stock_status: form.stock_status,
+        stock_status: (parseInt(form.stock, 10) || 0) <= 0 && form.stock_status === 'in_stock'
+          ? 'out_of_stock'
+          : form.stock_status,
         images: form.images,
         key_features: form.key_features,
         sizes: form.sizes,
@@ -973,32 +1013,42 @@ export default function AdminProductForm() {
 
             {activeTab === 'pricing' && (
             <div className="bg-white rounded-2xl border border-gray-100 p-5 mt-5">
-              <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 mb-4">Stock Status</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400">Stock & Availability</h2>
+                <span className="text-[11px] text-gray-400 font-medium">Customers only see "In Stock" when units &gt; 3</span>
+              </div>
               <div className="grid grid-cols-3 gap-2 mb-3">
                 {([
-                  { value: 'in_stock', label: 'In Stock' },
-                  { value: 'few_units_left', label: 'Few Units Left' },
-                  { value: 'out_of_stock', label: 'Out of Stock' },
+                  { value: 'in_stock', label: 'In Stock (50+)' },
+                  { value: 'few_units_left', label: 'Few Units (1-3)' },
+                  { value: 'out_of_stock', label: 'Out of Stock (0)' },
                 ] as const).map(s => (
-                  <button key={s.value} type="button" onClick={() => selectStockStatus(s.value)} className={`py-2 px-1 rounded-xl text-xs font-medium transition-colors ${form.stock_status === s.value ? 'bg-brand-400 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                  <button key={s.value} type="button" onClick={() => selectStockStatus(s.value)} className={`py-2 px-1 rounded-xl text-xs font-medium transition-colors ${form.stock_status === s.value ? 'bg-brand-400 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                     {s.label}
                   </button>
                 ))}
               </div>
               {form.stock_status !== 'out_of_stock' && (
                 <div>
-                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Units left</label>
+                  <label className="block text-gray-600 text-xs font-medium mb-1.5">Total Units Available</label>
                   <input 
                     id="stock-field"
                     type="number" 
                     min="0" 
                     value={form.stock} 
-                    onChange={e => set('stock', e.target.value)} 
-                    placeholder="e.g. 3" 
-                    className={`w-full border ${validationErrors.stock ? 'border-red-500 bg-red-50/10' : 'border-gray-200 focus:border-brand-400'} rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white`} 
+                    onChange={e => handleStockChange(e.target.value)} 
+                    placeholder="e.g. 50" 
+                    className={`w-full border ${validationErrors.stock ? 'border-red-500 bg-red-50/10' : 'border-gray-200 focus:border-brand-400'} rounded-xl px-4 py-2.5 text-gray-900 placeholder-gray-400 outline-none text-sm bg-gray-50 focus:bg-white font-medium`} 
                   />
                   {form.stock_status === 'in_stock' && (
-                    <p className="text-gray-400 text-[11px] mt-2">Pre-filled for you — adjust only if you want an exact count.</p>
+                    <p className="text-gray-400 text-[11px] mt-2">
+                      💡 Defaulted to 50 units for you. Customers will simply see a clean <strong>"In Stock"</strong> tag (the exact number is shielded).
+                    </p>
+                  )}
+                  {form.stock_status === 'few_units_left' && (
+                    <p className="text-amber-600 text-[11px] mt-2 font-medium">
+                      ⚡ Low stock trigger active: customers will see <strong>"Few units left — only {form.stock || '3'} remaining"</strong>.
+                    </p>
                   )}
                 </div>
               )}
@@ -1073,7 +1123,7 @@ export default function AdminProductForm() {
                         price: parseFloat(form.selling_price) || 0,
                         original_price: form.original_price ? parseFloat(form.original_price) : null,
                         image_url: form.images[0] || null,
-                        stock: parseInt(form.stock, 10) || 10,
+                        stock: parseInt(form.stock, 10) || 50,
                       }
                       setForm(f => ({ ...f, variants: [...f.variants, newV] }))
                     }}
@@ -1129,7 +1179,7 @@ export default function AdminProductForm() {
                               price: parseFloat(form.selling_price) || 0,
                               original_price: form.original_price ? parseFloat(form.original_price) : null,
                               image_url: form.images[0] || null,
-                              stock: parseInt(form.stock, 10) || 10,
+                              stock: parseInt(form.stock, 10) || 50,
                             }
                             setForm(f => ({ ...f, variants: [...f.variants, newV] }))
                           }}
