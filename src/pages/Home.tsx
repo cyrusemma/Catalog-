@@ -165,7 +165,7 @@ export default function Home() {
               if (activeIndex >= 0 && topSuggestions[activeIndex]) {
                 const p = topSuggestions[activeIndex]
                 setDropdownOpen(false)
-                navigate(`/product/${p.slug}`)
+                navigate(`/product/${p.slug || p.id}`)
                 return
               }
               handleSearch(e)
@@ -233,10 +233,9 @@ export default function Home() {
                       return (
                         <li key={p.id} id={`home-search-opt-${p.id}`} role="option" aria-selected={isActive}>
                           <Link
-                            to={`/product/${p.slug}`}
+                            to={`/product/${p.slug || p.id}`}
                             onMouseEnter={() => setActiveIndex(i)}
-                            onMouseDown={(e) => {
-                              e.preventDefault()
+                            onClick={() => {
                               setDropdownOpen(false)
                             }}
                             className={`flex items-center gap-3 px-3 py-2.5 transition-colors ${

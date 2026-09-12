@@ -144,18 +144,42 @@ export function useInfiniteProducts(
 }
 
 
-export function useProduct(id: string, isMarketplaceView = true) {
+export function useProduct(idOrSlug: string, isMarketplaceView = true) {
   return useQuery({
-    queryKey: ['product', id, isMarketplaceView],
+    queryKey: ['product', idOrSlug, isMarketplaceView],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug)
+      let query = supabase
         .from('products')
         .select('*, store:stores(name, slug, logo_url, markup_percentage)')
-        .eq('id', id)
         .eq('is_published', true)
-        .single()
-      if (error) throw error
-      
+
+      if (isUUID) {
+        query = query.eq('id', idOrSlug)
+      } else {
+        query = query.eq('slug', idOrSlug)
+      }
+
+      const { data, error } = await query.maybeSingle()
+      if (error || !data) {
+        // Fallback: try matching the alternate column
+        const fallback = await supabase
+          .from('products')
+          .select('*, store:stores(name, slug, logo_url, markup_percentage)')
+          .eq('is_published', true)
+          .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
+          .maybeSingle()
+        if (fallback.error || !fallback.data) {
+          throw error || new Error('Product not found')
+        }
+        const globalMarkup = await getGlobalMarkup()
+        const product = fallback.data as any
+        if (isMarketplaceView) {
+          return applyMarkup(product, globalMarkup)
+        }
+        return product as Product
+      }
+
       const globalMarkup = await getGlobalMarkup()
       const product = data as any
       if (isMarketplaceView) {
@@ -163,7 +187,7 @@ export function useProduct(id: string, isMarketplaceView = true) {
       }
       return product as Product
     },
-    enabled: !!id,
+    enabled: !!idOrSlug,
   })
 }
 

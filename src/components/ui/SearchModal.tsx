@@ -358,7 +358,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                           return (
                             <Link
                               key={p.id}
-                              to={`/product/${p.slug}`}
+                              to={`/product/${p.slug || p.id}`}
                               onClick={onClose}
                               className="flex items-center gap-3 p-2.5 rounded-2xl bg-cream-50/70 dark:bg-white/5 hover:bg-brand-400/10 dark:hover:bg-brand-400/20 border border-cream-200/70 dark:border-white/5 hover:border-brand-400/30 cursor-pointer transition-all group"
                             >
