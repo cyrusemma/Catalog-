@@ -18,7 +18,10 @@ import {
   ShoppingCartSimple,
   UserPlus,
   MagnifyingGlass,
-  CaretLeft
+  X,
+  SidebarSimple,
+  CaretRight,
+  Sparkle
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -44,7 +47,7 @@ export default function Account() {
   const [signedOut, setSignedOut] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'inbox' | 'vouchers' | 'wishlist' | 'followed' | 'recent' | 'address' | 'alerts' | 'store'>('overview')
   const [showCreateWizard, setShowCreateWizard] = useState(false)
-  const [mobileView, setMobileView] = useState<'menu' | 'content'>('menu')
+  const [slideMenuOpen, setSlideMenuOpen] = useState(false)
 
   // Address form fields
   const [phone, setPhone] = useState('')
@@ -307,33 +310,263 @@ export default function Account() {
     .slice(0, 2)
     .join('') || '?'
 
-  const sidebarItems = [
-    { id: 'overview', label: 'Account Overview', icon: UserIcon },
-    { id: 'orders', label: 'My Orders', icon: Package, count: orders?.length },
-    { id: 'inbox', label: 'Inbox', icon: ClipboardText, count: notifications.length },
-    { id: 'vouchers', label: 'Vouchers & Coupons', icon: Ticket, count: vouchers?.length },
+  type TabId = 'overview' | 'orders' | 'inbox' | 'vouchers' | 'wishlist' | 'followed' | 'recent' | 'address' | 'alerts' | 'store'
+
+  interface NavItem {
+    id: TabId
+    label: string
+    icon: any
+    count?: number
+    isStore?: boolean
+  }
+
+  interface NavSection {
+    title: string
+    items: NavItem[]
+  }
+
+  const navSections: NavSection[] = [
+    {
+      title: 'Shopping & Activity',
+      items: [
+        { id: 'overview', label: 'Account Overview', icon: UserIcon },
+        { id: 'orders', label: 'My Orders', icon: Package, count: orders?.length },
+        { id: 'wishlist', label: 'Wishlist', icon: Heart, count: wishlistItems.length },
+        { id: 'recent', label: 'Recently Viewed', icon: Eye, count: recentProducts.length },
+      ]
+    },
+    {
+      title: 'Offers & Updates',
+      items: [
+        { id: 'vouchers', label: 'Vouchers & Coupons', icon: Ticket, count: vouchers?.length },
+        { id: 'inbox', label: 'Inbox & Alerts', icon: ClipboardText, count: notifications.length },
+        { id: 'followed', label: 'Followed Sellers', icon: Storefront, count: profile.followed_stores?.length },
+      ]
+    },
+    {
+      title: 'Profile & Settings',
+      items: [
+        { id: 'address', label: 'Address Book', icon: MapPin },
+        { id: 'alerts', label: 'Notification Settings', icon: Bell },
+        { id: 'store', label: store ? 'Merchant Dashboard' : 'Open a Store', icon: Sparkle, isStore: true },
+      ]
+    }
+  ]
+
+  const quickTabs: NavItem[] = [
+    { id: 'overview', label: 'Overview', icon: UserIcon },
+    { id: 'orders', label: 'Orders', icon: Package, count: orders?.length },
     { id: 'wishlist', label: 'Wishlist', icon: Heart, count: wishlistItems.length },
-    { id: 'followed', label: 'Followed Sellers', icon: Storefront, count: profile.followed_stores?.length },
-    { id: 'recently-viewed', label: 'Recently Viewed', icon: Eye, count: recentProducts.length },
-    { id: 'address', label: 'Address Book', icon: MapPin },
-    { id: 'alerts', label: 'Notification Settings', icon: Bell },
-    { id: 'store', label: 'Merchant Dashboard', icon: Storefront }
-  ] as const
+    { id: 'vouchers', label: 'Coupons', icon: Ticket, count: vouchers?.length },
+    { id: 'address', label: 'Address', icon: MapPin },
+    { id: 'store', label: store ? 'Store' : 'Sell', icon: Sparkle },
+  ]
+
+  const currentTabLabel = navSections
+    .flatMap(s => s.items)
+    .find(i => i.id === activeTab)?.label || 'Overview'
 
   return (
-    <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-10 pb-28 lg:pb-10">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-brand-400" />
-        <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Customer Portal</span>
+    <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-8 sm:py-10 pb-28 lg:pb-12">
+      {/* ── Slide Menu Drawer Modal ─────────────────────────────────────── */}
+      <AnimatePresence>
+        {slideMenuOpen && (
+          <div className="fixed inset-0 z-50 flex">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setSlideMenuOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            />
+
+            {/* Slide-out Drawer */}
+            <motion.aside
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 280 }}
+              className="relative w-full max-w-xs sm:max-w-sm h-full bg-white dark:bg-dark-900 border-r border-cream-200 dark:border-brand-400/20 shadow-2xl flex flex-col z-10 overflow-hidden"
+            >
+              {/* Drawer Top Header */}
+              <div className="p-5 border-b border-cream-100 dark:border-white/5 bg-cream-50/50 dark:bg-dark-800/40 flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  {profile.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt=""
+                      className="w-11 h-11 rounded-2xl object-cover ring-2 ring-brand-400/30 flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-500 text-white font-bold text-sm flex items-center justify-center flex-shrink-0 shadow-sm shadow-brand-400/20">
+                      {initials}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-dark-800 dark:text-white font-bold text-sm truncate">
+                      {profile.display_name || 'Customer'}
+                    </p>
+                    <p className="text-dark-800/45 dark:text-white/45 text-xs truncate">
+                      {profile.email}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSlideMenuOpen(false)}
+                  className="p-2 rounded-xl text-dark-800/60 dark:text-white/60 hover:bg-cream-200 dark:hover:bg-dark-700 hover:text-dark-800 dark:hover:text-white transition-colors"
+                  aria-label="Close menu"
+                >
+                  <X size={20} weight="bold" />
+                </button>
+              </div>
+
+              {/* Drawer Navigation Links */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                {navSections.map(section => (
+                  <div key={section.title} className="space-y-1.5">
+                    <p className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-dark-800/40 dark:text-white/40">
+                      {section.title}
+                    </p>
+                    <div className="space-y-1">
+                      {section.items.map(item => {
+                        const active = activeTab === item.id
+                        const Icon = item.icon
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveTab(item.id)
+                              setSlideMenuOpen(false)
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-left text-sm font-semibold transition-all group ${
+                              active
+                                ? 'bg-brand-400 text-white shadow-sm shadow-brand-400/25'
+                                : item.isStore
+                                ? 'bg-brand-400/10 text-brand-400 hover:bg-brand-400/20 dark:bg-brand-400/15'
+                                : 'text-dark-800/70 dark:text-white/70 hover:bg-cream-100 dark:hover:bg-dark-800 hover:text-dark-800 dark:hover:text-white'
+                            }`}
+                          >
+                            <span className="flex items-center gap-3">
+                              <Icon size={18} weight={active ? 'fill' : 'bold'} className="flex-shrink-0" />
+                              <span className="truncate">{item.label}</span>
+                            </span>
+
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              {'count' in item && item.count !== undefined && item.count > 0 && (
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                                  active
+                                    ? 'bg-white/25 text-white'
+                                    : 'bg-cream-200 dark:bg-dark-700 text-dark-800/60 dark:text-white/60'
+                                }`}>
+                                  {item.count}
+                                </span>
+                              )}
+                              <CaretRight
+                                size={14}
+                                weight="bold"
+                                className={`transition-transform ${
+                                  active ? 'text-white' : 'text-dark-800/30 dark:text-white/30 group-hover:translate-x-0.5'
+                                }`}
+                              />
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Drawer Footer */}
+              <div className="p-4 border-t border-cream-100 dark:border-white/5 bg-cream-50/40 dark:bg-dark-800/30 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSlideMenuOpen(false)
+                    signOut()
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-2xl text-sm font-semibold text-red-500 hover:bg-red-500/10 transition-colors"
+                >
+                  <SignOut size={16} weight="bold" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Page Header & Quick Navigation Bar ──────────────────────────── */}
+      <div className="mb-8 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="w-2 h-2 rounded-full bg-brand-400 animate-pulse" />
+              <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Customer Portal</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-bold text-dark-800 dark:text-white">
+              My Account
+            </h1>
+          </div>
+
+          {/* Slide Menu Trigger Button */}
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setSlideMenuOpen(true)}
+              className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-brand-400 hover:bg-brand-500 text-white font-bold text-sm shadow-md shadow-brand-400/20 active:scale-95 transition-all"
+            >
+              <SidebarSimple size={18} weight="bold" />
+              <span>Slide Menu</span>
+              <span className="hidden sm:inline-block text-[11px] px-2 py-0.5 rounded-lg bg-white/20 text-white font-medium">
+                {currentTabLabel}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Tabs Horizontal Scroll */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {quickTabs.map(tab => {
+            const active = activeTab === tab.id
+            const Icon = tab.icon
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+                  active
+                    ? 'bg-dark-800 text-white dark:bg-brand-400 dark:text-white shadow-sm'
+                    : 'bg-white dark:bg-dark-800 text-dark-800/60 dark:text-white/60 border border-cream-200 dark:border-white/5 hover:bg-cream-50 dark:hover:bg-dark-700/50 hover:text-dark-800 dark:hover:text-white'
+                }`}
+              >
+                <Icon size={14} weight={active ? 'fill' : 'bold'} />
+                <span>{tab.label}</span>
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    active
+                      ? 'bg-white/20 text-white'
+                      : 'bg-cream-100 dark:bg-dark-700 text-dark-800/60 dark:text-white/60'
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
       </div>
-      <h1 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white mb-8">My Account</h1>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
-        {/* Navigation Sidebar */}
-        <aside className={`w-full lg:w-64 bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 rounded-3xl p-4 space-y-1.5 shadow-sm sticky top-24 ${
-          mobileView === 'menu' ? 'block' : 'hidden lg:block'
-        }`}>
-          <div className="flex items-center gap-3 px-3 py-3 border-b border-cream-100 dark:border-white/5 mb-3">
+        {/* Navigation Sidebar (Desktop persistent rail) */}
+        <aside className="hidden lg:block w-64 bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 rounded-3xl p-4 space-y-4 shadow-sm sticky top-24">
+          <div className="flex items-center gap-3 px-3 py-2 border-b border-cream-100 dark:border-white/5">
             {profile.avatar_url ? (
               <img
                 src={profile.avatar_url}
@@ -355,47 +588,50 @@ export default function Account() {
             </div>
           </div>
 
-          <nav className="space-y-1">
-            {sidebarItems.map(item => {
-              const active = activeTab === item.id || (item.id === 'recently-viewed' && activeTab === 'recent')
-              const Icon = item.icon
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    if (item.id === 'recently-viewed') {
-                      setActiveTab('recent')
-                    } else {
-                      setActiveTab(item.id)
-                    }
-                    setMobileView('content')
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-left text-sm font-semibold transition-all group ${
-                    active
-                      ? 'bg-brand-400/10 text-brand-400'
-                      : 'text-dark-800/60 dark:text-white/60 hover:bg-cream-50 dark:hover:bg-dark-700/30 hover:text-dark-800 dark:hover:text-white'
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Icon size={16} weight={active ? 'fill' : 'bold'} className="flex-shrink-0" />
-                    {item.label}
-                  </span>
-                  {'count' in item && item.count !== undefined && item.count > 0 && (
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${
-                      active ? 'bg-brand-400 text-white' : 'bg-cream-100 dark:bg-dark-700 text-dark-800/50 dark:text-white/50 group-hover:bg-cream-200 dark:group-hover:bg-dark-600'
-                    }`}>
-                      {item.count}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+          <nav className="space-y-4">
+            {navSections.map(section => (
+              <div key={section.title} className="space-y-1">
+                <p className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-dark-800/40 dark:text-white/40">
+                  {section.title}
+                </p>
+                <div className="space-y-0.5">
+                  {section.items.map(item => {
+                    const active = activeTab === item.id
+                    const Icon = item.icon
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setActiveTab(item.id)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-left text-sm font-semibold transition-all group ${
+                          active
+                            ? 'bg-brand-400/10 text-brand-400 font-bold'
+                            : 'text-dark-800/60 dark:text-white/60 hover:bg-cream-50 dark:hover:bg-dark-700/30 hover:text-dark-800 dark:hover:text-white'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2.5 truncate">
+                          <Icon size={16} weight={active ? 'fill' : 'bold'} className="flex-shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                        </span>
+                        {'count' in item && item.count !== undefined && item.count > 0 && (
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${
+                            active ? 'bg-brand-400 text-white' : 'bg-cream-100 dark:bg-dark-700 text-dark-800/50 dark:text-white/50 group-hover:bg-cream-200 dark:group-hover:bg-dark-600'
+                          }`}>
+                            {item.count}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
 
-          <div className="pt-3 mt-3 border-t border-cream-100 dark:border-white/5">
+          <div className="pt-2 border-t border-cream-100 dark:border-white/5">
             <button
               onClick={signOut}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl text-left text-sm font-semibold text-red-500 hover:bg-red-500/5 transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-2xl text-left text-sm font-semibold text-red-500 hover:bg-red-500/5 transition-colors"
             >
               <SignOut size={16} weight="bold" />
               Sign Out
@@ -404,19 +640,7 @@ export default function Account() {
         </aside>
 
         {/* Dynamic Display Panel */}
-        <div className={`flex-1 w-full min-w-0 ${
-          mobileView === 'content' ? 'block' : 'hidden lg:block'
-        }`}>
-          {mobileView === 'content' && (
-            <button
-              type="button"
-              onClick={() => setMobileView('menu')}
-              className="lg:hidden flex items-center gap-1.5 mb-6 text-xs font-bold text-brand-400 hover:text-brand-500 bg-brand-400/10 px-3.5 py-2 rounded-xl border border-brand-400/20 active:scale-95 transition-all"
-            >
-              <CaretLeft size={14} weight="bold" className="flex-shrink-0" />
-              <span>Back to Account Menu</span>
-            </button>
-          )}
+        <div className="flex-1 w-full min-w-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
