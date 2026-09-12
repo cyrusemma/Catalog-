@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { ShoppingCart, Storefront, UserCircle, SquaresFour, MagnifyingGlass } from '@phosphor-icons/react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { ShoppingCart, Storefront, UserCircle, SquaresFour, MagnifyingGlass, X } from '@phosphor-icons/react'
 import { useQuery } from '@tanstack/react-query'
 import { useCartStore } from '../../store/cartStore'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
@@ -10,7 +10,6 @@ import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
 import ThemeToggle from '../ui/ThemeToggle'
 
 import NotificationButton from '../ui/NotificationButton'
-import SearchModal from '../ui/SearchModal'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import { effectivePrice } from '../../lib/utils'
@@ -18,6 +17,7 @@ import { useThemeStore } from '../../store/themeStore'
 
 export default function Navbar() {
   const location = useLocation()
+  const navigate = useNavigate()
   const totalItems = useCartStore(s => s.totalItems())
   const cartItems = useCartStore(s => s.items)
   const subtotal = useCartStore(s => s.totalPrice())
@@ -29,7 +29,38 @@ export default function Navbar() {
   const [hidden, setHidden] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [showMiniCart, setShowMiniCart] = useState(false)
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isMobileSearchActive, setIsMobileSearchActive] = useState(false)
+  const mobileInputRef = useRef<HTMLInputElement>(null)
+
+  // Sync search input with URL search params when on shop page
+  useEffect(() => {
+    if (location.pathname === '/shop') {
+      const params = new URLSearchParams(location.search)
+      const q = params.get('q')
+      if (q) setSearchQuery(q)
+    } else {
+      setSearchQuery('')
+    }
+  }, [location.pathname, location.search])
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmed = searchQuery.trim()
+    if (trimmed) {
+      navigate(`/shop?q=${encodeURIComponent(trimmed)}`)
+    } else {
+      navigate('/shop')
+    }
+    setIsMobileSearchActive(false)
+  }
+
+  const handleClearSearch = () => {
+    setSearchQuery('')
+    if (location.pathname === '/shop') {
+      navigate('/shop')
+    }
+  }
 
   const lastY = useRef(0)
   const miniCartTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -126,52 +157,102 @@ export default function Navbar() {
             : 'bg-white/10 dark:bg-dark-900/25 backdrop-blur-sm border-cream-200/10 dark:border-white/5 shadow-sm dark:shadow-none'
           }
         `}>
-          <Link to="/" className="flex items-center gap-2.5 group min-w-0 flex-1 sm:flex-none">
-            {settings.logo_url ? (
-              <img
-                src={settings.logo_url}
-                alt={settings.store_name}
-                className="w-8 h-8 flex-shrink-0 object-contain rounded-xl bg-white/5"
-              />
-            ) : (
-              <div className="w-8 h-8 flex-shrink-0 bg-gradient-to-br from-brand-400 to-brand-500 rounded-xl flex items-center justify-center shadow-amber-glow group-hover:shadow-amber-glow-lg transition-shadow">
-                <Storefront size={16} weight="duotone" className="text-white" />
+          {/* Mobile Active Search Input Bar */}
+          {isMobileSearchActive ? (
+            <form onSubmit={handleSearchSubmit} className="md:hidden flex items-center gap-2 flex-1 animate-in fade-in zoom-in-95 duration-150 mr-2">
+              <div className="relative flex-1">
+                <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 pointer-events-none" />
+                <input
+                  ref={mobileInputRef}
+                  type="text"
+                  autoFocus
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search products..."
+                  className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-white/80 dark:bg-dark-900/80 border border-brand-400 text-dark-800 dark:text-white placeholder-dark-800/40 dark:placeholder-white/40 text-xs font-medium outline-none shadow-xs"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    aria-label="Clear search"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 hover:text-dark-800 dark:hover:text-white"
+                  >
+                    <X size={12} weight="bold" />
+                  </button>
+                )}
               </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileSearchActive(false)}
+                className="text-xs font-semibold text-dark-800/60 dark:text-white/60 hover:text-dark-800 dark:hover:text-white px-1 py-1"
+              >
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <>
+              <Link to="/" className="flex items-center gap-2.5 group min-w-0 flex-1 sm:flex-none">
+                {settings.logo_url ? (
+                  <img
+                    src={settings.logo_url}
+                    alt={settings.store_name}
+                    className="w-8 h-8 flex-shrink-0 object-contain rounded-xl bg-white/5"
+                  />
+                ) : (
+                  <div className="w-8 h-8 flex-shrink-0 bg-gradient-to-br from-brand-400 to-brand-500 rounded-xl flex items-center justify-center shadow-amber-glow group-hover:shadow-amber-glow-lg transition-shadow">
+                    <Storefront size={16} weight="duotone" className="text-white" />
+                  </div>
+                )}
+                <span className="font-display font-bold text-base text-dark-800 dark:text-white truncate">{settings.store_name}</span>
+              </Link>
+
+              <div className="hidden sm:flex items-center gap-2">
+                {navLink('/', 'Home')}
+                {navLink('/shop', 'Shop')}
+                {navLink('/gallery', 'Gallery')}
+              </div>
+            </>
+          )}
+
+          {/* Desktop Direct Search Form */}
+          <form onSubmit={handleSearchSubmit} className="hidden md:flex items-center relative w-full max-w-[180px] lg:max-w-[260px] mx-2">
+            <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search products..."
+              className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-white/40 dark:bg-dark-900/40 border border-cream-200/60 dark:border-white/10 text-dark-800 dark:text-white placeholder-dark-800/40 dark:placeholder-white/40 text-xs font-medium focus:border-brand-400 focus:bg-white dark:focus:bg-dark-900 outline-none transition-all shadow-xs"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                title="Clear search"
+                aria-label="Clear search"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-dark-800/40 dark:text-white/40 hover:text-dark-800 dark:hover:text-white"
+              >
+                <X size={12} weight="bold" />
+              </button>
             )}
-            <span className="font-display font-bold text-base text-dark-800 dark:text-white truncate">{settings.store_name}</span>
-          </Link>
-
-          <div className="hidden sm:flex items-center gap-2">
-            {navLink('/', 'Home')}
-            {navLink('/shop', 'Shop')}
-            {navLink('/gallery', 'Gallery')}
-          </div>
-
-          {/* Desktop Search Trigger */}
-          <button
-            type="button"
-            onClick={() => setIsSearchOpen(true)}
-            className="hidden md:flex items-center justify-between w-full max-w-[200px] lg:max-w-[270px] mx-3 px-3 py-1.5 rounded-xl bg-white/40 dark:bg-dark-900/40 border border-cream-200/60 dark:border-white/10 text-dark-800/50 dark:text-white/40 hover:border-brand-400/40 hover:bg-white/60 dark:hover:bg-dark-900/60 transition-all text-xs font-medium group"
-          >
-            <div className="flex items-center gap-2 truncate">
-              <MagnifyingGlass size={15} className="text-dark-800/40 dark:text-white/40 group-hover:text-brand-400 transition-colors flex-shrink-0" />
-              <span className="truncate">Search catalog...</span>
-            </div>
-            <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-mono font-semibold text-dark-800/40 dark:text-white/40 bg-cream-100 dark:bg-white/10 rounded border border-cream-200 dark:border-white/5 flex-shrink-0">
-              ⌘K
-            </kbd>
-          </button>
+          </form>
 
           <div className="flex items-center gap-1 ml-auto md:ml-0">
-            {/* Mobile Search Icon Button */}
-            <button
-              type="button"
-              onClick={() => setIsSearchOpen(true)}
-              aria-label="Search catalog"
-              className="md:hidden w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white"
-            >
-              <MagnifyingGlass size={18} weight="duotone" />
-            </button>
+            {/* Mobile Search Icon Button (when search is not active) */}
+            {!isMobileSearchActive && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileSearchActive(true)
+                  setTimeout(() => mobileInputRef.current?.focus(), 50)
+                }}
+                aria-label="Search catalog"
+                className="md:hidden w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white"
+              >
+                <MagnifyingGlass size={18} weight="duotone" />
+              </button>
+            )}
 
             <ThemeToggle />
             <NotificationButton />
@@ -284,9 +365,6 @@ export default function Navbar() {
           </div>
         </nav>
       </div>
-
-      {/* Global Spotlight Search Modal */}
-      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </div>
   )
 }
