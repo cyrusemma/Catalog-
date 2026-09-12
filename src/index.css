@@ -484,11 +484,17 @@ html.theme-turquoise-dark .card {
 }
 
 .admin-shell .bg-white,
-.admin-shell .bg-white\/85 {
+.admin-shell .bg-white\/70,
+.admin-shell .bg-white\/80,
+.admin-shell .bg-white\/85,
+.admin-shell .bg-white\/90,
+.admin-shell .bg-white\/95,
+.admin-shell .bg-white\/98 {
   background-color: var(--admin-panel) !important;
 }
 
 .admin-shell .bg-gray-50,
+.admin-shell .bg-gray-50\/80,
 .admin-shell .bg-gray-100 {
   background-color: var(--admin-panel-soft) !important;
 }
@@ -571,8 +577,14 @@ html.theme-turquoise-dark .card {
   border-color: rgba(212, 130, 10, 0.35) !important;
 }
 
+.admin-theme-amoled .text-amber-500,
+.admin-theme-amoled .text-amber-600,
+.admin-theme-amoled .text-amber-700,
 .admin-theme-amoled .text-amber-800,
 .admin-theme-amoled .text-amber-900,
+.admin-theme-gold .text-amber-500,
+.admin-theme-gold .text-amber-600,
+.admin-theme-gold .text-amber-700,
 .admin-theme-gold .text-amber-800,
 .admin-theme-gold .text-amber-900 {
   color: #f4c46f !important;
@@ -590,11 +602,51 @@ html.theme-turquoise-dark .card {
   border-color: rgba(248, 113, 113, 0.34) !important;
 }
 
+.admin-theme-amoled .text-red-400,
 .admin-theme-amoled .text-red-500,
 .admin-theme-amoled .text-red-600,
+.admin-theme-amoled .text-red-700,
+.admin-theme-gold .text-red-400,
 .admin-theme-gold .text-red-500,
-.admin-theme-gold .text-red-600 {
+.admin-theme-gold .text-red-600,
+.admin-theme-gold .text-red-700 {
   color: #fb7185 !important;
+}
+
+.admin-theme-amoled .bg-emerald-50,
+.admin-theme-gold .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.14) !important;
+}
+
+.admin-theme-amoled .border-emerald-200,
+.admin-theme-gold .border-emerald-200 {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+.admin-theme-amoled .text-emerald-500,
+.admin-theme-amoled .text-emerald-600,
+.admin-theme-amoled .text-emerald-700,
+.admin-theme-gold .text-emerald-500,
+.admin-theme-gold .text-emerald-600,
+.admin-theme-gold .text-emerald-700 {
+  color: #34d399 !important;
+}
+
+.admin-theme-amoled .bg-brand-50,
+.admin-theme-gold .bg-brand-50 {
+  background-color: rgba(212, 130, 10, 0.15) !important;
+}
+
+.admin-theme-amoled .border-brand-200,
+.admin-theme-gold .border-brand-200 {
+  border-color: rgba(212, 130, 10, 0.35) !important;
+}
+
+.admin-theme-amoled .text-brand-500,
+.admin-theme-amoled .text-brand-600,
+.admin-theme-gold .text-brand-500,
+.admin-theme-gold .text-brand-600 {
+  color: #fbbf24 !important;
 }
 
 .admin-shell .bg-green-500 {

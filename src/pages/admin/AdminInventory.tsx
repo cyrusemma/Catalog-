@@ -172,14 +172,14 @@ export default function AdminInventory() {
             <button
               onClick={() => qc.invalidateQueries({ queryKey: ['admin-inventory'] })}
               disabled={isFetching}
-              className="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 transition-colors shadow-xs"
+              className="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 text-gray-700 transition-colors shadow-xs"
               title="Refresh inventory"
             >
               <RefreshCw size={16} className={isFetching ? 'animate-spin text-brand-500' : ''} />
             </button>
             <button
               onClick={exportInventoryCSV}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-xs sm:text-sm font-semibold transition-colors shadow-xs"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs sm:text-sm font-bold transition-colors shadow-xs"
             >
               <Download size={16} /> Export Inventory
             </button>
@@ -188,9 +188,9 @@ export default function AdminInventory() {
 
         {/* Low Stock & Out of Stock Warning Banner */}
         {(stats.outOfStockCount > 0 || stats.lowStockCount > 0) && (
-          <div className="bg-gradient-to-r from-red-50 via-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border shadow-xs bg-amber-500/10 border-amber-500/30">
             <div className="flex items-start sm:items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle size={20} />
               </div>
               <div>
@@ -201,7 +201,7 @@ export default function AdminInventory() {
                     ? `🔴 ${stats.outOfStockCount} items are Out of Stock`
                     : `🟡 ${stats.lowStockCount} items are Low on Stock`}
                 </h2>
-                <p className="text-xs text-gray-600 mt-0.5">
+                <p className="text-xs text-gray-500 mt-0.5">
                   Restock these items to avoid missed orders and maintain active storefront listings.
                 </p>
               </div>
@@ -210,7 +210,7 @@ export default function AdminInventory() {
               <button
                 type="button"
                 onClick={() => setFilter(stats.outOfStockCount > 0 ? 'out_of_stock' : 'low_stock')}
-                className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-colors shadow-xs"
+                className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-colors shadow-xs flex-shrink-0"
               >
                 View Items Needing Restock
               </button>
@@ -221,23 +221,23 @@ export default function AdminInventory() {
         {/* Metrics Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Out of Stock Alert */}
-          <div className="bg-red-50/70 border border-red-200/80 rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-red-600">Out of Stock</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-red-500">Out of Stock</span>
               <XCircle size={20} className="text-red-500" />
             </div>
-            <p className="text-2xl sm:text-3xl font-extrabold text-red-700 mt-2">{stats.outOfStockCount}</p>
-            <p className="text-[11px] text-red-500 mt-1 font-medium">Needs immediate restock</p>
+            <p className="text-2xl sm:text-3xl font-extrabold text-red-500 mt-2">{stats.outOfStockCount}</p>
+            <p className="text-[11px] text-red-400 mt-1 font-medium">Needs immediate restock</p>
           </div>
 
           {/* Low Stock Alert */}
-          <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">About to Finish</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-500">About to Finish</span>
               <AlertTriangle size={20} className="text-amber-500" />
             </div>
-            <p className="text-2xl sm:text-3xl font-extrabold text-amber-700 mt-2">{stats.lowStockCount}</p>
-            <p className="text-[11px] text-amber-600 mt-1 font-medium">≤ 3 units remaining</p>
+            <p className="text-2xl sm:text-3xl font-extrabold text-amber-500 mt-2">{stats.lowStockCount}</p>
+            <p className="text-[11px] text-amber-400 mt-1 font-medium">≤ 3 units remaining</p>
           </div>
 
           {/* Total Units */}
@@ -253,11 +253,11 @@ export default function AdminInventory() {
           {/* Total Inventory Value */}
           <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Inventory Value</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-500">Inventory Value</span>
               <DollarSign size={20} className="text-emerald-500" />
             </div>
             <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-2">{formatPrice(stats.totalValue)}</p>
-            <p className="text-[11px] text-emerald-600 mt-1 font-medium">Total retail valuation</p>
+            <p className="text-[11px] text-emerald-500 mt-1 font-medium">Total retail valuation</p>
           </div>
         </div>
 
@@ -278,11 +278,11 @@ export default function AdminInventory() {
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 border ${
                     filter === tab.id
                       ? 'bg-brand-500 border-brand-500 text-white shadow-xs'
-                      : 'bg-gray-50 text-gray-600 border-gray-200/60 hover:bg-gray-100'
+                      : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
                   }`}
                 >
                   <span>{tab.label}</span>
-                  <span className={`px-1.5 py-0.2 rounded-md text-[10px] ${filter === tab.id ? 'bg-white/20 text-white' : 'bg-gray-200/70 text-gray-600'}`}>
+                  <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${filter === tab.id ? 'bg-white/25 text-white' : 'bg-gray-200 text-gray-700'}`}>
                     {tab.count}
                   </span>
                 </button>
@@ -296,7 +296,7 @@ export default function AdminInventory() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search inventory..."
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-brand-500 outline-none"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-brand-500 outline-none text-gray-900 placeholder:text-gray-400"
               />
             </div>
           </div>
@@ -324,7 +324,7 @@ export default function AdminInventory() {
                 <div
                   key={product.id}
                   className={`bg-white rounded-2xl border transition-all shadow-xs overflow-hidden ${
-                    isOut ? 'border-red-200 bg-red-50/10' : isLow ? 'border-amber-200 bg-amber-50/10' : 'border-gray-100'
+                    isOut ? 'border-red-500/40 bg-red-500/[0.03]' : isLow ? 'border-amber-500/40 bg-amber-500/[0.03]' : 'border-gray-100'
                   }`}
                 >
                   <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -333,7 +333,7 @@ export default function AdminInventory() {
                       <img
                         src={product.images?.[0] || 'https://placehold.co/80x80/f3f4f6/9ca3af?text=?'}
                         alt={product.title}
-                        className="w-12 h-12 rounded-xl object-cover border border-gray-100 flex-shrink-0 bg-gray-50"
+                        className="w-12 h-12 rounded-xl object-cover border border-gray-200 flex-shrink-0 bg-gray-100"
                       />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -341,13 +341,13 @@ export default function AdminInventory() {
                             {product.title}
                           </h3>
                           {hasVariants && (
-                            <span className="text-[10px] font-semibold text-brand-600 bg-brand-50 border border-brand-200/50 px-2 py-0.2 rounded-md">
+                            <span className="text-[10px] font-bold text-brand-500 bg-brand-500/15 border border-brand-500/30 px-2 py-0.5 rounded-md">
                               {product.variants!.length} Variations
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {product.category || 'General'} · <span className="font-semibold text-gray-700">{formatPrice(product.selling_price)}</span>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {product.category || 'General'} · <span className="font-semibold text-gray-900">{formatPrice(product.selling_price)}</span>
                         </p>
                       </div>
                     </div>
@@ -359,10 +359,10 @@ export default function AdminInventory() {
                         <span
                           className={`text-xs font-bold px-2.5 py-1 rounded-lg border inline-flex items-center gap-1.5 ${
                             isOut
-                              ? 'bg-red-50 text-red-700 border-red-200'
+                              ? 'bg-red-500/15 text-red-500 border-red-500/30'
                               : isLow
-                              ? 'bg-amber-50 text-amber-700 border-amber-200'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
+                              : 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
                           }`}
                         >
                           {isOut ? (
@@ -385,8 +385,8 @@ export default function AdminInventory() {
                             disabled={restockMutation.isPending}
                             className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all shadow-2xs ${
                               amt === 50
-                                ? 'bg-brand-50 hover:bg-brand-100 text-brand-600 border-brand-200'
-                                : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-700'
+                                ? 'bg-brand-500/15 hover:bg-brand-500/25 text-brand-500 border-brand-500/30'
+                                : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-800'
                             }`}
                             title={`Add +${amt} units to stock`}
                           >
@@ -404,7 +404,7 @@ export default function AdminInventory() {
                             value={customStockValue}
                             onChange={e => setCustomStockValue(e.target.value)}
                             placeholder={currentStock.toString()}
-                            className="w-16 px-2 py-1 text-xs border border-brand-500 rounded-lg outline-none font-bold text-center"
+                            className="w-16 px-2 py-1 text-xs border-2 border-brand-500 bg-white rounded-lg outline-none font-bold text-center text-gray-900"
                           />
                           <button
                             type="button"
@@ -414,7 +414,7 @@ export default function AdminInventory() {
                                 restockMutation.mutate({ product, addUnits: 0, exactStock: num })
                               }
                             }}
-                            className="p-1 rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors"
+                            className="p-1.5 rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors shadow-2xs"
                           >
                             <Check size={14} />
                           </button>
@@ -426,7 +426,7 @@ export default function AdminInventory() {
                             setEditingStockId(product.id)
                             setCustomStockValue(currentStock.toString())
                           }}
-                          className="px-2.5 py-1 rounded-lg text-xs font-semibold text-gray-500 hover:text-gray-900 border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold text-gray-700 hover:text-gray-900 border border-gray-200 bg-white hover:bg-gray-100 transition-colors"
                         >
                           Set
                         </button>
@@ -437,7 +437,7 @@ export default function AdminInventory() {
                         <button
                           type="button"
                           onClick={() => setExpandedId(isExpanded ? null : product.id)}
-                          className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors flex items-center gap-1 text-xs font-semibold"
+                          className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-100 text-gray-700 transition-colors flex items-center gap-1 text-xs font-semibold"
                           title="Show variation stock"
                         >
                           <span>{product.variants!.length} Variations</span>
@@ -449,7 +449,7 @@ export default function AdminInventory() {
 
                   {/* Expandable Variations Breakdown */}
                   {hasVariants && isExpanded && (
-                    <div className="bg-gray-50/80 border-t border-gray-100 p-4 space-y-3">
+                    <div className="bg-gray-50 border-t border-gray-200/80 p-4 space-y-3">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
                           Priced Variations Stock Breakdown ({product.variants!.length} options)
@@ -458,7 +458,7 @@ export default function AdminInventory() {
                           type="button"
                           onClick={() => restockMutation.mutate({ product, addUnits: 50, restockAllVariants: true })}
                           disabled={restockMutation.isPending}
-                          className="self-start sm:self-auto text-xs font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200/60 px-3 py-1 rounded-lg transition-colors"
+                          className="self-start sm:self-auto text-xs font-bold text-brand-500 bg-brand-500/15 hover:bg-brand-500/25 border border-brand-500/30 px-3 py-1 rounded-lg transition-colors"
                         >
                           + Restock All Variants (+50 each)
                         </button>
@@ -475,17 +475,17 @@ export default function AdminInventory() {
                               className="p-3 bg-white rounded-xl border border-gray-200/80 flex items-center justify-between gap-2 shadow-2xs"
                             >
                               <div className="min-w-0">
-                                <p className="text-xs font-bold text-gray-800 truncate">{v.name}</p>
+                                <p className="text-xs font-bold text-gray-900 truncate">{v.name}</p>
                                 <p className="text-[11px] text-gray-500">{formatPrice(v.price)}</p>
                               </div>
                               <div className="flex items-center gap-1">
                                 <span
-                                  className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${
+                                  className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
                                     isVOut
-                                      ? 'bg-red-50 text-red-600'
+                                      ? 'bg-red-500/15 text-red-500 border-red-500/30'
                                       : isVLow
-                                      ? 'bg-amber-50 text-amber-600'
-                                      : 'bg-emerald-50 text-emerald-600'
+                                      ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
+                                      : 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
                                   }`}
                                 >
                                   {vStock} units
@@ -495,7 +495,7 @@ export default function AdminInventory() {
                                     key={amt}
                                     type="button"
                                     onClick={() => restockMutation.mutate({ product, addUnits: amt, variantId: v.id })}
-                                    className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-gray-100 hover:bg-brand-50 hover:text-brand-600 border border-gray-200 transition-colors"
+                                    className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-gray-100 hover:bg-brand-500/15 hover:text-brand-500 border border-gray-200 text-gray-800 transition-colors"
                                     title={`Add +${amt} to this variant`}
                                   >
                                     +{amt}

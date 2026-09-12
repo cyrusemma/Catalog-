@@ -362,7 +362,7 @@ export default function AdminSettings() {
             <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">Store Configuration</h1>
           </div>
           {isDirty && (
-            <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium px-3 py-1.5 rounded-xl">
+            <div className="flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/30 text-amber-500 text-xs font-bold px-3 py-1.5 rounded-xl">
               <AlertTriangle size={14} />
               Unsaved changes
             </div>
@@ -425,11 +425,11 @@ export default function AdminSettings() {
                 </div>
                 <Field label="Operating Hours" value={form.operating_hours} onChange={v => set("operating_hours", v)} placeholder="e.g. Mon-Fri: 9am - 5pm, Sat: 10am - 2pm" />
                 
-                <div className="bg-red-50 border border-red-100 rounded-2xl p-4 mt-4">
+                <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 mt-4">
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <div>
-                      <h3 className="font-semibold text-red-800 text-sm">Maintenance Mode</h3>
-                      <p className="text-red-600/80 text-xs mt-0.5">Temporarily close the store to visitors.</p>
+                      <h3 className="font-semibold text-red-500 text-sm">Maintenance Mode</h3>
+                      <p className="text-red-400 text-xs mt-0.5">Temporarily close the store to visitors.</p>
                     </div>
                     <ToggleSwitch checked={form.maintenance_mode} onChange={v => set("maintenance_mode", v)} />
                   </div>
@@ -688,16 +688,16 @@ export default function AdminSettings() {
                 </section>
               )}
 
-              <section className="bg-red-50 rounded-3xl border border-red-100 p-6 space-y-5 mt-8">
+              <section className="bg-red-500/10 rounded-3xl border border-red-500/30 p-6 space-y-5 mt-8">
                 <div>
-                  <h2 className="font-bold text-red-900 text-lg flex items-center gap-2"><Trash size={18} /> Danger Zone</h2>
-                  <p className="text-red-700/80 text-sm mt-1">Destructive actions for your store.</p>
+                  <h2 className="font-bold text-red-500 text-lg flex items-center gap-2"><Trash size={18} /> Danger Zone</h2>
+                  <p className="text-red-400 text-sm mt-1">Destructive actions for your store.</p>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <button type="button" className="text-left px-4 py-3 bg-white border border-red-200 rounded-xl text-red-600 font-medium hover:bg-red-50 transition-colors">
+                  <button type="button" className="text-left px-4 py-3 bg-white border border-red-500/30 rounded-xl text-red-500 font-medium hover:bg-red-500/10 transition-colors">
                     Reset Visitor Analytics
                   </button>
-                  <button type="button" className="text-left px-4 py-3 bg-white border border-red-200 rounded-xl text-red-600 font-medium hover:bg-red-50 transition-colors">
+                  <button type="button" className="text-left px-4 py-3 bg-white border border-red-500/30 rounded-xl text-red-500 font-medium hover:bg-red-500/10 transition-colors">
                     Restore Default Settings
                   </button>
                 </div>
@@ -709,16 +709,16 @@ export default function AdminSettings() {
         </div>
 
         {/* Global Save Button - Sticky Bottom */}
-        <div className="fixed bottom-0 left-0 right-0 lg:left-64 p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 z-50">
+        <div className="fixed bottom-0 left-0 right-0 lg:left-64 p-4 bg-white/95 backdrop-blur-md border-t border-gray-100 z-50 shadow-lg">
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-            <div className="text-sm font-medium text-gray-500 hidden sm:block">
+            <div className="text-sm font-semibold text-gray-500 hidden sm:block">
               {isDirty ? 'You have unsaved changes' : 'Everything is up to date'}
             </div>
             <button 
               type="button" 
               onClick={() => save.mutate()} 
               disabled={save.isPending || !isDirty} 
-              className="w-full sm:w-auto px-8 py-3 flex items-center justify-center gap-2 bg-gray-900 hover:bg-black disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold rounded-xl transition-all shadow-sm"
+              className="w-full sm:w-auto px-8 py-3 flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 disabled:hover:bg-brand-500 text-white font-bold rounded-xl transition-all shadow-sm"
             >
               {saved ? <CheckCircle size={18} /> : <Save size={18} />}
               {saved ? "Saved!" : save.isPending ? "Saving..." : "Save Settings"}
@@ -799,7 +799,7 @@ function PushSettings() {
 
 function ToggleSwitch({ checked, onChange, ariaLabel }: { checked: boolean; onChange: (v: boolean) => void; ariaLabel?: string }) {
   return (
-    <label className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors cursor-pointer ${checked ? "bg-brand-500" : "bg-gray-200"}`}>
+    <label className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors cursor-pointer border ${checked ? "bg-brand-500 border-brand-500" : "bg-gray-200 border-gray-300/50"}`}>
       <input
         type="checkbox"
         checked={checked}
@@ -807,7 +807,7 @@ function ToggleSwitch({ checked, onChange, ariaLabel }: { checked: boolean; onCh
         className="sr-only"
         aria-label={ariaLabel || "Toggle setting"}
       />
-      <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${checked ? "translate-x-[26px]" : "translate-x-0.5"}`} />
+      <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${checked ? "translate-x-[24px]" : "translate-x-0.5"}`} />
     </label>
   )
 }
