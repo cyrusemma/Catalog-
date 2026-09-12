@@ -745,7 +745,7 @@ export default function App() {
   return (
     <QueryClientProvider client={qc}>
       <Toaster position={toasterPosition} richColors />
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <NewArrivalsListener />
         <CartSync />
         <WishlistSync />
