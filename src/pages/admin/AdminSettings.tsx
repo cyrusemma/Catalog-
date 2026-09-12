@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAdminContext } from "../../hooks/useAdminContext"
-import { Save, CheckCircle, Upload, X, Image as ImageIcon, Loader2, AlertTriangle, Store, Palette, MessageCircle, ShoppingBag, Sliders, Settings2, Trash } from "lucide-react"
+import { Save, CheckCircle, Upload, X, Image as ImageIcon, Loader2, AlertTriangle, Store, Palette, MessageCircle, ShoppingBag, Sliders, Settings2, Trash, Volume2 } from "lucide-react"
 import AdminLayout from "../../components/admin/AdminLayout"
 import { supabase } from "../../lib/supabase"
 import { extensionForMime, isValidImageUrl, validateImageFile } from "../../lib/productValidation"
 import { compressImage } from "../../lib/imageOptimization"
-import { formatPhoneNumber } from "../../lib/utils"
+import { formatPhoneNumber, playNotificationSound } from "../../lib/utils"
 import { toast } from "sonner"
 import { getActiveSubscription, pushIsSupported, subscribeToPush, unsubscribeFromPush } from "../../lib/pushSubscription"
 
@@ -645,6 +645,7 @@ export default function AdminSettings() {
                 </section>
               )}
 
+              <SoundNotificationSettings />
               <PushSettings />
             </div>
           )}
@@ -806,6 +807,42 @@ function PushSettings() {
           {isPushLoading && <Loader2 size={16} className="animate-spin text-gray-400" />}
           <ToggleSwitch checked={pushEnabled} onChange={handlePushToggle} ariaLabel="Toggle push notifications" />
         </div>
+      </div>
+    </section>
+  )
+}
+
+function SoundNotificationSettings() {
+  const [playing, setPlaying] = useState(false)
+
+  const handleTestSound = () => {
+    setPlaying(true)
+    playNotificationSound()
+    toast.success("🔔 Order alert sound played!", { duration: 3000 })
+    setTimeout(() => setPlaying(false), 800)
+  }
+
+  return (
+    <section className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+            <Volume2 size={20} className="text-brand-500" />
+            Live Order Chime &amp; Sound
+          </h2>
+          <p className="text-gray-500 text-sm mt-1">
+            Plays a crisp 3-tone cash register chime whenever a customer places an order while you have the dashboard open.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleTestSound}
+          disabled={playing}
+          className="px-4 py-2.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-600 font-bold text-xs flex items-center justify-center gap-2 border border-brand-200/60 transition-colors shadow-2xs whitespace-nowrap self-start sm:self-auto"
+        >
+          <Volume2 size={16} className={playing ? 'animate-bounce text-brand-500' : ''} />
+          {playing ? 'Playing Chime...' : 'Play Test Sound'}
+        </button>
       </div>
     </section>
   )

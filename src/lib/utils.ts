@@ -216,46 +216,105 @@ export function validateGhanaPhoneNumber(number: string): boolean {
   return validPrefixes.includes(prefix)
 }
 
+let sharedAudioCtx: AudioContext | null = null
+
+function getAudioContext(): AudioContext | null {
+  try {
+    if (!sharedAudioCtx) {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+      if (AudioContextClass) {
+        sharedAudioCtx = new AudioContextClass()
+      }
+    }
+    if (sharedAudioCtx && sharedAudioCtx.state === 'suspended') {
+      sharedAudioCtx.resume().catch(() => {})
+    }
+    return sharedAudioCtx
+  } catch {
+    return null
+  }
+}
+
+// Unlock audio on first user touch/click
+if (typeof window !== 'undefined') {
+  const unlockAudio = () => {
+    const ctx = getAudioContext()
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().catch(() => {})
+    }
+    window.removeEventListener('click', unlockAudio)
+    window.removeEventListener('touchstart', unlockAudio)
+    window.removeEventListener('keydown', unlockAudio)
+  }
+  window.addEventListener('click', unlockAudio, { passive: true })
+  window.addEventListener('touchstart', unlockAudio, { passive: true })
+  window.addEventListener('keydown', unlockAudio, { passive: true })
+}
+
 export function playNotificationSound() {
   try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
-    if (!AudioContextClass) return
-    const ctx = new AudioContextClass()
-    
-    // First high note (coin chime)
-    const osc1 = ctx.createOscillator()
-    const gain1 = ctx.createGain()
-    osc1.type = 'triangle'
-    osc1.frequency.setValueAtTime(880, ctx.currentTime) // A5
-    gain1.gain.setValueAtTime(0, ctx.currentTime)
-    gain1.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.02)
-    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
-    
-    osc1.connect(gain1)
-    gain1.connect(ctx.destination)
-    osc1.start()
-    osc1.stop(ctx.currentTime + 0.3)
+    const ctx = getAudioContext()
+    if (!ctx) return
 
-    // Second higher note (bell chime)
-    setTimeout(() => {
-      try {
-        const osc2 = ctx.createOscillator()
-        const gain2 = ctx.createGain()
-        osc2.type = 'sine'
-        osc2.frequency.setValueAtTime(1320, ctx.currentTime) // E6
-        gain2.gain.setValueAtTime(0, ctx.currentTime)
-        gain2.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02)
-        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4)
-        
-        osc2.connect(gain2)
-        gain2.connect(ctx.destination)
-        osc2.start()
-        osc2.stop(ctx.currentTime + 0.4)
-      } catch (e) {
-        console.error('Audio synthesizer note 2 error:', e)
-      }
-    }, 80)
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(() => playChime(ctx)).catch(() => {})
+    } else {
+      playChime(ctx)
+    }
   } catch (e) {
     console.error('Audio synthesizer failed to play:', e)
   }
+}
+
+function playChime(ctx: AudioContext) {
+  const now = ctx.currentTime
+
+  // Note 1: Bright sparkle (C6 - 1046.5 Hz)
+  const osc1 = ctx.createOscillator()
+  const gain1 = ctx.createGain()
+  osc1.type = 'triangle'
+  osc1.frequency.setValueAtTime(1046.5, now)
+  gain1.gain.setValueAtTime(0, now)
+  gain1.gain.linearRampToValueAtTime(0.18, now + 0.02)
+  gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.35)
+  osc1.connect(gain1)
+  gain1.connect(ctx.destination)
+  osc1.start(now)
+  osc1.stop(now + 0.35)
+
+  // Note 2: Warm fundamental (E6 - 1318.5 Hz)
+  setTimeout(() => {
+    try {
+      const now2 = ctx.currentTime
+      const osc2 = ctx.createOscillator()
+      const gain2 = ctx.createGain()
+      osc2.type = 'sine'
+      osc2.frequency.setValueAtTime(1318.51, now2)
+      gain2.gain.setValueAtTime(0, now2)
+      gain2.gain.linearRampToValueAtTime(0.22, now2 + 0.02)
+      gain2.gain.exponentialRampToValueAtTime(0.0001, now2 + 0.45)
+      osc2.connect(gain2)
+      gain2.connect(ctx.destination)
+      osc2.start(now2)
+      osc2.stop(now2 + 0.45)
+    } catch {}
+  }, 90)
+
+  // Note 3: Golden bell chime (G6 - 1567.98 Hz)
+  setTimeout(() => {
+    try {
+      const now3 = ctx.currentTime
+      const osc3 = ctx.createOscillator()
+      const gain3 = ctx.createGain()
+      osc3.type = 'sine'
+      osc3.frequency.setValueAtTime(1567.98, now3)
+      gain3.gain.setValueAtTime(0, now3)
+      gain3.gain.linearRampToValueAtTime(0.25, now3 + 0.02)
+      gain3.gain.exponentialRampToValueAtTime(0.0001, now3 + 0.6)
+      osc3.connect(gain3)
+      gain3.connect(ctx.destination)
+      osc3.start(now3)
+      osc3.stop(now3 + 0.6)
+    } catch {}
+  }, 180)
 }
