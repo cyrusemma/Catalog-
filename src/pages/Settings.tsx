@@ -239,17 +239,21 @@ export default function Settings() {
             <button
               type="button"
               onClick={toggle}
-              disabled={pushWorking || pushSubscribed === null}
+              disabled={pushSubscribed === null}
               aria-label="Toggle new-arrival notifications"
-              className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors ${
+              className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors cursor-pointer ${
                 pushSubscribed ? 'bg-brand-400' : 'bg-cream-200 dark:bg-dark-700'
-              } disabled:opacity-50`}
+              } ${pushSubscribed === null ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <span
-                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                className={`inline-flex items-center justify-center h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-out ${
                   pushSubscribed ? 'translate-x-6' : 'translate-x-1'
                 }`}
-              />
+              >
+                {pushWorking && (
+                  <span className="w-2.5 h-2.5 rounded-full border-2 border-brand-400 border-t-transparent animate-spin" />
+                )}
+              </span>
             </button>
           ) : !isLoggedIn ? (
             <button

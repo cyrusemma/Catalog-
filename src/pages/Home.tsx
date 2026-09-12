@@ -12,6 +12,7 @@ import {
   Sparkle,
   Storefront,
   WhatsappLogo,
+  X,
 } from '@phosphor-icons/react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -156,9 +157,9 @@ export default function Home() {
         initial={reduceMotion ? false : { opacity: 0, y: 8 }}
         animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8"
+        className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 relative z-40"
       >
-        <div ref={searchRootRef} className="relative">
+        <div ref={searchRootRef} className="relative z-40">
           <form
             onSubmit={(e) => {
               e.preventDefault()
@@ -168,12 +169,13 @@ export default function Home() {
                 navigate(`/product/${p.slug || p.id}`)
                 return
               }
+              setDropdownOpen(false)
               handleSearch(e)
             }}
             role="search"
             className="search-aura"
           >
-            <div className="search-aura__inner relative h-12 sm:h-14 rounded-full bg-white/80 dark:bg-white/5 backdrop-blur-xl shadow-sm">
+            <div className="search-aura__inner relative h-12 sm:h-14 rounded-full bg-white/90 dark:bg-white/5 backdrop-blur-xl shadow-sm flex items-center">
               <MagnifyingGlass
                 size={18}
                 weight="bold"
@@ -187,9 +189,13 @@ export default function Home() {
                   if (e.target.value.trim().length >= 2) setDropdownOpen(true)
                 }}
                 onFocus={() => {
-                  if (suggestionsOpen) setDropdownOpen(true)
+                  if (searchTerm.trim().length >= 2) setDropdownOpen(true)
                 }}
                 onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setDropdownOpen(false)
+                    return
+                  }
                   if (!dropdownOpen || topSuggestions.length === 0) return
                   if (e.key === 'ArrowDown') {
                     e.preventDefault()
@@ -209,8 +215,21 @@ export default function Home() {
                 aria-activedescendant={
                   activeIndex >= 0 ? `home-search-opt-${topSuggestions[activeIndex]?.id}` : undefined
                 }
-                className="w-full h-full pl-11 pr-4 rounded-full bg-transparent text-base text-dark-800 dark:text-white placeholder:text-dark-800/40 dark:placeholder:text-white/40 outline-none focus:ring-2 focus:ring-brand-400/30 transition-shadow"
+                className="w-full h-full pl-11 pr-10 rounded-full bg-transparent text-base text-dark-800 dark:text-white placeholder:text-dark-800/40 dark:placeholder:text-white/40 outline-none focus:ring-2 focus:ring-brand-400/30 transition-shadow"
               />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchTerm('')
+                    setDropdownOpen(false)
+                  }}
+                  aria-label="Clear search"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-dark-800/40 dark:text-white/40 hover:text-dark-800 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                >
+                  <X size={14} weight="bold" />
+                </button>
+              )}
             </div>
           </form>
 
@@ -223,7 +242,7 @@ export default function Home() {
                 animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
                 exit={reduceMotion ? undefined : { opacity: 0, y: -4 }}
                 transition={{ duration: 0.18, ease: 'easeOut' }}
-                className="absolute left-0 right-0 top-full mt-2 z-30 rounded-2xl border border-dark-800/10 dark:border-white/10 bg-white/95 dark:bg-dark-900/95 backdrop-blur-xl shadow-xl overflow-hidden"
+                className="absolute left-0 right-0 top-full mt-2 z-50 rounded-2xl border border-dark-800/10 dark:border-white/10 bg-white/95 dark:bg-dark-900/95 backdrop-blur-xl shadow-2xl overflow-hidden"
               >
                 {topSuggestions.length > 0 ? (
                   <ul className="max-h-[60vh] overflow-y-auto py-1">
@@ -235,6 +254,10 @@ export default function Home() {
                           <Link
                             to={`/product/${p.slug || p.id}`}
                             onMouseEnter={() => setActiveIndex(i)}
+                            onMouseDown={(e) => {
+                              // Stop mousedown from triggering document-level blur/close before click
+                              e.stopPropagation()
+                            }}
                             onClick={() => {
                               setDropdownOpen(false)
                             }}

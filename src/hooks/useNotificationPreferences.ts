@@ -54,6 +54,8 @@ export function useNotificationPreferences(): NotificationPreferences {
     if (!user) return
     setPushError(null)
     setPushWorking(true)
+    // Optimistic UI update — instant toggle
+    setPushSubscribed(true)
     try {
       const sub = await subscribeToPush(user.id)
       if (!sub) {
@@ -69,8 +71,8 @@ export function useNotificationPreferences(): NotificationPreferences {
         console.warn('Could not sync notify_new_arrivals flag:', profileErr.message)
       }
       qc.invalidateQueries({ queryKey: ['customer-profile'] })
-      setPushSubscribed(true)
     } catch (err) {
+      setPushSubscribed(false)
       setPushError(err instanceof Error ? err.message : 'Could not update notifications.')
     } finally {
       setPushWorking(false)
@@ -81,6 +83,8 @@ export function useNotificationPreferences(): NotificationPreferences {
     if (!user) return
     setPushError(null)
     setPushWorking(true)
+    // Optimistic UI update — instant toggle
+    setPushSubscribed(false)
     try {
       await unsubscribeFromPush(user.id)
       const { error: profileErr } = await supabase
@@ -91,8 +95,8 @@ export function useNotificationPreferences(): NotificationPreferences {
         console.warn('Could not sync notify_new_arrivals flag:', profileErr.message)
       }
       qc.invalidateQueries({ queryKey: ['customer-profile'] })
-      setPushSubscribed(false)
     } catch (err) {
+      setPushSubscribed(true)
       setPushError(err instanceof Error ? err.message : 'Could not update notifications.')
     } finally {
       setPushWorking(false)
