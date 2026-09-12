@@ -1,9 +1,17 @@
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
+  ArrowUpRight,
+  CaretRight,
+  ChartLineUp,
+  Lightning,
   MagnifyingGlass,
+  RocketLaunch,
+  SealCheck,
   ShoppingBagOpen,
+  Sparkle,
   Storefront,
+  WhatsappLogo,
 } from '@phosphor-icons/react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -436,78 +444,146 @@ export default function Home() {
         </div>
       </motion.section>
 
-      {/* Become a Seller Banner CTA */}
+      {/* Become a Seller Banner CTA - Classic Luxury Redesign */}
       <motion.section
-        initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 28 }}
         whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        className="py-12 sm:py-20 relative overflow-hidden"
+        viewport={{ once: true, margin: '-60px' }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        className="py-14 sm:py-24 relative overflow-hidden"
       >
         <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="glass rounded-[2.5rem] border border-brand-400/20 relative overflow-hidden p-8 sm:p-12 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-10 shadow-2xl">
-            {/* Ambient Background Glow inside the card */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-brand-400/10 via-brand-400/5 to-transparent pointer-events-none" />
-            <div className="absolute -top-32 -right-32 w-96 h-96 bg-brand-400/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative rounded-[2.5rem] sm:rounded-[3rem] p-8 sm:p-12 lg:p-16 border border-amber-500/25 dark:border-amber-500/20 bg-gradient-to-br from-[#1c1209] via-[#140b04] to-[#0a0502] text-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12">
+            
+            {/* Ambient Lighting & Glow Flares */}
+            <div className="absolute -top-32 -left-32 w-96 h-96 bg-amber-500/15 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-amber-600/10 rounded-full blur-[130px] pointer-events-none" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(217,119,6,0.08),transparent_60%)] pointer-events-none" />
 
-            {/* Left Column: Core Copy */}
-            <div className="max-w-xl text-center lg:text-left">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-400/10 border border-brand-400/25 text-[10px] font-extrabold uppercase tracking-wider text-brand-400 mb-4 shadow-sm">
-                <Storefront size={12} weight="bold" /> Start Selling
-              </span>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white mb-4 leading-tight">
-                Turn your passion into an online business
+            {/* Left Column: Core Copy & CTAs */}
+            <div className="max-w-xl text-center lg:text-left relative z-10">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300 text-[11px] font-bold uppercase tracking-widest mb-5 backdrop-blur-md shadow-xs">
+                <Sparkle size={13} weight="fill" className="text-amber-400 animate-pulse" />
+                <span>For Creators &amp; Merchants</span>
+              </div>
+
+              <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal tracking-tight text-white leading-[1.12] mb-5">
+                Turn your passion into an{' '}
+                <span className="italic font-serif bg-gradient-to-r from-amber-200 via-amber-300 to-yellow-400 bg-clip-text text-transparent">
+                  online business
+                </span>
               </h2>
-              <p className="text-sm sm:text-base text-dark-800/60 dark:text-white/60 mb-8 leading-relaxed">
-                Create a stunning storefront in under 60 seconds. Customize your shop, upload products, and manage order notifications right into your WhatsApp. No listing fees, no upfront monthly costs.
+
+              <p className="text-sm sm:text-base text-[#e5d8c5]/80 mb-8 leading-relaxed font-light">
+                Launch your branded digital storefront in under 60 seconds. Upload products, share your unique boutique link, and receive verified customer orders directly to your WhatsApp with zero listing fees.
               </p>
+
+              {/* Value Badges */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 sm:gap-3 mb-9">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-xs font-medium text-amber-200/90">
+                  <Lightning size={14} weight="fill" className="text-amber-400" />
+                  60-Second Setup
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-xs font-medium text-amber-200/90">
+                  <WhatsappLogo size={14} weight="fill" className="text-emerald-400" />
+                  WhatsApp Orders
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-xs font-medium text-amber-200/90">
+                  <SealCheck size={14} weight="fill" className="text-amber-400" />
+                  100% Free to Start
+                </span>
+              </div>
+
+              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
                 <Link
                   to="/sell"
-                  className="btn-primary w-full sm:w-auto px-8 py-3.5 rounded-2xl text-sm font-semibold shadow-lg shadow-brand-500/25 hover:shadow-brand-500/35 transition-all"
+                  className="group w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-dark-950 font-extrabold text-sm tracking-wide shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2.5 transition-all transform hover:-translate-y-0.5 active:scale-95"
                 >
-                  Create Your Store ↗
+                  <span>Create Your Store</span>
+                  <ArrowUpRight size={18} weight="bold" className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </Link>
+
                 <Link
                   to="/shop"
-                  className="text-sm font-bold text-dark-800/70 dark:text-white/70 hover:text-brand-400 transition-colors py-2"
+                  className="w-full sm:w-auto px-6 py-4 rounded-2xl border border-white/15 hover:border-amber-400/40 bg-white/5 hover:bg-white/10 text-white/90 hover:text-white font-semibold text-sm transition-all flex items-center justify-center gap-2 backdrop-blur-md"
                 >
-                  Explore existing shops
+                  <span>Explore Existing Shops</span>
+                  <CaretRight size={16} />
                 </Link>
               </div>
             </div>
 
-            {/* Right Column: Visual Features (Isometric Grid) */}
-            <div className="grid grid-cols-2 gap-4 w-full lg:max-w-sm">
-              <div className="card p-5 border border-brand-400/10 shadow-md">
-                <span className="text-xl sm:text-2xl mb-2 block">⚡</span>
-                <h3 className="text-sm font-bold text-dark-800 dark:text-white mb-1">Instant Setup</h3>
-                <p className="text-[11px] text-dark-800/50 dark:text-white/40 leading-snug">
-                  Get a unique shareable store link (/s/slug) in just seconds.
-                </p>
+            {/* Right Column: Luxury Interactive Showcase Card & Bento */}
+            <div className="w-full lg:max-w-md space-y-4 relative z-10">
+              {/* Storefront Mock Preview Card */}
+              <div className="bg-white/[0.05] border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+                <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-white/10">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                    <span className="text-xs font-mono text-amber-200/80 truncate">catalog.com/s/your-store</span>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex-shrink-0">
+                    ACTIVE STORE
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3.5 mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 p-0.5 shadow-md flex-shrink-0">
+                    <div className="w-full h-full bg-[#1c1209] rounded-[14px] flex items-center justify-center text-amber-400 font-serif text-lg font-bold">
+                      B
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="font-serif text-sm font-bold text-white truncate">Bella Boutique</h4>
+                      <SealCheck size={16} weight="fill" className="text-amber-400 flex-shrink-0" />
+                    </div>
+                    <p className="text-[11px] text-[#e5d8c5]/60 mt-0.5">Luxury Apparel &amp; Accessories</p>
+                  </div>
+                </div>
+
+                {/* WhatsApp Order Notification Simulation */}
+                <div className="bg-emerald-950/50 border border-emerald-500/30 rounded-2xl p-3.5 flex items-start gap-3 shadow-inner">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+                    <WhatsappLogo size={18} weight="fill" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] font-bold text-emerald-300">New WhatsApp Order</p>
+                      <span className="text-[10px] text-emerald-400/70 font-mono">Just now</span>
+                    </div>
+                    <p className="text-xs font-medium text-white/90 truncate mt-0.5">
+                      Silk Satin Slip Dress (GH₵ 280.00)
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="card p-5 border border-brand-400/10 shadow-md translate-y-4">
-                <span className="text-xl sm:text-2xl mb-2 block">💬</span>
-                <h3 className="text-sm font-bold text-dark-800 dark:text-white mb-1">WhatsApp Orders</h3>
-                <p className="text-[11px] text-dark-800/50 dark:text-white/40 leading-snug">
-                  Customers checkout and send shopping carts straight to your phone.
-                </p>
-              </div>
-              <div className="card p-5 border border-brand-400/10 shadow-md -translate-y-4">
-                <span className="text-xl sm:text-2xl mb-2 block">💰</span>
-                <h3 className="text-sm font-bold text-dark-800 dark:text-white mb-1">100% Free</h3>
-                <p className="text-[11px] text-dark-800/50 dark:text-white/40 leading-snug">
-                  Zero setup or subscription costs to display your inventory.
-                </p>
-              </div>
-              <div className="card p-5 border border-brand-400/10 shadow-md">
-                <span className="text-xl sm:text-2xl mb-2 block">📈</span>
-                <h3 className="text-sm font-bold text-dark-800 dark:text-white mb-1">Analytics</h3>
-                <p className="text-[11px] text-dark-800/50 dark:text-white/40 leading-snug">
-                  Monitor unique storefront page visits directly in your dashboard.
-                </p>
+
+              {/* Bento Feature Grid */}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 hover:border-amber-400/30 transition-all">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 mb-2.5">
+                    <RocketLaunch size={18} weight="duotone" />
+                  </div>
+                  <h5 className="text-xs font-bold text-white mb-0.5">Instant Setup</h5>
+                  <p className="text-[11px] text-[#e5d8c5]/60 leading-relaxed">
+                    Custom link ready in under 60 seconds.
+                  </p>
+                </div>
+
+                <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 hover:border-amber-400/30 transition-all">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 mb-2.5">
+                    <ChartLineUp size={18} weight="duotone" />
+                  </div>
+                  <h5 className="text-xs font-bold text-white mb-0.5">Live Analytics</h5>
+                  <p className="text-[11px] text-[#e5d8c5]/60 leading-relaxed">
+                    Track visitor counts and order trends.
+                  </p>
+                </div>
               </div>
             </div>
+
           </div>
         </div>
       </motion.section>
