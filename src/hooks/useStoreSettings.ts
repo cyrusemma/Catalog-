@@ -19,6 +19,9 @@ export interface StoreSettings {
   social_facebook: string | null
   whatsapp_template: string | null
   show_visitor_count: boolean
+  maintenance_mode: boolean
+  maintenance_message: string | null
+  operating_hours: string | null
 }
 
 const ENV_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined
@@ -42,6 +45,9 @@ const DEFAULTS: StoreSettings = {
   social_facebook: null,
   whatsapp_template: null,
   show_visitor_count: false,
+  maintenance_mode: false,
+  maintenance_message: null,
+  operating_hours: null,
 }
 
 export function useStoreSettings() {

@@ -15,8 +15,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { StoreContext } from './contexts/StoreContext'
 import type { StoreContextValue } from './contexts/StoreContext'
 import { useDynamicPWA } from './hooks/useDynamicPWA'
-import { Store } from 'lucide-react'
+import { Store, MessageCircle } from 'lucide-react'
 import { Images } from '@phosphor-icons/react'
+import { useStoreSettings } from './hooks/useStoreSettings'
 
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
@@ -226,6 +227,81 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
   const signInReason = useSignInStore(s => s.reason)
   const constraintsRef = useRef(null)
   const mode = useThemeStore(s => s.mode)
+  const settings = useStoreSettings()
+  const { user } = useCustomerSession()
+  const isAdmin = user?.app_metadata?.role === 'admin'
+
+  if (settings.maintenance_mode && !isAdmin) {
+    return (
+      <div className="flex flex-col min-h-dvh bg-gradient-to-br from-[#100609] via-[#0f0a05] to-[#000] text-white overflow-hidden relative font-sans">
+        <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-brand-400/5 blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-brand-400/5 blur-[120px] pointer-events-none" />
+        
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-16 relative z-10">
+          <div className="max-w-md w-full text-center space-y-8 glass border border-brand-400/10 p-8 sm:p-10 rounded-3xl shadow-2xl backdrop-blur-md">
+            {/* Logo / Icon */}
+            <div className="flex justify-center">
+              {settings.logo_url ? (
+                <div className="relative group">
+                  <img 
+                    src={settings.logo_url} 
+                    alt={settings.store_name} 
+                    className="w-24 h-24 rounded-3xl object-cover border-2 border-brand-400/20 shadow-lg group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 rounded-3xl bg-brand-400/10 animate-pulse pointer-events-none" />
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-3xl bg-brand-400/10 border border-brand-400/20 flex items-center justify-center text-brand-400">
+                  <Store size={38} />
+                </div>
+              )}
+            </div>
+
+            {/* Title & Badge */}
+            <div className="space-y-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-brand-400/10 text-brand-400 border border-brand-400/25">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-ping" />
+                Under Maintenance
+              </span>
+              <h1 className="text-3xl font-display font-bold tracking-tight text-white">
+                {settings.store_name}
+              </h1>
+              {settings.tagline && (
+                <p className="text-white/40 text-xs tracking-wide">
+                  {settings.tagline}
+                </p>
+              )}
+            </div>
+
+            {/* Message Body */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-sm text-gray-300 leading-relaxed font-normal">
+              {settings.maintenance_message || "We're currently polishing our storefront to serve you better. Please check back soon!"}
+            </div>
+
+            {/* Operating Hours or Contact */}
+            {settings.whatsapp_number && (
+              <div className="pt-2">
+                <a
+                  href={`https://wa.me/${settings.whatsapp_number.replace(/\D/g, '')}?text=${encodeURIComponent("Hello, I am inquiring about store reopening.")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-sm shadow-lg shadow-[#25D366]/20 transition-all hover:scale-[1.02] active:scale-95"
+                >
+                  <MessageCircle size={18} />
+                  Contact Us on WhatsApp
+                </a>
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-white/5 text-[11px] text-white/30">
+              Admin? <Link to="/admin/login" className="text-brand-400 hover:underline">Log in to dashboard</Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div ref={constraintsRef} className="flex flex-col min-h-dvh overflow-x-hidden relative">
       <AnnouncementBanner />
