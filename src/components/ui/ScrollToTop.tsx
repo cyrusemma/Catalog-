@@ -1,11 +1,19 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { ArrowUp } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false)
+  const location = useLocation()
+  const isAdminRoute = location.pathname.startsWith('/admin')
 
   useEffect(() => {
+    if (isAdminRoute) {
+      setIsVisible(false)
+      return
+    }
+
     const toggleVisibility = () => {
       // Show button when page is scrolled down 400px
       if (window.scrollY > 400) {
@@ -17,14 +25,9 @@ export default function ScrollToTop() {
 
     window.addEventListener('scroll', toggleVisibility)
     return () => window.removeEventListener('scroll', toggleVisibility)
-  }, [])
+  }, [isAdminRoute])
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    })
-  }
+  if (isAdminRoute) return null
 
   return (
     <AnimatePresence>
@@ -44,4 +47,11 @@ export default function ScrollToTop() {
       )}
     </AnimatePresence>
   )
+
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    })
+  }
 }

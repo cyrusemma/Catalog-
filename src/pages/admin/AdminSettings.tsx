@@ -353,20 +353,31 @@ export default function AdminSettings() {
 
   return (
     <AdminLayout>
-      <div className="p-4 sm:p-6 lg:p-8 max-w-4xl pb-32 lg:pb-10 mx-auto">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-4xl pb-16 mx-auto">
         
         {/* Header */}
-        <div className="mb-6 lg:mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="mb-6 lg:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <p className="text-gray-400 text-xs lg:text-sm mb-1 flex items-center gap-1.5"><Settings2 size={14}/> Settings</p>
             <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">Store Configuration</h1>
           </div>
-          {isDirty && (
-            <div className="flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/30 text-amber-500 text-xs font-bold px-3 py-1.5 rounded-xl">
-              <AlertTriangle size={14} />
-              Unsaved changes
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {isDirty && (
+              <div className="flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/30 text-amber-500 text-xs font-bold px-3 py-2 rounded-xl">
+                <AlertTriangle size={14} />
+                Unsaved changes
+              </div>
+            )}
+            <button 
+              type="button" 
+              onClick={() => save.mutate()} 
+              disabled={save.isPending || !isDirty} 
+              className="px-5 py-2.5 flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 disabled:hover:bg-brand-500 text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-sm"
+            >
+              {saved ? <CheckCircle size={16} /> : <Save size={16} />}
+              {saved ? "Saved!" : save.isPending ? "Saving..." : "Save Settings"}
+            </button>
+          </div>
         </div>
 
         {/* Tab Navigation */}
@@ -708,22 +719,25 @@ export default function AdminSettings() {
 
         </div>
 
-        {/* Global Save Button - Sticky Bottom */}
-        <div className="fixed bottom-0 left-0 right-0 lg:left-64 p-4 bg-white/95 backdrop-blur-md border-t border-gray-100 z-50 shadow-lg">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-            <div className="text-sm font-semibold text-gray-500 hidden sm:block">
-              {isDirty ? 'You have unsaved changes' : 'Everything is up to date'}
-            </div>
-            <button 
-              type="button" 
-              onClick={() => save.mutate()} 
-              disabled={save.isPending || !isDirty} 
-              className="w-full sm:w-auto px-8 py-3 flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 disabled:hover:bg-brand-500 text-white font-bold rounded-xl transition-all shadow-sm"
-            >
-              {saved ? <CheckCircle size={18} /> : <Save size={18} />}
-              {saved ? "Saved!" : save.isPending ? "Saving..." : "Save Settings"}
-            </button>
+        {/* Bottom Save Action Card */}
+        <div className="bg-white rounded-3xl border border-gray-100 p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-8">
+          <div>
+            <h3 className="font-bold text-gray-900 text-base">
+              {isDirty ? 'You have unsaved changes' : 'Settings are up to date'}
+            </h3>
+            <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
+              {isDirty ? 'Click save to apply your latest changes to the live storefront.' : 'All store configurations are active and synchronized.'}
+            </p>
           </div>
+          <button 
+            type="button" 
+            onClick={() => save.mutate()} 
+            disabled={save.isPending || !isDirty} 
+            className="w-full sm:w-auto px-7 py-3 flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 disabled:hover:bg-brand-500 text-white font-bold text-sm rounded-xl transition-all shadow-sm flex-shrink-0"
+          >
+            {saved ? <CheckCircle size={18} /> : <Save size={18} />}
+            {saved ? "Saved!" : save.isPending ? "Saving..." : "Save Settings"}
+          </button>
         </div>
 
       </div>
@@ -799,15 +813,21 @@ function PushSettings() {
 
 function ToggleSwitch({ checked, onChange, ariaLabel }: { checked: boolean; onChange: (v: boolean) => void; ariaLabel?: string }) {
   return (
-    <label className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors cursor-pointer border ${checked ? "bg-brand-500 border-brand-500" : "bg-gray-200 border-gray-300/50"}`}>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={e => onChange(e.target.checked)}
-        className="sr-only"
-        aria-label={ariaLabel || "Toggle setting"}
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel || "Toggle setting"}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex flex-shrink-0 h-6 w-11 items-center rounded-full transition-colors cursor-pointer border ${
+        checked ? "bg-brand-500 border-brand-500" : "bg-gray-200 border-gray-300/40"
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition-transform ${
+          checked ? "translate-x-6" : "translate-x-1"
+        }`}
       />
-      <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${checked ? "translate-x-[24px]" : "translate-x-0.5"}`} />
-    </label>
+    </button>
   )
 }
