@@ -1,7 +1,8 @@
 import { useParams, Link } from 'react-router-dom'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useCustomPage } from '../hooks/useCms'
+import SEOHead from '../components/layout/SEOHead'
+import Breadcrumbs from '../components/ui/Breadcrumbs'
 import { ArrowLeft, AlertCircle } from 'lucide-react'
 
 
@@ -23,7 +24,6 @@ export default function CustomPage({ forcedSlug }: CustomPageProps) {
   }
 
   const title = pageData?.title || defaultTitles[slug] || 'Information'
-  useDocumentTitle(pageData?.meta_title || `${title} | ${storeName}`)
 
   if (isLoading) {
     return (
@@ -33,16 +33,29 @@ export default function CustomPage({ forcedSlug }: CustomPageProps) {
     )
   }
 
+  const breadcrumbItems = [
+    { label: title },
+  ]
+
   return (
     <div className="pt-24 pb-20 px-4 sm:px-6 w-full min-h-screen">
-      <div className="max-w-3xl mx-auto">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-amber-500 transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Home
-        </Link>
+      <SEOHead
+        title={pageData?.meta_title || `${title} | ${storeName}`}
+        description={pageData?.meta_description || `${title} page on ${storeName}`}
+      />
+
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <Breadcrumbs items={breadcrumbItems} />
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-amber-500 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Home
+          </Link>
+        </div>
+
 
         {pageData ? (
           <div className="prose prose-brand dark:prose-invert max-w-none">

@@ -10,10 +10,12 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useBlogPost, useBlogPosts } from '../hooks/useCms'
+import SEOHead from '../components/layout/SEOHead'
+import Breadcrumbs from '../components/ui/Breadcrumbs'
 import { toast } from 'sonner'
+
 
 function calculateReadingTime(html: string): number {
   if (!html) return 1
@@ -30,8 +32,6 @@ export default function BlogPost() {
   const { data: post, isLoading } = useBlogPost(slug || '')
   const { data: allPosts = [] } = useBlogPosts({ limit: 4, publishedOnly: true })
   const [copied, setCopied] = useState(false)
-
-  useDocumentTitle(post ? `${post.title} | ${storeName}` : `Article | ${storeName}`)
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
 
@@ -65,6 +65,10 @@ export default function BlogPost() {
   if (!post) {
     return (
       <div className="pt-28 pb-20 px-4 max-w-3xl mx-auto text-center space-y-4">
+        <SEOHead
+          title="Story Not Found"
+          description="The article you are looking for has been moved or removed."
+        />
         <Newspaper className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto" />
         <h1 className="text-2xl font-bold text-dark-800 dark:text-white">Article Not Found</h1>
         <p className="text-xs text-gray-400">The article you are looking for has been moved or removed.</p>
@@ -81,17 +85,59 @@ export default function BlogPost() {
   const readTime = calculateReadingTime(post.content_html)
   const relatedPosts = allPosts.filter(p => p.id !== post.id).slice(0, 3)
 
+  const blogPostingSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt || post.title,
+    image: post.cover_image_url || undefined,
+    datePublished: post.published_at || post.created_at,
+    dateModified: post.updated_at || post.published_at || post.created_at,
+    author: {
+      '@type': 'Person',
+      name: post.author_name || 'Store Editorial',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: storeName,
+      logo: {
+        '@type': 'ImageObject',
+        url: settings.logo_url || 'https://catalog.cyrus.com/apple-touch-icon.png',
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': shareUrl,
+    },
+  }
+
+  const breadcrumbItems = [
+    { label: 'Journal & Stories', href: '/blog' },
+    { label: post.title },
+  ]
+
   return (
     <div className="pt-24 pb-24 px-4 sm:px-6 w-full min-h-screen">
+      <SEOHead
+        title={post.title}
+        description={post.excerpt || `Read ${post.title} on ${storeName}`}
+        image={post.cover_image_url || undefined}
+        type="article"
+        schemaData={blogPostingSchema}
+      />
+
       <div className="max-w-3xl mx-auto space-y-8">
-        {/* Navigation Breadcrumb */}
-        <Link
-          to="/blog"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-amber-500 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Stories & Journal
-        </Link>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <Breadcrumbs items={breadcrumbItems} />
+          <Link
+            to="/blog"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-amber-500 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Journal
+          </Link>
+        </div>
+
 
         {/* Header Metadata */}
         <div className="space-y-4">

@@ -16,18 +16,23 @@ import Image from '../components/ui/Image'
 import { useSignInStore } from '../store/signInStore'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useStoreSettings } from '../hooks/useStoreSettings'
+import SEOHead from '../components/layout/SEOHead'
+import Breadcrumbs from '../components/ui/Breadcrumbs'
 import { trackProductView, trackCartInteraction } from '../components/ui/AppReviewPrompt'
 import { useStoreContext } from '../contexts/StoreContext'
 import { toast } from 'sonner'
 import type { ProductVariant } from '../types'
 
 export default function ProductDetail() {
+  const settings = useStoreSettings()
   const formatPrice = useCurrencyFormatter()
   const { id, storeSlug } = useParams<{ id: string; storeSlug?: string }>()
   const isMarketplaceView = !storeSlug
   const { storeId } = useStoreContext()
   const { data: product, isLoading } = useProduct(id!, isMarketplaceView)
   useDocumentTitle(product?.title || 'Product')
+
 
   useEffect(() => {
     if (product) {
@@ -239,11 +244,55 @@ export default function ProductDetail() {
         ? product.selling_price
         : (product.original_price && product.original_price > product.selling_price ? product.original_price : null))
 
+  const productSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    image: images,
+    description: product.description ? product.description.replace(/<[^>]*>/g, '').slice(0, 300) : product.title,
+    sku: product.id,
+    offers: {
+      '@type': 'Offer',
+      price: displayPrice,
+      priceCurrency: settings.currency || 'GHS',
+      availability:
+        product.stock_status === 'out_of_stock'
+          ? 'https://schema.org/OutOfStock'
+          : 'https://schema.org/InStock',
+      url: typeof window !== 'undefined' ? window.location.href : '',
+    },
+    ...(product.rating ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: product.rating,
+        reviewCount: product.rating_count || 1,
+      }
+    } : {}),
+  }
+
+  const breadcrumbItems = [
+    { label: 'Shop', href: '/shop' },
+    ...(product.category ? [{ label: product.category, href: `/shop?category=${encodeURIComponent(product.category)}` }] : []),
+    { label: product.title },
+  ]
+
   return (
-    <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-10 pb-28 lg:pb-10">
-      <Link to={backPath} className="inline-flex items-center gap-2 text-dark-800/60 dark:text-white/50 hover:text-brand-400 text-sm mb-8 transition-colors">
-        <ArrowLeft size={16} /> {backLabel}
-      </Link>
+    <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-8 pb-28 lg:pb-10 space-y-6">
+      <SEOHead
+        title={product.title}
+        description={product.description ? product.description.replace(/<[^>]*>/g, '').slice(0, 160) : `${product.title} - buy online on ${settings.store_name}`}
+        image={images[0]}
+        type="product"
+        schemaData={productSchema}
+      />
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <Breadcrumbs items={breadcrumbItems} />
+        <Link to={backPath} className="inline-flex items-center gap-1.5 text-xs text-dark-800/60 dark:text-white/50 hover:text-brand-400 transition-colors">
+          <ArrowLeft size={14} /> {backLabel}
+        </Link>
+      </div>
+
 
       <div className="grid md:grid-cols-2 gap-8 lg:gap-14">
         {/* Images */}

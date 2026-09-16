@@ -7,9 +7,10 @@ import {
   ArrowRight, 
   Sparkles 
 } from 'lucide-react'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useBlogPosts } from '../hooks/useCms'
+import SEOHead from '../components/layout/SEOHead'
+import Breadcrumbs from '../components/ui/Breadcrumbs'
 
 
 function calculateReadingTime(html: string): number {
@@ -22,7 +23,6 @@ function calculateReadingTime(html: string): number {
 export default function Blog() {
   const settings = useStoreSettings()
   const storeName = settings.store_name || 'Our Marketplace'
-  useDocumentTitle(`Blog & Stories | ${storeName}`)
 
   const [search, setSearch] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
@@ -52,9 +52,25 @@ export default function Blog() {
   const featuredPost = posts[0]
   const listPosts = selectedTag || search.trim() ? filteredPosts : filteredPosts.slice(1)
 
+  const blogCollectionSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `${storeName} Journal & Stories`,
+    description: 'Style inspirations, product guides, and behind-the-scenes stories from our marketplace creators.',
+    url: typeof window !== 'undefined' ? `${window.location.origin}/blog` : 'https://catalog.cyrus.com/blog',
+  }
+
   return (
     <div className="pt-24 pb-24 px-4 sm:px-6 w-full min-h-screen">
+      <SEOHead
+        title={`Stories & Blog | ${storeName}`}
+        description="Style inspirations, product guides, and behind-the-scenes stories from our marketplace creators."
+        schemaData={blogCollectionSchema}
+      />
+
       <div className="max-w-6xl mx-auto space-y-10">
+        <Breadcrumbs items={[{ label: 'Stories & Blog' }]} />
+
         {/* Header Hero */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -64,6 +80,7 @@ export default function Blog() {
           <h1 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white">
             The {storeName} Journal
           </h1>
+
           <p className="text-sm sm:text-base text-dark-800/60 dark:text-white/60">
             Style inspirations, product guides, and behind-the-scenes stories from our marketplace creators.
           </p>

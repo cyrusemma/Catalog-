@@ -25,8 +25,11 @@ import {
 import { useCatalogSearch } from '../hooks/useCatalogSearch'
 import { usePriceRanges } from '../hooks/usePriceRanges'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useStoreContext } from '../contexts/StoreContext'
 import { effectivePrice } from '../lib/utils'
+import SEOHead from '../components/layout/SEOHead'
+
 
 import type { Product } from '../types'
 
@@ -328,10 +331,27 @@ export default function Shop() {
 
   const isFeatured = (index: number) => layout === 'magazine' && index % 5 === 0
 
+  const settings = useStoreSettings()
+  const storeName = settings.store_name || 'Catalog by Cyrus'
+
+  const shopCollectionSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `Shop All Products | ${storeName}`,
+    description: 'Browse our complete catalog of curated products, clothing, shoes, accessories, and electronics.',
+    url: typeof window !== 'undefined' ? `${window.location.origin}/shop` : 'https://catalog.cyrus.com/shop',
+  }
+
   return (
     <main className="w-full flex-1 max-w-7xl mx-auto px-4 py-5 sm:py-10 pb-28 lg:pb-10">
+      <SEOHead
+        title={activeParent ? `${activeParent.name} | ${storeName}` : `Shop All Products | ${storeName}`}
+        description={activeParent?.description || `Explore our selection of products on ${storeName}. Easy WhatsApp ordering and fast delivery.`}
+        schemaData={shopCollectionSchema}
+      />
       {/* Header */}
       <div className="mb-5 sm:mb-8">
+
         <h1 className="text-2xl sm:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white mb-1 sm:mb-2">
           Shop
         </h1>

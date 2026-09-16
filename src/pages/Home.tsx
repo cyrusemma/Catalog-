@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -14,26 +14,39 @@ import {
   WhatsappLogo,
   X,
 } from '@phosphor-icons/react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import ProductCard from '../components/ui/ProductCard'
 import CustomerReviews from '../components/ui/CustomerReviews'
 import UnifiedHeroCarousel from '../components/ui/UnifiedHeroCarousel'
+import ShopLoader from '../components/ui/ShopLoader'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useCatalogSearch } from '../hooks/useCatalogSearch'
 import { useStoreSettings } from '../hooks/useStoreSettings'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
-import { useNavigate } from 'react-router-dom'
-import type { Product } from '../types'
-import ShopLoader from '../components/ui/ShopLoader'
-import { formatPrice } from '../lib/utils'
-import { useQuery } from '@tanstack/react-query'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { supabase } from '../lib/supabase'
+import { formatPrice } from '../lib/utils'
+import type { Product } from '../types'
+import SEOHead from '../components/layout/SEOHead'
 
 export default function Home() {
-  useDocumentTitle('Home')
+  const settings = useStoreSettings()
+  const storeName = settings.store_name || 'Catalog by Cyrus'
+  const storeTagline = settings.tagline || 'Discover Amazing Products'
+
+  const storeSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Store',
+    name: storeName,
+    description: storeTagline,
+    url: typeof window !== 'undefined' ? window.location.origin : 'https://catalog.cyrus.com',
+    telephone: settings.whatsapp_number || undefined,
+    currenciesAccepted: settings.currency || 'GHS',
+    paymentAccepted: 'Mobile Money, Cash on Delivery, Bank Transfer',
+    priceRange: '$$',
+  }
+
   const { profile } = useCustomerSession()
   const followedStoreIds = profile?.followed_stores || []
 
@@ -59,9 +72,9 @@ export default function Home() {
   const { data: allProducts = [], isError: allProductsIsError, error: allProductsError } = useProducts()
   const productsError = allProductsError ?? featuredError ?? newProductsError
   const productsLoadFailed = allProductsIsError || featuredIsError || newProductsIsError
-  const settings = useStoreSettings()
   const reduceMotion = useReducedMotion()
   const navigate = useNavigate()
+
 
   useEffect(() => {
     // If installed as PWA and they open the default route (/), trap them to their store
@@ -153,6 +166,13 @@ export default function Home() {
 
   return (
     <main className="flex-1">
+      <SEOHead
+        title={storeName}
+        description={storeTagline}
+        schemaData={storeSchema}
+      />
+      <h1 className="sr-only">{storeName} — {storeTagline}</h1>
+
       <motion.section
         initial={reduceMotion ? false : { opacity: 0, y: 8 }}
         animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
