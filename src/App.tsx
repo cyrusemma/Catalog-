@@ -56,6 +56,9 @@ const Privacy = lazy(() => import('./pages/Privacy'))
 const Terms = lazy(() => import('./pages/Terms'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const Feedback = lazy(() => import('./pages/Feedback'))
+const Blog = lazy(() => import('./pages/Blog'))
+const BlogPost = lazy(() => import('./pages/BlogPost'))
+const CustomPage = lazy(() => import('./pages/CustomPage'))
 const StoreFront = lazy(() => import('./pages/store/StoreFront'))
 const BecomeMerchant = lazy(() => import('./pages/BecomeMerchant'))
 import OfflineGame from './pages/OfflineGame'
@@ -64,6 +67,7 @@ const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
 const AdminProductForm = lazy(() => import('./pages/admin/AdminProductForm'))
+const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'))
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
 const AdminReviews = lazy(() => import('./pages/admin/AdminReviews'))
@@ -72,8 +76,12 @@ const AdminSubscribers = lazy(() => import('./pages/admin/AdminSubscribers'))
 const AdminDiscounts = lazy(() => import('./pages/admin/AdminDiscounts'))
 const AdminPriceRanges = lazy(() => import('./pages/admin/AdminPriceRanges'))
 const AdminInventory = lazy(() => import('./pages/admin/AdminInventory'))
+const AdminPages = lazy(() => import('./pages/admin/AdminPages'))
+const AdminBlog = lazy(() => import('./pages/admin/AdminBlog'))
+const AdminBlogForm = lazy(() => import('./pages/admin/AdminBlogForm'))
 
 const qc = new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 60 * 5 } } })
+
 
 // ─── Route Guards ────────────────────────────────────────────────────────────
 
@@ -632,6 +640,11 @@ function AnimatedRoutes() {
         <Route path="/settings" element={<StorefrontLayout><Settings /></StorefrontLayout>} />
         <Route path="/privacy" element={<StorefrontLayout><Privacy /></StorefrontLayout>} />
         <Route path="/terms" element={<StorefrontLayout><Terms /></StorefrontLayout>} />
+        <Route path="/about" element={<StorefrontLayout><CustomPage forcedSlug="about" /></StorefrontLayout>} />
+        <Route path="/faq" element={<StorefrontLayout><CustomPage forcedSlug="faq" /></StorefrontLayout>} />
+        <Route path="/p/:slug" element={<StorefrontLayout><CustomPage /></StorefrontLayout>} />
+        <Route path="/blog" element={<StorefrontLayout><Blog /></StorefrontLayout>} />
+        <Route path="/blog/:slug" element={<StorefrontLayout><BlogPost /></StorefrontLayout>} />
         <Route path="/reset-password" element={<StorefrontLayout><ResetPassword /></StorefrontLayout>} />
         <Route path="/feedback" element={<StorefrontLayout><Feedback /></StorefrontLayout>} />
         {/* Merchant storefronts — fully isolated tenant surface, no global nav */}
@@ -649,6 +662,7 @@ function AnimatedRoutes() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
         <Route path="/admin/products" element={<AdminProtectedRoute><AdminProducts /></AdminProtectedRoute>} />
+        <Route path="/admin/categories" element={<AdminProtectedRoute><AdminCategories /></AdminProtectedRoute>} />
         <Route path="/admin/inventory" element={<AdminProtectedRoute><AdminInventory /></AdminProtectedRoute>} />
         <Route path="/admin/products/new" element={<AdminProtectedRoute><AdminProductForm /></AdminProtectedRoute>} />
         <Route path="/admin/products/:id/edit" element={<AdminProtectedRoute><AdminProductForm /></AdminProtectedRoute>} />
@@ -656,9 +670,14 @@ function AnimatedRoutes() {
         <Route path="/admin/orders" element={<AdminProtectedRoute><AdminOrders /></AdminProtectedRoute>} />
         <Route path="/admin/discounts" element={<AdminProtectedRoute><AdminDiscounts /></AdminProtectedRoute>} />
         <Route path="/admin/price-ranges" element={<AdminProtectedRoute><AdminPriceRanges /></AdminProtectedRoute>} />
+        <Route path="/admin/blog" element={<AdminProtectedRoute><AdminBlog /></AdminProtectedRoute>} />
+        <Route path="/admin/blog/new" element={<AdminProtectedRoute><AdminBlogForm /></AdminProtectedRoute>} />
+        <Route path="/admin/blog/:id/edit" element={<AdminProtectedRoute><AdminBlogForm /></AdminProtectedRoute>} />
+        <Route path="/admin/pages" element={<AdminProtectedRoute><AdminPages /></AdminProtectedRoute>} />
         <Route path="/admin/reviews" element={<AdminProtectedRoute><AdminReviews /></AdminProtectedRoute>} />
         <Route path="/admin/settings" element={<AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>} />
         <Route path="/admin/subscribers" element={<AdminOnlyRoute><AdminSubscribers /></AdminOnlyRoute>} />
+
 
         {/* Catch all */}
         <Route path="*" element={<Navigate to="/" replace />} />

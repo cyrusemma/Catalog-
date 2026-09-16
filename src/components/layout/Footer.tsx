@@ -107,6 +107,7 @@ export default function Footer() {
           <div className="flex flex-wrap justify-center gap-6 text-sm font-semibold text-dark-800/60 dark:text-white/50 mb-12">
             <Link to="/" className="hover:text-brand-400 transition-colors">Home</Link>
             <Link to="/shop" className="hover:text-brand-400 transition-colors">Shop</Link>
+            <Link to="/blog" className="hover:text-brand-400 transition-colors">Stories & Blog</Link>
             <Link to="/cart" className="hover:text-brand-400 transition-colors">Cart</Link>
             <Link
               to="/sell"
@@ -119,8 +120,11 @@ export default function Footer() {
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
               </span>
             </Link>
+            <Link to="/about" className="hover:text-brand-400 transition-colors">About Us</Link>
+            <Link to="/faq" className="hover:text-brand-400 transition-colors">FAQs</Link>
             <Link to="/settings" className="hover:text-brand-400 transition-colors">Contact & Settings</Link>
           </div>
+
 
         {/* Interaction Grid: Reviews & Contacts */}
         <div className="mb-10 w-full max-w-4xl flex justify-center">
