@@ -21,7 +21,9 @@ import {
   X,
   SidebarSimple,
   CaretRight,
-  Sparkle
+  Sparkle,
+  GearSix,
+  ShieldCheck
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -358,6 +360,8 @@ export default function Account() {
     { id: 'orders', label: 'Orders', icon: Package, count: orders?.length },
     { id: 'wishlist', label: 'Wishlist', icon: Heart, count: wishlistItems.length },
     { id: 'vouchers', label: 'Coupons', icon: Ticket, count: vouchers?.length },
+    { id: 'inbox', label: 'Inbox', icon: ClipboardText, count: notifications.length },
+    { id: 'followed', label: 'Stores', icon: Storefront, count: profile.followed_stores?.length },
     { id: 'address', label: 'Address', icon: MapPin },
     { id: 'store', label: store ? 'Store' : 'Sell', icon: Sparkle },
   ]
@@ -409,7 +413,7 @@ export default function Account() {
                       {profile.display_name || 'Customer'}
                     </p>
                     <p className="text-dark-800/45 dark:text-white/45 text-xs truncate">
-                      {profile.email}
+                      Viewing: <span className="text-brand-400 font-semibold">{currentTabLabel}</span>
                     </p>
                   </div>
                 </div>
@@ -501,37 +505,120 @@ export default function Account() {
         )}
       </AnimatePresence>
 
-      {/* ── Page Header & Quick Navigation Bar ──────────────────────────── */}
-      <div className="mb-8 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="w-2 h-2 rounded-full bg-brand-400 animate-pulse" />
-              <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Customer Portal</span>
+      {/* ── App Profile Header Card ─────────────────────────────────────── */}
+      <div className="mb-6 rounded-3xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 shadow-sm relative overflow-hidden">
+        {/* Ambient Glow */}
+        <div className="absolute -top-16 -right-16 w-48 h-48 bg-brand-400/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-brand-400/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+          {/* User Details */}
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="relative flex-shrink-0">
+              {profile.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.display_name || 'Profile'}
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover ring-2 ring-brand-400/40 shadow-sm"
+                />
+              ) : (
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-500 text-white font-bold text-lg sm:text-xl flex items-center justify-center shadow-md shadow-brand-400/20">
+                  {initials}
+                </div>
+              )}
+              <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-dark-800" title="Active" />
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-bold text-dark-800 dark:text-white">
-              My Account
-            </h1>
+
+            <div className="min-w-0 space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg sm:text-xl font-display font-bold text-dark-800 dark:text-white truncate">
+                  {profile.display_name || 'Valued Customer'}
+                </h1>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-brand-400/15 text-brand-500 dark:text-brand-400">
+                  <ShieldCheck size={12} weight="fill" />
+                  {store ? 'Store Merchant' : 'Verified Member'}
+                </span>
+              </div>
+              <p className="text-xs text-dark-800/50 dark:text-white/40 truncate flex items-center gap-1.5">
+                <EnvelopeSimple size={13} /> {profile.email}
+              </p>
+            </div>
           </div>
 
-          {/* Slide Menu Trigger Button */}
-          <div className="flex items-center gap-2.5">
+          {/* Quick Action Buttons */}
+          <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab('inbox')}
+              className={`p-2.5 rounded-2xl border transition-all relative ${
+                activeTab === 'inbox'
+                  ? 'bg-brand-400 text-white border-brand-400 shadow-sm shadow-brand-400/25'
+                  : 'bg-cream-50 dark:bg-dark-700/50 border-cream-200 dark:border-white/10 text-dark-800/70 dark:text-white/70 hover:text-brand-400 hover:border-brand-400/30'
+              }`}
+              title="Notifications"
+            >
+              <Bell size={18} weight={notifications.length > 0 ? 'fill' : 'bold'} />
+              {notifications.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-brand-400 rounded-full ring-2 ring-white dark:ring-dark-800" />
+              )}
+            </button>
+
+            <Link
+              to="/settings"
+              className="p-2.5 rounded-2xl bg-cream-50 dark:bg-dark-700/50 border border-cream-200 dark:border-white/10 text-dark-800/70 dark:text-white/70 hover:text-brand-400 hover:border-brand-400/30 transition-all"
+              title="Settings"
+            >
+              <GearSix size={18} weight="bold" />
+            </Link>
+
             <button
               type="button"
               onClick={() => setSlideMenuOpen(true)}
-              className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-brand-400 hover:bg-brand-500 text-white font-bold text-sm shadow-md shadow-brand-400/20 active:scale-95 transition-all"
+              className="lg:hidden flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-brand-400 hover:bg-brand-500 text-white font-bold text-xs shadow-sm shadow-brand-400/20 active:scale-95 transition-all"
             >
-              <SidebarSimple size={18} weight="bold" />
-              <span>Slide Menu</span>
-              <span className="hidden sm:inline-block text-[11px] px-2 py-0.5 rounded-lg bg-white/20 text-white font-medium">
-                {currentTabLabel}
-              </span>
+              <SidebarSimple size={16} weight="bold" />
+              <span>Menu</span>
             </button>
           </div>
         </div>
 
-        {/* Quick Tabs Horizontal Scroll */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {/* Quick Interactive Stat Badges */}
+        <div className="grid grid-cols-4 gap-2 sm:gap-3 mt-5 pt-4 border-t border-cream-100 dark:border-white/5">
+          {[
+            { id: 'orders' as TabId, label: 'Orders', count: orders?.length || 0, icon: Package },
+            { id: 'wishlist' as TabId, label: 'Saved', count: wishlistItems.length, icon: Heart },
+            { id: 'vouchers' as TabId, label: 'Coupons', count: vouchers?.length || 0, icon: Ticket },
+            { id: 'followed' as TabId, label: 'Stores', count: profile.followed_stores?.length || 0, icon: Storefront },
+          ].map(stat => {
+            const active = activeTab === stat.id
+            const Icon = stat.icon
+            return (
+              <button
+                key={stat.id}
+                type="button"
+                onClick={() => setActiveTab(stat.id)}
+                className={`flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl transition-all text-center active:scale-95 ${
+                  active
+                    ? 'bg-brand-400/10 dark:bg-brand-400/15 border border-brand-400/30'
+                    : 'bg-cream-50/60 dark:bg-dark-700/30 border border-transparent hover:bg-cream-100 dark:hover:bg-dark-700/60'
+                }`}
+              >
+                <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-dark-800 dark:text-white">
+                  <Icon size={15} weight="bold" className={active ? 'text-brand-400' : 'text-dark-800/40 dark:text-white/40'} />
+                  <span>{stat.count}</span>
+                </div>
+                <span className="text-[10px] font-semibold text-dark-800/50 dark:text-white/40 mt-0.5">
+                  {stat.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── App Navigation Pills Strip ───────────────────────────────────── */}
+      <div className="mb-6 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex items-center gap-1.5 p-1 bg-cream-100/80 dark:bg-dark-800/80 backdrop-blur-md rounded-2xl border border-cream-200 dark:border-white/5 w-max">
           {quickTabs.map(tab => {
             const active = activeTab === tab.id
             const Icon = tab.icon
@@ -540,23 +627,30 @@ export default function Account() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+                className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 ${
                   active
-                    ? 'bg-dark-800 text-white dark:bg-brand-400 dark:text-white shadow-sm'
-                    : 'bg-white dark:bg-dark-800 text-dark-800/60 dark:text-white/60 border border-cream-200 dark:border-white/5 hover:bg-cream-50 dark:hover:bg-dark-700/50 hover:text-dark-800 dark:hover:text-white'
+                    ? 'text-white'
+                    : 'text-dark-800/60 dark:text-white/60 hover:text-dark-800 dark:hover:text-white'
                 }`}
               >
-                <Icon size={14} weight={active ? 'fill' : 'bold'} />
-                <span>{tab.label}</span>
-                {tab.count !== undefined && tab.count > 0 && (
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                    active
-                      ? 'bg-white/20 text-white'
-                      : 'bg-cream-100 dark:bg-dark-700 text-dark-800/60 dark:text-white/60'
-                  }`}>
-                    {tab.count}
-                  </span>
+                {active && (
+                  <motion.div
+                    layoutId="activeAccountTabPill"
+                    className="absolute inset-0 bg-brand-400 rounded-xl shadow-sm shadow-brand-400/25"
+                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                  />
                 )}
+                <span className="relative z-10 flex items-center gap-1.5">
+                  <Icon size={14} weight={active ? 'fill' : 'bold'} />
+                  <span>{tab.label}</span>
+                  {tab.count !== undefined && tab.count > 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                      active ? 'bg-white/25 text-white' : 'bg-cream-200 dark:bg-dark-700 text-dark-800/60 dark:text-white/60'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  )}
+                </span>
               </button>
             )
           })}
