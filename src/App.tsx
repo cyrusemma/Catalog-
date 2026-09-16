@@ -59,7 +59,9 @@ const Feedback = lazy(() => import('./pages/Feedback'))
 const Blog = lazy(() => import('./pages/Blog'))
 const BlogPost = lazy(() => import('./pages/BlogPost'))
 const CustomPage = lazy(() => import('./pages/CustomPage'))
+const NotFound = lazy(() => import('./pages/NotFound'))
 const StoreFront = lazy(() => import('./pages/store/StoreFront'))
+
 const BecomeMerchant = lazy(() => import('./pages/BecomeMerchant'))
 import OfflineGame from './pages/OfflineGame'
 const MerchantDashboard = lazy(() => import('./pages/merchant/MerchantDashboard'))
@@ -679,8 +681,9 @@ function AnimatedRoutes() {
         <Route path="/admin/subscribers" element={<AdminOnlyRoute><AdminSubscribers /></AdminOnlyRoute>} />
 
 
-        {/* Catch all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Catch all — 404 */}
+        <Route path="*" element={<StorefrontLayout><NotFound /></StorefrontLayout>} />
+
       </Routes>
     </>
   )
