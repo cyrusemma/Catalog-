@@ -1,0 +1,43 @@
+# robots.txt for Catalog
+User-agent: *
+Allow: /
+Allow: /shop
+Allow: /blog
+Allow: /about
+Allow: /faq
+Allow: /terms
+Allow: /privacy
+Allow: /p/
+Allow: /product/
+
+# Block administrative and private user routes from search engine indexing
+Disallow: /admin
+Disallow: /admin/
+Disallow: /merchant
+Disallow: /merchant/
+Disallow: /account
+Disallow: /account/
+Disallow: /cart
+Disallow: /reset-password
+
+# Allow AI crawlers to discover public catalog information
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+Disallow: /merchant/
+Disallow: /account/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin/
+Disallow: /merchant/
+Disallow: /account/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin/
+Disallow: /merchant/
+Disallow: /account/
+
+# Sitemap location
+Sitemap: https://catalog.cyrus.com/sitemap.xml

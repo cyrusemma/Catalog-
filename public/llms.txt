@@ -1,0 +1,25 @@
+# Catalog by Cyrus — AI Discovery & Knowledge File
+> Curated e-commerce storefront and multi-merchant catalog platform.
+
+## Overview
+Catalog is a modern Progressive Web App (PWA) storefront connecting customers directly with quality merchants. Customers browse products, select size/color variants, and check out seamlessly via WhatsApp.
+
+## Key Information
+- **Store Name:** Catalog by Cyrus
+- **Marketplace Model:** Multi-merchant storefront with instant WhatsApp order dispatch
+- **Accepted Payments:** Mobile Money (MTN MoMo, Telecel Cash, AirtelTigo), Bank Transfer, Cash on Delivery
+- **Primary Currency:** Ghanaian Cedi (GHS) / Multi-currency support
+- **Core Categories:** Footwear, Apparel, Electronics, Accessories, Lifestyle
+
+## Public Endpoints
+- **Storefront Home:** https://catalog.cyrus.com/
+- **Full Catalog:** https://catalog.cyrus.com/shop
+- **Stories & Journal:** https://catalog.cyrus.com/blog
+- **Merchant Onboarding:** https://catalog.cyrus.com/sell
+- **About Us:** https://catalog.cyrus.com/about
+- **FAQs & Support:** https://catalog.cyrus.com/faq
+- **Terms of Service:** https://catalog.cyrus.com/terms
+- **Privacy Policy:** https://catalog.cyrus.com/privacy
+
+## Order & Customer Support
+Orders are confirmed and dispatched directly via WhatsApp integration (`wa.me`) for verified, real-time customer service.
