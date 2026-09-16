@@ -93,6 +93,37 @@ export interface Category {
   slug: string
   parent_id: string | null
   sort_order: number
+  image_url?: string | null
+  description?: string | null
+  icon?: string | null
+}
+
+export interface CustomPage {
+  id: string
+  slug: string
+  title: string
+  content_html: string
+  meta_title?: string | null
+  meta_description?: string | null
+  is_published: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface BlogPost {
+  id: string
+  slug: string
+  title: string
+  excerpt?: string | null
+  content_html: string
+  cover_image_url?: string | null
+  author_name?: string | null
+  tags?: string[]
+  is_published: boolean
+  views_count?: number
+  published_at?: string
+  created_at?: string
+  updated_at?: string
 }
 
 export interface StoreSettings {
@@ -145,4 +176,5 @@ export interface PriceRange {
   created_at?: string
   updated_at?: string
 }
+
 
