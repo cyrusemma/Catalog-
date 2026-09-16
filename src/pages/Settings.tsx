@@ -10,6 +10,7 @@ import {
   EnvelopeSimple,
   SlidersHorizontal,
   CaretRight,
+  ArrowLeft,
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
@@ -76,12 +77,21 @@ export default function Settings() {
     .join('') || '?'
 
   return (
-    <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-10 pb-28 lg:pb-10">
-      <div className="flex items-center gap-2 mb-2">
+    <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-8 pb-28 lg:pb-12">
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cream-100/80 dark:bg-dark-800 text-xs font-bold text-dark-800/70 dark:text-white/70 hover:text-brand-400 dark:hover:text-brand-400 mb-5 transition-colors border border-cream-200 dark:border-white/5 active:scale-95"
+      >
+        <ArrowLeft size={14} weight="bold" />
+        <span>Back</span>
+      </button>
+
+      <div className="flex items-center gap-2 mb-1.5">
         <span className="w-1.5 h-1.5 rounded-full bg-brand-400" />
         <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">Preferences</span>
       </div>
-      <h1 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white mb-8 flex items-center gap-3">
+      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-bold text-dark-800 dark:text-white mb-6 flex items-center gap-3">
         <SlidersHorizontal size={28} weight="duotone" className="text-brand-400" />
         Settings
       </h1>
