@@ -36,6 +36,7 @@ export default defineConfig({
     })
   ],
   build: {
+    sourcemap: false,
     chunkSizeWarningLimit: 1600,
     modulePreload: {
       resolveDependencies(_filename, deps) {
@@ -53,6 +54,10 @@ export default defineConfig({
           if (id.includes('@tanstack')) return 'react-query'
           if (id.includes('react-router-dom')) return 'router'
           if (id.includes('framer-motion')) return 'motion'
+          if (id.includes('recharts') || id.includes('d3-')) return 'charts'
+          if (id.includes('react-quill') || id.includes('quill')) return 'quill'
+          if (id.includes('@phosphor-icons')) return 'phosphor'
+          if (id.includes('lucide-react')) return 'icons'
 
           return 'vendor'
         },
@@ -60,3 +65,4 @@ export default defineConfig({
     },
   },
 })
+
