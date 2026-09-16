@@ -312,6 +312,17 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
+  const isAppView = [
+    '/account',
+    '/cart',
+    '/wishlist',
+    '/settings',
+    '/reset-password',
+    '/feedback',
+    '/offline-game',
+    '/gallery'
+  ].some(path => location.pathname === path || location.pathname.startsWith('/account/'))
+
   return (
     <div ref={constraintsRef} className="flex flex-col min-h-dvh overflow-x-hidden relative">
       <AnnouncementBanner />
@@ -330,11 +341,12 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
           </motion.div>
         </AnimatePresence>
       </div>
-      <Footer />
+      {!isAppView && <Footer />}
       <BottomNav />
       
-      {/* Floating lookbook/gallery trigger on mobile storefront views */}
-      {location.pathname !== '/gallery' && (
+      {/* Floating lookbook/gallery trigger on mobile storefront views (hidden on app views) */}
+      {!isAppView && location.pathname !== '/gallery' && (
+
         <motion.div
           drag
           dragElastic={0.6}
@@ -595,6 +607,11 @@ function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
     )
   }
 
+  const isMerchantAppView = [
+    '/cart',
+    '/wishlist',
+  ].some(suffix => location.pathname.endsWith(suffix))
+
   return (
     <StoreContext.Provider value={ctxValue}>
       <div className="flex flex-col min-h-dvh overflow-x-hidden">
@@ -613,13 +630,14 @@ function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
             </motion.div>
           </AnimatePresence>
         </div>
-        <StoreFooter />
+        {!isMerchantAppView && <StoreFooter />}
         <StoreBottomNav />
         <SignInModal open={signInOpen} onClose={closeSignIn} reason={signInReason ?? undefined} />
         <ToastContainer />
       </div>
     </StoreContext.Provider>
   )
+
 }
 
 function AnimatedRoutes() {
