@@ -39,7 +39,7 @@ import CartSync from './components/ui/CartSync'
 import WishlistSync from './components/ui/WishlistSync'
 import { useSignInStore } from './store/signInStore'
 import { useCustomerSession } from './hooks/useCustomerSession'
-import { applyTheme, initialColor, useThemeStore, type ColorTheme } from './store/themeStore'
+import { applyTheme, initialColor, resolveEffectiveMode, useThemeStore, type ColorTheme } from './store/themeStore'
 import PushPromptModal from './components/ui/PushPromptModal'
 import AccountDeletionRestoreModal from './components/ui/AccountDeletionRestoreModal'
 
@@ -375,7 +375,7 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
             to="/gallery"
             aria-label="Open lookbook gallery"
             className={`flex items-center gap-1.5 px-4 py-3 rounded-full font-bold text-[11px] backdrop-blur-md border shadow-lg transition-all active:scale-95 pointer-events-auto ${
-              mode === 'dark'
+              resolveEffectiveMode(mode) === 'dark'
                 ? 'bg-dark-900/80 border-brand-400/30 text-brand-400 shadow-black/50 hover:bg-dark-900/90'
                 : 'bg-white/80 border-brand-400/20 text-brand-500 shadow-brand-400/10 hover:bg-white/90'
             }`}

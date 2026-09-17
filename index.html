@@ -12,6 +12,20 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Catalog" />
+    <meta name="theme-color" content="#fdfbf7" />
+    <script>
+      (function() {
+        try {
+          var mode = localStorage.getItem('catalog-mode') || 'light';
+          var color = localStorage.getItem('catalog-color') || 'golden';
+          var isDark = mode === 'dark' || (mode === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var root = document.documentElement;
+          if (isDark) root.classList.add('dark');
+          var target = color === 'golden' ? (isDark ? 'theme-dark' : 'theme-light') : ('theme-' + color + '-' + (isDark ? 'dark' : 'light'));
+          root.classList.add(target);
+        } catch(e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" />

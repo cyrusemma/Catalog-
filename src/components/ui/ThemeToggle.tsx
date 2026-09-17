@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { Sun, Moon } from '@phosphor-icons/react'
-import { useThemeStore } from '../../store/themeStore'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useThemeStore, resolveEffectiveMode } from '../../store/themeStore'
 import { toast } from 'sonner'
 
 /**
@@ -13,7 +14,8 @@ export default function ThemeToggle() {
   const toggleMode = useThemeStore(s => s.toggleMode)
   const color = useThemeStore(s => s.color)
   const setColor = useThemeStore(s => s.setColor)
-  const isDark = mode === 'dark'
+  const effectiveMode = resolveEffectiveMode(mode)
+  const isDark = effectiveMode === 'dark'
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isLongPressRef = useRef(false)
@@ -55,8 +57,9 @@ export default function ThemeToggle() {
   }
 
   return (
-    <button
+    <motion.button
       type="button"
+      whileTap={{ scale: 0.88 }}
       onMouseDown={startPress}
       onMouseUp={endPress}
       onMouseLeave={endPress}
@@ -64,9 +67,29 @@ export default function ThemeToggle() {
       onTouchEnd={endPress}
       onClick={handleClick}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white"
+      className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-brand-400/10 active:bg-brand-400/20 transition-colors text-dark-800 dark:text-white relative overflow-hidden"
+      title={
+        mode === 'system'
+          ? `Theme: System (${isDark ? 'Dark' : 'Light'}) • Tap to toggle • Long-press to switch palette`
+          : `Theme: ${isDark ? 'Dark' : 'Light'} • Tap to toggle • Long-press to switch palette`
+      }
     >
-      {isDark ? <Sun size={18} weight="duotone" /> : <Moon size={18} weight="duotone" />}
-    </button>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={isDark ? 'dark' : 'light'}
+          initial={{ opacity: 0, rotate: -45, scale: 0.6 }}
+          animate={{ opacity: 1, rotate: 0, scale: 1 }}
+          exit={{ opacity: 0, rotate: 45, scale: 0.6 }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          className="flex items-center justify-center"
+        >
+          {isDark ? (
+            <Sun size={18} weight="duotone" className="text-amber-400" />
+          ) : (
+            <Moon size={18} weight="duotone" className="text-dark-800 dark:text-white" />
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </motion.button>
   )
 }

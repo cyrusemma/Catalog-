@@ -11,11 +11,14 @@ import {
   SlidersHorizontal,
   CaretRight,
   ArrowLeft,
+  Sun,
+  Moon,
+  Desktop,
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { toast } from 'sonner'
-import { COLOR_THEMES, useThemeStore } from '../store/themeStore'
+import { COLOR_THEMES, useThemeStore, type Mode } from '../store/themeStore'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useNotificationPreferences } from '../hooks/useNotificationPreferences'
 import { useSignInStore } from '../store/signInStore'
@@ -76,6 +79,12 @@ export default function Settings() {
     .slice(0, 2)
     .join('') || '?'
 
+  const modeOptions: { value: Mode; label: string; icon: any; desc: string }[] = [
+    { value: 'light', label: 'Light', icon: Sun, desc: 'Clean daylight theme' },
+    { value: 'dark', label: 'Dark', icon: Moon, desc: 'Deep night contrast' },
+    { value: 'system', label: 'System', icon: Desktop, desc: 'Syncs with device OS' },
+  ]
+
   return (
     <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-8 pb-28 lg:pb-12">
       <button
@@ -99,19 +108,21 @@ export default function Settings() {
       {/* Theme switcher — full grid of every theme. */}
       <motion.section
         {...sectionMotion(0)}
-        className="rounded-3xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 mb-5"
+        className="rounded-3xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 p-5 sm:p-6 mb-5 shadow-sm"
       >
         <div className="flex items-center gap-2 mb-1">
           <Palette size={18} weight="duotone" className="text-brand-400" />
-          <h2 className="text-dark-800 dark:text-white font-semibold">Appearance</h2>
+          <h2 className="text-dark-800 dark:text-white font-semibold">Appearance & Themes</h2>
         </div>
-        <p className="text-dark-800/55 dark:text-white/50 text-sm mb-4">
-          Choose a colour theme. Switch between light and dark from the navbar. Saved to this device.
+        <p className="text-dark-800/55 dark:text-white/50 text-xs sm:text-sm mb-5">
+          Customize your visual palette and theme mode. Your choices are saved and synced locally on this device.
         </p>
 
-        {/* Colour theme */}
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-800/50 dark:text-white/40 mb-2">Colour</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-5">
+        {/* Colour theme 4-column balanced grid */}
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-dark-800/50 dark:text-white/40 mb-2.5">
+          Color Palette
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {COLOR_THEMES.map(t => {
             const active = t.value === color
             return (
@@ -119,47 +130,69 @@ export default function Settings() {
                 key={t.value}
                 type="button"
                 onClick={() => setColor(t.value)}
-                className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all ${
+                className={`relative flex flex-col p-3 rounded-2xl text-left transition-all duration-200 group active:scale-95 ${
                   active
-                    ? 'bg-brand-400/10 ring-2 ring-brand-400/40'
-                    : 'bg-cream-100 dark:bg-white/5 ring-1 ring-transparent hover:ring-brand-400/20'
+                    ? 'bg-brand-400/10 ring-2 ring-brand-400/50 dark:ring-brand-400 shadow-sm'
+                    : 'bg-cream-100/70 dark:bg-white/5 border border-transparent hover:border-brand-400/20 hover:bg-cream-100 dark:hover:bg-white/10'
                 }`}
               >
-                <span
-                  aria-hidden="true"
-                  className={`flex-shrink-0 w-8 h-8 rounded-lg ring-1 ring-black/10 dark:ring-white/10 ${t.swatchClass}`}
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-1 text-sm font-medium text-dark-800 dark:text-white truncate">
-                    {t.label}
-                    {active && <Check size={13} weight="bold" className="text-brand-400 flex-shrink-0" />}
-                  </span>
-                  <span className="block text-[11px] text-dark-800/50 dark:text-white/40 truncate">
-                    {t.subtitle}
-                  </span>
+                {/* Swatch Pill with mini highlight */}
+                <div className="flex items-center justify-between mb-3">
+                  <span
+                    aria-hidden="true"
+                    className={`w-9 h-9 rounded-xl ring-1 ring-black/10 dark:ring-white/10 shadow-sm ${t.swatchClass}`}
+                  />
+                  {active && (
+                    <span className="w-5 h-5 rounded-full bg-brand-400 text-white flex items-center justify-center shadow-sm">
+                      <Check size={12} weight="bold" />
+                    </span>
+                  )}
+                </div>
+
+                <span className="text-xs font-bold text-dark-800 dark:text-white truncate">
+                  {t.label}
+                </span>
+                <span className="text-[10px] text-dark-800/50 dark:text-white/40 truncate mt-0.5">
+                  {t.subtitle}
                 </span>
               </button>
             )
           })}
         </div>
 
-        {/* Light / dark */}
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-800/50 dark:text-white/40 mb-2">Mode</p>
-        <div className="inline-flex rounded-2xl bg-cream-100 dark:bg-white/5 p-1">
-          {(['light', 'dark'] as const).map(m => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMode(m)}
-              className={`px-5 py-2 rounded-xl text-sm font-semibold capitalize transition-colors ${
-                mode === m
-                  ? 'bg-brand-400 text-white shadow-sm'
-                  : 'text-dark-800/60 dark:text-white/55 hover:text-dark-800 dark:hover:text-white'
-              }`}
-            >
-              {m}
-            </button>
-          ))}
+        {/* 3-Option Mode Switcher */}
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-dark-800/50 dark:text-white/40 mb-2.5">
+          Display Mode
+        </p>
+        <div className="grid grid-cols-3 gap-2 p-1.5 rounded-2xl bg-cream-100/80 dark:bg-dark-900/80 border border-cream-200 dark:border-white/5">
+          {modeOptions.map(m => {
+            const active = mode === m.value
+            const Icon = m.icon
+            return (
+              <button
+                key={m.value}
+                type="button"
+                onClick={() => setMode(m.value)}
+                className={`relative flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 ${
+                  active
+                    ? 'text-white'
+                    : 'text-dark-800/60 dark:text-white/60 hover:text-dark-800 dark:hover:text-white'
+                }`}
+              >
+                {active && (
+                  <motion.div
+                    layoutId="activeSettingsThemeMode"
+                    className="absolute inset-0 bg-brand-400 rounded-xl shadow-sm shadow-brand-400/25"
+                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-1.5">
+                  <Icon size={16} weight={active ? 'fill' : 'bold'} />
+                  <span>{m.label}</span>
+                </span>
+              </button>
+            )
+          })}
         </div>
       </motion.section>
 
