@@ -497,7 +497,7 @@ export default function Home() {
               <div className="pt-2 flex justify-center lg:justify-start">
                 <Link
                   to="/gallery"
-                  className="group inline-flex items-center gap-2 px-7 py-3.5 bg-dark-900 dark:bg-white text-white dark:text-dark-950 hover:bg-brand-500 dark:hover:bg-amber-300 font-bold rounded-2xl text-sm shadow-lg shadow-black/5 dark:shadow-white/5 transition-all transform hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
+                  className="group inline-flex items-center gap-2 px-7 py-3.5 bg-dark-900 hover:bg-dark-800 dark:bg-amber-400 dark:hover:bg-amber-300 text-white dark:text-dark-900 font-bold rounded-2xl text-sm shadow-lg shadow-black/10 dark:shadow-amber-500/20 transition-all transform hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
                 >
                   <span>Open Visual Gallery</span>
                   <ArrowRight size={16} weight="bold" className="group-hover:translate-x-1 transition-transform" />
