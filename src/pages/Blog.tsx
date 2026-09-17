@@ -5,7 +5,7 @@ import {
   Search, 
   Clock, 
   ArrowRight, 
-  Sparkles 
+  BookOpen 
 } from 'lucide-react'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useBlogPosts } from '../hooks/useCms'
@@ -74,7 +74,7 @@ export default function Blog() {
         {/* Header Hero */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            <Sparkles className="w-3.5 h-3.5" />
+            <BookOpen className="w-3.5 h-3.5" />
             Stories & Curations
           </div>
           <h1 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white">

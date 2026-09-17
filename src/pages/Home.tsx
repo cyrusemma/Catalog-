@@ -4,12 +4,12 @@ import {
   ArrowUpRight,
   CaretRight,
   ChartLineUp,
+  Images,
   Lightning,
   MagnifyingGlass,
   RocketLaunch,
   SealCheck,
   ShoppingBagOpen,
-  Sparkle,
   Storefront,
   WhatsappLogo,
   X,
@@ -467,7 +467,7 @@ export default function Home() {
           <div className="rounded-[2rem] bg-gradient-to-br from-brand-400/5 to-brand-500/10 border border-brand-400/10 p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
             <div className="space-y-2 text-center md:text-left">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-400/10 border border-brand-400/20 text-[10px] font-bold uppercase tracking-wider text-brand-400">
-                ✨ LOOKBOOK
+                <Images size={13} weight="bold" /> LOOKBOOK
               </span>
               <h2 className="text-2xl sm:text-3xl font-display font-bold text-dark-800 dark:text-white">
                 Explore the Visual Gallery
@@ -505,7 +505,7 @@ export default function Home() {
             {/* Left Column: Core Copy & CTAs */}
             <div className="max-w-xl text-center lg:text-left relative z-10">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300 text-[11px] font-bold uppercase tracking-widest mb-5 backdrop-blur-md shadow-xs">
-                <Sparkle size={13} weight="fill" className="text-amber-400 animate-pulse" />
+                <Storefront size={13} weight="fill" className="text-amber-400" />
                 <span>For Creators &amp; Merchants</span>
               </div>
 

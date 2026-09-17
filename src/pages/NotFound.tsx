@@ -6,7 +6,7 @@ import {
   ShoppingBag, 
   Newspaper, 
   HelpCircle, 
-  Sparkles 
+  Compass 
 } from 'lucide-react'
 import SEOHead from '../components/layout/SEOHead'
 
@@ -38,7 +38,7 @@ export default function NotFound() {
       <div className="max-w-2xl w-full text-center space-y-8">
         {/* Animated Badge */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-bold uppercase tracking-wider">
-          <Sparkles className="w-3.5 h-3.5" />
+          <Compass className="w-3.5 h-3.5" />
           404 — Page Not Found
         </div>
 
