@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Package, CheckCircle, Truck, Clock, ShoppingBag, Star, X, Edit3 } from 'lucide-react'
+import { ArrowLeft, Package, CheckCircle, Truck, Clock, ShoppingBag, Star, X, Edit3, BellRing, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { useCustomerSession } from '../hooks/useCustomerSession'
+import { useNotificationPreferences } from '../hooks/useNotificationPreferences'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -33,6 +34,7 @@ function OrderStatusProgress({ currentStepIndex }: { currentStepIndex: number })
 
 export default function CustomerOrders() {
   const { user, isLoggedIn, loading } = useCustomerSession()
+  const { pushSubscribed, pushWorking, supported, subscribe } = useNotificationPreferences()
   const navigate = useNavigate()
   const formatPrice = useCurrencyFormatter()
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
@@ -115,6 +117,45 @@ export default function CustomerOrders() {
         </motion.div>
       ) : (
         <div className="space-y-6">
+          {/* Live Order Tracking Notification Banner */}
+          {supported && pushSubscribed === false && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-3xl bg-gradient-to-br from-brand-400/10 via-brand-500/5 to-transparent border border-brand-400/30 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+            >
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-brand-400 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-brand-400/20">
+                  <BellRing size={20} className="animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-dark-800 dark:text-white">Get Live Order & Delivery Alerts</h3>
+                  <p className="text-xs text-dark-800/60 dark:text-white/60 mt-0.5 max-w-md">
+                    Enable push notifications on this phone to receive instant updates when your package is dispatched and out for delivery.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={subscribe}
+                disabled={pushWorking}
+                className="self-stretch sm:self-center bg-brand-400 hover:bg-brand-500 active:scale-95 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md shadow-brand-400/25 flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-50"
+              >
+                {pushWorking ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Enabling...</span>
+                  </>
+                ) : (
+                  <>
+                    <BellRing size={14} />
+                    <span>Enable Tracking Alerts</span>
+                  </>
+                )}
+              </button>
+            </motion.div>
+          )}
+
           {orders.map((order, idx) => {
             const currentStepIndex = STATUS_STEPS.indexOf(order.status)
             const isCancelled = order.status === 'cancelled'

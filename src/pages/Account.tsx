@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   Bell,
   BellSlash,
+  BellRinging,
+  CircleNotch,
   SignOut,
   User as UserIcon,
   EnvelopeSimple,
@@ -41,7 +43,7 @@ const STATUS_STEPS = ['pending', 'confirmed', 'processing', 'shipped', 'delivere
 
 export default function Account() {
   const { isLoggedIn, user, profile, loading } = useCustomerSession()
-  const { pushSubscribed, pushWorking, pushError, supported, toggle } = useNotificationPreferences()
+  const { pushSubscribed, pushWorking, pushError, supported, toggle, subscribe } = useNotificationPreferences()
   const navigate = useNavigate()
   const qc = useQueryClient()
   const formatPrice = useCurrencyFormatter()
@@ -761,6 +763,50 @@ export default function Account() {
                       Quick Update Address
                     </button>
                   </div>
+
+                  {/* Smart Notification Opt-in Card for Unsubscribed Members */}
+                  {supported && pushSubscribed === false && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-3xl bg-gradient-to-br from-brand-400/10 via-brand-500/5 to-transparent border border-brand-400/30 p-5 sm:p-6 shadow-sm relative overflow-hidden"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-brand-400 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-brand-400/20">
+                            <BellRinging size={24} weight="fill" className="animate-pulse" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-base font-bold text-dark-800 dark:text-white">Enable VIP Drop & Order Alerts</h3>
+                              <span className="text-[10px] uppercase font-mono font-bold bg-brand-400 text-white px-2 py-0.5 rounded-full">VIP Perk</span>
+                            </div>
+                            <p className="text-xs text-dark-800/60 dark:text-white/60 mt-1 max-w-lg">
+                              Never miss out on flash sales, restocks, or real-time package delivery alerts. Enable instant push notifications.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={subscribe}
+                          disabled={pushWorking}
+                          className="self-start sm:self-center bg-brand-400 hover:bg-brand-500 active:scale-95 text-white font-bold text-xs px-5 py-3 rounded-2xl transition-all shadow-md shadow-brand-400/25 flex items-center gap-2 flex-shrink-0 disabled:opacity-50"
+                        >
+                          {pushWorking ? (
+                            <>
+                              <CircleNotch size={14} className="animate-spin" />
+                              <span>Enabling...</span>
+                            </>
+                          ) : (
+                            <>
+                              <BellRinging size={14} weight="bold" />
+                              <span>Turn On Alerts</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
 
                   {/* Overview Cards Grid */}
                   <div className="grid md:grid-cols-2 gap-5">
