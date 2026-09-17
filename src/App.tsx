@@ -16,7 +16,6 @@ import { StoreContext } from './contexts/StoreContext'
 import type { StoreContextValue } from './contexts/StoreContext'
 import { useDynamicPWA } from './hooks/useDynamicPWA'
 import { Store, MessageCircle } from 'lucide-react'
-import { Images } from '@phosphor-icons/react'
 import { useStoreSettings } from './hooks/useStoreSettings'
 
 import Navbar from './components/layout/Navbar'
@@ -343,48 +342,6 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
       </div>
       {!isAppView && <Footer />}
       <BottomNav />
-      
-      {/* Floating lookbook/gallery trigger on mobile storefront views (hidden on app views) */}
-      {!isAppView && location.pathname !== '/gallery' && (
-
-        <motion.div
-          drag
-          dragElastic={0.6}
-          dragMomentum={false}
-          dragConstraints={constraintsRef}
-          dragTransition={{ bounceStiffness: 400, bounceDamping: 18 }}
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.95 }}
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ 
-            opacity: 1, 
-            scale: 1,
-            y: [0, -6, 0]
-          }}
-          transition={{
-            y: {
-              repeat: Infinity,
-              duration: 2.5,
-              ease: "easeInOut"
-            },
-            default: { type: "spring", stiffness: 260, damping: 20 }
-          }}
-          className="sm:hidden fixed bottom-24 right-4 z-[99] touch-none"
-        >
-          <Link
-            to="/gallery"
-            aria-label="Open lookbook gallery"
-            className={`flex items-center gap-1.5 px-4 py-3 rounded-full font-bold text-[11px] backdrop-blur-md border shadow-lg transition-all active:scale-95 pointer-events-auto ${
-              resolveEffectiveMode(mode) === 'dark'
-                ? 'bg-dark-900/80 border-brand-400/30 text-brand-400 shadow-black/50 hover:bg-dark-900/90'
-                : 'bg-white/80 border-brand-400/20 text-brand-500 shadow-brand-400/10 hover:bg-white/90'
-            }`}
-          >
-            <Images size={16} weight="fill" className="animate-pulse" />
-            <span>Gallery</span>
-          </Link>
-        </motion.div>
-      )}
 
       <SignInModal open={signInOpen} onClose={closeSignIn} reason={signInReason ?? undefined} />
       <OfflineIndicator />
