@@ -138,9 +138,6 @@ export default function AppReviewPrompt() {
       await supabase.from('site_reviews').insert({
         rating,
         message: comment.trim() || `Rated ${rating} star${rating !== 1 ? 's' : ''} via in-app prompt.`,
-        name: null,
-        email: null,
-        page_url: window.location.pathname,
       })
     } catch {
       // Best-effort — don't fail the UI
