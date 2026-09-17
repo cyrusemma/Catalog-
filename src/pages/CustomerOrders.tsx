@@ -358,21 +358,40 @@ function ReviewModal({
       // We store the product URL or identifier in page_url so it can be tied back if needed
       const productUrl = `/product/${item.product_slug || item.product_id}`
       
-      const { error } = await supabase.from('site_reviews').insert({
-        name: userName,
-        email: userEmail,
+      let payload: Record<string, any> = {
+        name: userName || null,
+        email: userEmail || null,
         rating,
         message: comment.trim() || `Rated ${rating} stars.`,
         page_url: productUrl,
-      })
+      }
 
-      if (error) throw error
+      let success = false
+      let lastError: any = null
+
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const { error } = await supabase.from('site_reviews').insert(payload)
+        if (!error) {
+          success = true
+          break
+        }
+        lastError = error
+        const columnMatch = error.message?.match(/Could not find the '([^']+)' column/i)
+        const missingCol = columnMatch ? columnMatch[1] : null
+        if (missingCol && missingCol in payload) {
+          delete payload[missingCol]
+          continue
+        }
+        break
+      }
+
+      if (!success && lastError) throw lastError
 
       toast.success('Review submitted successfully! Thank you.')
       onSuccess()
       onClose()
     } catch (err: any) {
-      toast.error('Failed to submit review: ' + err.message)
+      toast.error('Failed to submit review: ' + (err.message || 'Unknown error'))
     } finally {
       setSubmitting(false)
     }
