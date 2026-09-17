@@ -160,6 +160,19 @@ export default function Home() {
     return out.slice(0, 6)
   }, [featured, newProducts])
 
+  // Extract up to 3 distinct product images for the editorial lookbook preview stack
+  const lookbookImages = useMemo(() => {
+    const list: string[] = []
+    const pool = [...(allProducts || []), ...(featured || []), ...(newProducts || [])]
+    for (const p of pool) {
+      if (p.images && p.images[0] && !list.includes(p.images[0])) {
+        list.push(p.images[0])
+        if (list.length === 3) break
+      }
+    }
+    return list
+  }, [allProducts, featured, newProducts])
+
   if (featuredLoading || newProductsLoading) {
     return <ShopLoader />
   }
@@ -455,33 +468,76 @@ export default function Home() {
         </section>
       )}
 
-      {/* Visual Lookbook / Gallery CTA Section */}
+      {/* Visual Lookbook / Gallery CTA Section — Editorial Magazine Redesign */}
       <motion.section
         initial={reduceMotion ? false : { opacity: 0, y: 24 }}
         whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-80px' }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        className="py-12 sm:py-16 bg-cream-50/30 dark:bg-white/2"
+        className="py-12 sm:py-18"
       >
         <div className="max-w-7xl mx-auto px-4">
-          <div className="rounded-[2rem] bg-gradient-to-br from-brand-400/5 to-brand-500/10 border border-brand-400/10 p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
-            <div className="space-y-2 text-center md:text-left">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-400/10 border border-brand-400/20 text-[10px] font-bold uppercase tracking-wider text-brand-400">
-                <Images size={13} weight="bold" /> LOOKBOOK
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-cream-100/90 via-cream-50 to-white dark:from-[#16120e] dark:via-dark-900 dark:to-dark-900 border border-dark-800/8 dark:border-white/10 p-7 sm:p-10 lg:p-12 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-8 sm:gap-12">
+            
+            {/* Subtle Warm Ambient Glow */}
+            <div className="absolute -right-20 -top-20 w-80 h-80 bg-brand-400/10 dark:bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-brand-500/10 dark:bg-amber-600/5 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Left Column: Editorial Copy & Action */}
+            <div className="space-y-4 text-center lg:text-left relative z-10 max-w-xl">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-brand-400/10 dark:bg-white/10 border border-brand-400/20 dark:border-white/15 text-[11px] font-bold uppercase tracking-widest text-brand-600 dark:text-amber-300 backdrop-blur-sm">
+                <Images size={13} weight="bold" /> CURATED LOOKBOOK
               </span>
-              <h2 className="text-2xl sm:text-3xl font-display font-bold text-dark-800 dark:text-white">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-display font-bold text-dark-800 dark:text-white tracking-tight leading-tight">
                 Explore the Visual Gallery
               </h2>
-              <p className="text-xs sm:text-sm text-dark-800/60 dark:text-white/60 max-w-xl">
-                Prefer a high-density, image-first catalog view? Browse the collection in grid, magazine, or compact list layouts to find inspiration.
+              <p className="text-xs sm:text-sm text-dark-800/70 dark:text-white/70 leading-relaxed">
+                Prefer an image-first, high-density catalog view? Browse full collections in grid, magazine, or compact list layouts to discover your next favorite piece.
               </p>
+              <div className="pt-2 flex justify-center lg:justify-start">
+                <Link
+                  to="/gallery"
+                  className="group inline-flex items-center gap-2 px-7 py-3.5 bg-dark-900 dark:bg-white text-white dark:text-dark-950 hover:bg-brand-500 dark:hover:bg-amber-300 font-bold rounded-2xl text-sm shadow-lg shadow-black/5 dark:shadow-white/5 transition-all transform hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
+                >
+                  <span>Open Visual Gallery</span>
+                  <ArrowRight size={16} weight="bold" className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
-            <Link
-              to="/gallery"
-              className="w-full md:w-auto px-6 py-3 bg-brand-400 hover:bg-brand-500 text-white font-semibold rounded-xl text-sm text-center shadow-md transition-colors whitespace-nowrap"
-            >
-              Open Gallery View
-            </Link>
+
+            {/* Right Column: Editorial Overlapping Image Stack */}
+            <div className="relative flex items-center justify-center shrink-0 z-10 py-4 lg:py-2">
+              {lookbookImages.length > 0 ? (
+                <div className="flex items-center -space-x-8 sm:-space-x-12 hover:space-x-2 transition-all duration-500 py-3">
+                  {lookbookImages.map((src, i) => {
+                    const rotations = [
+                      '-rotate-6 translate-y-2',
+                      'rotate-0 -translate-y-2 z-10 scale-105',
+                      'rotate-6 translate-y-2',
+                    ]
+                    return (
+                      <div
+                        key={i}
+                        className={`relative w-24 sm:w-32 lg:w-36 aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border-2 border-white dark:border-dark-800 transform transition-all duration-300 hover:scale-110 hover:z-20 hover:rotate-0 hover:shadow-2xl ${rotations[i] || ''}`}
+                      >
+                        <img
+                          src={src}
+                          alt={`Lookbook curation ${i + 1}`}
+                          loading="lazy"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="w-48 h-32 rounded-2xl bg-brand-400/10 border border-brand-400/20 flex items-center justify-center text-brand-400">
+                  <Images size={36} weight="duotone" />
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       </motion.section>
