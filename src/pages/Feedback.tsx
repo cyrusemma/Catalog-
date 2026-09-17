@@ -102,19 +102,72 @@ export default function Feedback() {
         }
       })
 
-      const { error } = await supabase.from('site_reviews').insert({
+      const hasSurveyData = Object.keys(surveyData).length > 0
+      let payload: Record<string, any> = {
         rating: overallRating,
         message: message.trim() || `Submitted site feedback survey.`,
         name: name.trim() || null,
         email: email.trim() || null,
         page_url: '/feedback',
-        survey_responses: Object.keys(surveyData).length > 0 ? surveyData : null
-      })
+        ...(hasSurveyData ? { survey_responses: surveyData } : {})
+      }
 
-      if (error) throw error
+      let success = false
+      let lastError: any = null
+
+      // Attempt up to 5 progressive retries stripping unmapped schema columns
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const { error } = await supabase.from('site_reviews').insert(payload)
+
+        if (!error) {
+          success = true
+          break
+        }
+
+        lastError = error
+        const errMsg = (error.message || '').toLowerCase()
+
+        // Detect missing column from PostgREST error message
+        const columnMatch = error.message?.match(/Could not find the '([^']+)' column/i)
+        const missingCol = columnMatch ? columnMatch[1] : null
+
+        if (missingCol && missingCol in payload) {
+          console.warn(`Column '${missingCol}' missing in site_reviews table, stripping and adapting...`)
+          if (missingCol === 'survey_responses' && payload.survey_responses) {
+            const breakdown = Object.entries(payload.survey_responses)
+              .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)}: ${v}/5`)
+              .join(', ')
+            payload.message = `${payload.message}\n\n[Survey Ratings: ${breakdown}]`
+          } else if (missingCol === 'email' && payload.email) {
+            payload.message = `${payload.message}\n[Email: ${payload.email}]`
+          } else if (missingCol === 'name' && payload.name) {
+            payload.message = `${payload.message}\n[Name: ${payload.name}]`
+          } else if (missingCol === 'page_url' && payload.page_url) {
+            payload.message = `${payload.message}\n[Page: ${payload.page_url}]`
+          }
+          delete payload[missingCol]
+          continue
+        }
+
+        // If the table uses 'comment' instead of 'message'
+        if ((errMsg.includes('message') || errMsg.includes('comment')) && !('comment' in payload) && 'message' in payload) {
+          payload.comment = payload.message
+          delete payload.message
+          continue
+        }
+
+        // Unrecoverable error (e.g. RLS or network)
+        break
+      }
+
+      if (!success && lastError) {
+        console.error('Supabase site_reviews insert error:', lastError)
+        throw new Error(lastError.message || 'Failed to submit feedback')
+      }
 
       setStep(5) // Move to success step
     } catch (err) {
+      console.error('Feedback submission error:', err)
       toast.error(err instanceof Error ? err.message : 'Failed to submit feedback.')
     } finally {
       setSubmitting(false)
