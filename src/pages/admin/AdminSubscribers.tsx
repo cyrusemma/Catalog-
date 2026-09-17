@@ -24,8 +24,7 @@ import {
   MessageCircle,
   X,
   Radio,
-  Loader2,
-  Sparkles
+  Loader2
 } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase, supabaseUrl } from '../../lib/supabase'
@@ -765,7 +764,7 @@ export default function AdminSubscribers() {
                                     onClick={() => handleWhatsAppReengagement(user, 'vip')}
                                     className="w-full flex items-center justify-center gap-2 bg-brand-400 hover:bg-brand-500 text-white font-bold py-2.5 px-4 rounded-2xl text-xs shadow-sm transition-all active:scale-95"
                                   >
-                                    <Sparkles size={14} /> Send WhatsApp VIP Invite Link
+                                    <BellRing size={14} /> Send WhatsApp VIP Invite Link
                                   </button>
                                 )}
 
@@ -1090,7 +1089,7 @@ export default function AdminSubscribers() {
                                             onClick={() => handleWhatsAppReengagement(user, 'vip')}
                                             className="flex items-center justify-center gap-2 bg-brand-400 hover:bg-brand-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition-colors shadow-sm"
                                           >
-                                            <Sparkles size={13} /> Send VIP Alert Invite
+                                            <BellRing size={13} /> Send VIP Alert Invite
                                           </button>
                                         )}
                                         <button

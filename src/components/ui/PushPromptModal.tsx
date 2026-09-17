@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BellRing, X, Loader2, Sparkles, Truck, Tag, ShieldCheck } from 'lucide-react'
+import { BellRing, X, Loader2, Zap, Truck, Tag, ShieldCheck, Flame } from 'lucide-react'
 import { useNotificationPreferences } from '../../hooks/useNotificationPreferences'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
 
@@ -87,7 +87,7 @@ export default function PushPromptModal() {
               </div>
 
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-400/10 dark:bg-brand-400/15 text-brand-500 dark:text-brand-400 text-xs font-bold mb-2">
-                <Sparkles size={13} />
+                <Flame size={13} className="text-amber-500" />
                 <span>VIP Member Perk</span>
               </div>
 
@@ -102,7 +102,7 @@ export default function PushPromptModal() {
               <div className="w-full bg-cream-50/70 dark:bg-dark-900/60 border border-cream-200/60 dark:border-white/5 rounded-2xl p-3.5 mb-5 space-y-2.5 text-left">
                 <div className="flex items-center gap-2.5 text-xs text-dark-800/80 dark:text-white/80 font-medium">
                   <div className="w-6 h-6 rounded-lg bg-brand-400/15 text-brand-500 dark:text-brand-400 flex items-center justify-center flex-shrink-0">
-                    <Sparkles size={13} />
+                    <Zap size={13} />
                   </div>
                   <span>15-minute early access to new collection drops</span>
                 </div>

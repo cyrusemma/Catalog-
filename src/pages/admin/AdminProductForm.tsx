@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAdminContext } from '../../hooks/useAdminContext'
 import { 
   ArrowLeft, Loader2, Plus, X, ImagePlus, Upload, 
-  ChevronLeft, ChevronRight, Eye, Sparkles, 
+  ChevronLeft, ChevronRight, Eye, FileText, 
   Calculator, Maximize2, Check, Search, 
   AlertCircle, ShoppingBag, Trash2
 } from 'lucide-react'
@@ -84,7 +84,7 @@ const POPULAR_COLORS = ['Black', 'White', 'Red', 'Blue', 'Grey', 'Green', 'Gold'
 const POPULAR_SIZES = ['S', 'M', 'L', 'XL', 'XXL', '36', '37', '38', '39', '40', '41', '42', '43', '44']
 
 const TABS = [
-  { id: 'basic', label: 'Basic Info', desc: 'Title, brand, description', icon: Sparkles },
+  { id: 'basic', label: 'Basic Info', desc: 'Title, brand, description', icon: FileText },
   { id: 'media', label: 'Media', desc: 'Product images', icon: ImagePlus },
   { id: 'pricing', label: 'Pricing & Stock', desc: 'Price, stock, flash sale', icon: Calculator },
   { id: 'variants', label: 'Variants', desc: 'Sizes and colors', icon: ShoppingBag },
@@ -702,7 +702,7 @@ export default function AdminProductForm() {
                         {/* Cover badge on first image */}
                         {i === 0 && (
                           <div className="absolute top-1.5 left-1.5 bg-brand-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
-                            <Sparkles size={8} />
+                            <Check size={9} strokeWidth={3} />
                             <span>Cover</span>
                           </div>
                         )}

@@ -23,7 +23,6 @@ import {
   X,
   SidebarSimple,
   CaretRight,
-  Sparkle,
   GearSix,
   ShieldCheck
 } from '@phosphor-icons/react'
@@ -352,7 +351,7 @@ export default function Account() {
       items: [
         { id: 'address', label: 'Address Book', icon: MapPin },
         { id: 'alerts', label: 'Notification Settings', icon: Bell },
-        { id: 'store', label: store ? 'Merchant Dashboard' : 'Open a Store', icon: Sparkle, isStore: true },
+        { id: 'store', label: store ? 'Merchant Dashboard' : 'Open a Store', icon: Storefront, isStore: true },
       ]
     }
   ]
@@ -365,7 +364,7 @@ export default function Account() {
     { id: 'inbox', label: 'Inbox', icon: ClipboardText, count: notifications.length },
     { id: 'followed', label: 'Stores', icon: Storefront, count: profile.followed_stores?.length },
     { id: 'address', label: 'Address', icon: MapPin },
-    { id: 'store', label: store ? 'Store' : 'Sell', icon: Sparkle },
+    { id: 'store', label: store ? 'Store' : 'Sell', icon: Storefront },
   ]
 
   const currentTabLabel = navSections
