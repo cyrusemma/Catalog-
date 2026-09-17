@@ -20,9 +20,12 @@ import {
   Mail,
   ShoppingBag as CartIcon,
   Bell,
+  BellRing,
   MessageCircle,
   X,
-  Radio
+  Radio,
+  Loader2,
+  Sparkles
 } from 'lucide-react'
 import AdminLayout from '../../components/admin/AdminLayout'
 import { supabase, supabaseUrl } from '../../lib/supabase'
@@ -72,6 +75,7 @@ export default function AdminSubscribers() {
   const [deletionFilter, setDeletionFilter] = useState<'all' | 'pending_deletion'>('all')
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
   const [actionInProgress, setActionInProgress] = useState<string | null>(null)
+  const [togglingSubscriberId, setTogglingSubscriberId] = useState<string | null>(null)
 
   // Broadcast Modal state
   const [broadcastOpen, setBroadcastOpen] = useState(false)
@@ -85,6 +89,58 @@ export default function AdminSubscribers() {
   const [pushBodies, setPushBodies] = useState<Record<string, string>>({})
   const [sendingPushId, setSendingPushId] = useState<string | null>(null)
   const [pushStatus, setPushStatus] = useState<Record<string, { kind: 'ok' | 'err'; text: string } | null>>({})
+
+  // Manual Toggle Customer Notification Subscription (Admin Override)
+  const handleToggleSubscriberStatus = async (userId: string, currentStatus: boolean, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    setTogglingSubscriberId(userId)
+    const newStatus = !currentStatus
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ notify_new_arrivals: newStatus })
+        .eq('id', userId)
+
+      if (error) throw error
+
+      toast.success(newStatus ? 'Customer subscribed to updates! 🎉' : 'Customer marked as unsubscribed.')
+      qc.invalidateQueries({ queryKey: ['admin-profiles'] })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not update subscriber status.')
+    } finally {
+      setTogglingSubscriberId(null)
+    }
+  }
+
+  // 1-Click WhatsApp Outreach for Non-Subscribers & Cart Recovery
+  const handleWhatsAppReengagement = (user: any, mode: 'cart' | 'vip' | 'chat' = 'chat', e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    if (!user.phone) {
+      toast.error('No phone number recorded for this customer.')
+      return
+    }
+    const cleanPhone = user.phone.replace(/[^0-9]/g, '')
+    const targetPhone = cleanPhone.startsWith('0') 
+      ? `233${cleanPhone.slice(1)}` 
+      : cleanPhone.startsWith('233') 
+      ? cleanPhone 
+      : `233${cleanPhone}`
+
+    const name = user.display_name?.split(' ')[0] || 'there'
+    const storeUrl = window.location.origin
+
+    let message = ''
+    if (mode === 'cart' || (mode === 'chat' && user.cartItems?.length > 0)) {
+      message = `Hello ${name}! 👋 We noticed you left ${user.cartItems?.length || 1} item(s) in your shopping cart (${formatPrice(user.cartTotal || 0)}). Tap here to complete your order before items sell out: ${storeUrl}/cart`
+    } else if (mode === 'vip' || !user.notify_new_arrivals) {
+      message = `Hello ${name}! 👋 We noticed you haven't enabled VIP notification alerts for our exclusive collection drops and flash discounts. Tap here to explore our latest arrivals and stay connected: ${storeUrl}`
+    } else {
+      message = `Hello ${name}! 👋 Thank you for shopping with us. How can we help you today?`
+    }
+
+    const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`
+    window.open(waUrl, '_blank')
+  }
 
   const handleAdminRestoreUser = async (userId: string) => {
     if (!window.confirm("Are you sure you want to cancel the deletion request and restore this user's account?")) {
@@ -362,18 +418,6 @@ export default function AdminSubscribers() {
     setDeletionFilter('all')
   }
 
-  const handleWhatsAppReminder = (user: any) => {
-    if (!user.phone) return
-    const itemsText = user.cartItems
-      .map((item: any) => `• ${item.product?.title || 'Product'} (x${item.quantity || 1})`)
-      .join('\n')
-    const message = `Hi ${user.display_name || 'there'}! 👋\n\nWe noticed you left some items in your shopping cart:\n\n${itemsText}\n\nWould you like us to secure them and prepare them for delivery? Let us know if you need any assistance completing your order!`
-    
-    const cleanPhone = user.phone.replace(/\D/g, '')
-    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
-    window.open(url, '_blank')
-  }
-
   return (
     <AdminLayout>
       <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
@@ -601,10 +645,15 @@ export default function AdminSubscribers() {
                         </div>
 
                         <div className="flex items-center gap-1.5 flex-shrink-0">
-                          {user.notify_new_arrivals ? (
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" title="Subscribed" />
-                          ) : (
-                            <span className="w-2.5 h-2.5 rounded-full bg-dark-800/20 dark:text-white/20" title="Unsubscribed" />
+                          {user.phone && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleWhatsAppReengagement(user, user.cartItems.length > 0 ? 'cart' : user.notify_new_arrivals ? 'chat' : 'vip', e)}
+                              className="p-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 transition-colors"
+                              title="1-Click WhatsApp outreach"
+                            >
+                              <MessageCircle size={15} />
+                            </button>
                           )}
                           <div className="w-7 h-7 rounded-xl bg-cream-100 dark:bg-dark-700 text-dark-800/60 dark:text-white/60 flex items-center justify-center">
                             {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -614,16 +663,26 @@ export default function AdminSubscribers() {
 
                       {/* Pill Badges & Quick Stats Strip */}
                       <div className="flex flex-wrap items-center gap-2 pt-1">
-                        {user.notify_new_arrivals ? (
-                          <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            Push Subscribed
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 bg-cream-200/60 dark:bg-dark-700 text-dark-800/50 dark:text-white/40 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            Unsubscribed
-                          </span>
-                        )}
+                        {/* Interactive Subscriber Switch Badge */}
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleSubscriberStatus(user.id, !!user.notify_new_arrivals, e)}
+                          disabled={togglingSubscriberId === user.id}
+                          className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full transition-all active:scale-95 border ${
+                            user.notify_new_arrivals
+                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
+                              : 'bg-cream-200/80 dark:bg-dark-700 text-dark-800/60 dark:text-white/50 border-cream-300 dark:border-white/10 hover:bg-cream-300 dark:hover:bg-dark-600'
+                          }`}
+                          title="Tap to toggle customer subscription status"
+                        >
+                          {togglingSubscriberId === user.id ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : (
+                            <span className={`w-1.5 h-1.5 rounded-full ${user.notify_new_arrivals ? 'bg-emerald-500 animate-pulse' : 'bg-dark-800/30 dark:bg-white/30'}`} />
+                          )}
+                          <span>{user.notify_new_arrivals ? 'Subscribed' : 'Unsubscribed'}</span>
+                          <span className="text-[9px] opacity-70 underline ml-0.5">{user.notify_new_arrivals ? 'Turn Off' : 'Subscribe'}</span>
+                        </button>
 
                         {user.cartItems.length > 0 && (
                           <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
@@ -655,15 +714,70 @@ export default function AdminSubscribers() {
                           transition={{ duration: 0.2 }}
                           className="border-t border-cream-100 dark:border-white/5 bg-cream-50/50 dark:bg-dark-900/40 p-4 space-y-4"
                         >
-                          {/* Quick WhatsApp recovery button */}
-                          {user.phone && user.cartItems.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => handleWhatsAppReminder(user)}
-                              className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-2xl text-xs shadow-sm transition-all active:scale-95"
-                            >
-                              <MessageCircle size={14} /> Send WhatsApp Cart Reminder
-                            </button>
+                          {/* Admin Manual Subscriber Control Card */}
+                          <div className="rounded-2xl bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 p-3.5 space-y-2.5">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-bold text-xs uppercase tracking-wider text-dark-800/60 dark:text-white/60 flex items-center gap-1.5">
+                                <BellRing size={13} className="text-brand-400" />
+                                Marketing & Newsletter Override
+                              </h4>
+                              <button
+                                type="button"
+                                onClick={(e) => handleToggleSubscriberStatus(user.id, !!user.notify_new_arrivals, e)}
+                                disabled={togglingSubscriberId === user.id}
+                                className={`text-xs font-bold px-3 py-1 rounded-xl transition-all shadow-sm ${
+                                  user.notify_new_arrivals
+                                    ? 'bg-red-50 text-red-600 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-900/30 hover:bg-red-100'
+                                    : 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                                }`}
+                              >
+                                {togglingSubscriberId === user.id ? 'Updating...' : user.notify_new_arrivals ? 'Mark as Unsubscribed' : 'Opt In Customer'}
+                              </button>
+                            </div>
+                            <p className="text-[11px] text-dark-800/50 dark:text-white/40">
+                              {user.notify_new_arrivals 
+                                ? 'Customer is subscribed to store campaigns and email notifications.' 
+                                : 'Customer has not subscribed yet. You can manually opt them in above.'}
+                            </p>
+                          </div>
+
+                          {/* 1-Click WhatsApp Direct Actions */}
+                          {user.phone && (
+                            <div className="space-y-2">
+                              <h4 className="font-bold text-xs uppercase tracking-wider text-dark-800/40 dark:text-white/40 flex items-center gap-1.5">
+                                <MessageCircle size={13} className="text-emerald-500" />
+                                1-Click WhatsApp Outreach
+                              </h4>
+                              <div className="grid grid-cols-1 gap-2">
+                                {user.cartItems.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleWhatsAppReengagement(user, 'cart')}
+                                    className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-2xl text-xs shadow-sm transition-all active:scale-95"
+                                  >
+                                    <MessageCircle size={14} /> Send WhatsApp Cart Reminder ({formatPrice(user.cartTotal)})
+                                  </button>
+                                )}
+
+                                {!user.notify_new_arrivals && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleWhatsAppReengagement(user, 'vip')}
+                                    className="w-full flex items-center justify-center gap-2 bg-brand-400 hover:bg-brand-500 text-white font-bold py-2.5 px-4 rounded-2xl text-xs shadow-sm transition-all active:scale-95"
+                                  >
+                                    <Sparkles size={14} /> Send WhatsApp VIP Invite Link
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleWhatsAppReengagement(user, 'chat')}
+                                  className="w-full flex items-center justify-center gap-2 bg-cream-100 dark:bg-dark-700 text-dark-800 dark:text-white font-semibold py-2 px-4 rounded-2xl text-xs transition-colors"
+                                >
+                                  <MessageCircle size={14} className="text-emerald-500" /> Open Direct WhatsApp Chat
+                                </button>
+                              </div>
+                            </div>
                           )}
 
                           {/* Cart items preview */}
@@ -692,7 +806,7 @@ export default function AdminSubscribers() {
                           <div className="space-y-2">
                             <h4 className="font-bold text-xs uppercase tracking-wider text-dark-800/40 dark:text-white/40 flex items-center gap-1.5">
                               <Bell size={12} className="text-brand-400" />
-                              Push Notifications ({user.pushSubscriptions.length} device{user.pushSubscriptions.length !== 1 ? 's' : ''})
+                              Browser Push Devices ({user.pushSubscriptions.length} device{user.pushSubscriptions.length !== 1 ? 's' : ''})
                             </h4>
 
                             {user.pushSubscriptions.length > 0 ? (
@@ -772,10 +886,10 @@ export default function AdminSubscribers() {
                 <thead>
                   <tr className="border-b border-cream-100 dark:border-white/5 bg-cream-50/50 dark:bg-dark-900/30 text-[11px] font-bold uppercase tracking-wider text-dark-800/40 dark:text-white/40">
                     <th className="py-4 px-6">Customer Profile</th>
-                    <th className="py-4 px-6">Subscription</th>
+                    <th className="py-4 px-6">Subscription (Click to Toggle)</th>
                     <th className="py-4 px-6">Active Cart</th>
                     <th className="py-4 px-6">Orders & Spent</th>
-                    <th className="py-4 px-6 text-right">Details</th>
+                    <th className="py-4 px-6 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-cream-100 dark:divide-white/5">
@@ -811,21 +925,36 @@ export default function AdminSubscribers() {
                                 <p className="text-xs text-dark-800/40 dark:text-white/40 truncate flex items-center gap-1.5 mt-0.5">
                                   <Mail size={12} /> {user.email}
                                 </p>
+                                {user.phone && (
+                                  <p className="text-[11px] text-dark-800/60 dark:text-white/50 font-mono flex items-center gap-1 mt-0.5">
+                                    <Phone size={10} /> {user.phone}
+                                  </p>
+                                )}
                               </div>
                             </div>
                           </td>
 
                           <td className="py-4 px-6">
-                            {user.notify_new_arrivals ? (
-                              <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-full border border-emerald-500/20">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                Subscribed ({user.pushSubscriptions.length})
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 bg-cream-200/60 dark:bg-dark-700 text-dark-800/50 dark:text-white/40 text-xs font-bold px-2.5 py-1 rounded-full">
-                                Unsubscribed
-                              </span>
-                            )}
+                            {/* Interactive 1-click Subscriber Switch badge */}
+                            <button
+                              type="button"
+                              onClick={(e) => handleToggleSubscriberStatus(user.id, !!user.notify_new_arrivals, e)}
+                              disabled={togglingSubscriberId === user.id}
+                              className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-all active:scale-95 border ${
+                                user.notify_new_arrivals
+                                  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
+                                  : 'bg-cream-200/80 dark:bg-dark-700 text-dark-800/60 dark:text-white/50 border-cream-300 dark:border-white/10 hover:bg-cream-300 dark:hover:bg-dark-600'
+                              }`}
+                              title="Click to toggle customer subscription status"
+                            >
+                              {togglingSubscriberId === user.id ? (
+                                <Loader2 size={12} className="animate-spin" />
+                              ) : (
+                                <span className={`w-2 h-2 rounded-full ${user.notify_new_arrivals ? 'bg-emerald-500 animate-pulse' : 'bg-dark-800/30 dark:bg-white/30'}`} />
+                              )}
+                              <span>{user.notify_new_arrivals ? `Subscribed (${user.pushSubscriptions.length})` : 'Unsubscribed'}</span>
+                              <span className="text-[10px] opacity-70 underline ml-1">{user.notify_new_arrivals ? 'Turn Off' : 'Subscribe'}</span>
+                            </button>
                           </td>
 
                           <td className="py-4 px-6">
@@ -850,13 +979,26 @@ export default function AdminSubscribers() {
                           </td>
 
                           <td className="py-4 px-6 text-right">
-                            <button
-                              type="button"
-                              className="w-8 h-8 rounded-xl bg-cream-100 dark:bg-dark-700 text-dark-800/60 dark:text-white/60 hover:text-dark-800 dark:hover:text-white inline-flex items-center justify-center transition-colors"
-                              aria-label="Expand details"
-                            >
-                              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              {user.phone && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleWhatsAppReengagement(user, user.cartItems.length > 0 ? 'cart' : user.notify_new_arrivals ? 'chat' : 'vip', e)}
+                                  className="px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 transition-colors inline-flex items-center gap-1.5 text-xs font-semibold"
+                                  title={user.cartItems.length > 0 ? "Send Cart Recovery via WhatsApp" : "Send VIP Invite via WhatsApp"}
+                                >
+                                  <MessageCircle size={14} />
+                                  <span>{user.cartItems.length > 0 ? 'Recover' : 'WhatsApp'}</span>
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="w-8 h-8 rounded-xl bg-cream-100 dark:bg-dark-700 text-dark-800/60 dark:text-white/60 hover:text-dark-800 dark:hover:text-white inline-flex items-center justify-center transition-colors"
+                                aria-label="Expand details"
+                              >
+                                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                              </button>
+                            </div>
                           </td>
                         </tr>
 
@@ -896,8 +1038,72 @@ export default function AdminSubscribers() {
                               )}
 
                               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                {/* Left Column: Cart & WhatsApp Recovery */}
+                                {/* Left Column: Cart & WhatsApp Recovery + Admin Manual Subscriber Controls */}
                                 <div className="space-y-4">
+                                  {/* Admin Manual Subscriber Control Card */}
+                                  <div className="border border-cream-200 dark:border-white/10 rounded-2xl bg-white dark:bg-dark-800 p-4 space-y-2 shadow-sm">
+                                    <div className="flex items-center justify-between">
+                                      <h4 className="font-bold text-xs uppercase tracking-wider text-dark-800/60 dark:text-white/60 flex items-center gap-2">
+                                        <BellRing size={14} className="text-brand-400" />
+                                        Marketing Subscription Override
+                                      </h4>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => handleToggleSubscriberStatus(user.id, !!user.notify_new_arrivals, e)}
+                                        disabled={togglingSubscriberId === user.id}
+                                        className={`text-xs font-bold px-3 py-1 rounded-xl transition-all shadow-sm ${
+                                          user.notify_new_arrivals
+                                            ? 'bg-red-50 text-red-600 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-900/30 hover:bg-red-100'
+                                            : 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                                        }`}
+                                      >
+                                        {togglingSubscriberId === user.id ? 'Updating...' : user.notify_new_arrivals ? 'Mark as Unsubscribed' : 'Opt In Customer'}
+                                      </button>
+                                    </div>
+                                    <p className="text-xs text-dark-800/50 dark:text-white/40">
+                                      {user.notify_new_arrivals 
+                                        ? 'Customer is actively subscribed in database. They will receive newsletter and email campaign broadcasts.' 
+                                        : 'Customer is currently marked as unsubscribed. You can manually opt them in above.'}
+                                    </p>
+                                  </div>
+
+                                  {/* 1-Click WhatsApp Direct Actions */}
+                                  {user.phone && (
+                                    <div className="border border-cream-200 dark:border-white/10 rounded-2xl bg-white dark:bg-dark-800 p-4 space-y-3 shadow-sm">
+                                      <h4 className="font-bold text-xs uppercase tracking-wider text-dark-800/60 dark:text-white/60 flex items-center gap-2">
+                                        <MessageCircle size={14} className="text-emerald-500" />
+                                        1-Click WhatsApp Outreach
+                                      </h4>
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {user.cartItems.length > 0 && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleWhatsAppReengagement(user, 'cart')}
+                                            className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition-colors shadow-sm"
+                                          >
+                                            <MessageCircle size={13} /> Recover Cart ({formatPrice(user.cartTotal)})
+                                          </button>
+                                        )}
+                                        {!user.notify_new_arrivals && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleWhatsAppReengagement(user, 'vip')}
+                                            className="flex items-center justify-center gap-2 bg-brand-400 hover:bg-brand-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition-colors shadow-sm"
+                                          >
+                                            <Sparkles size={13} /> Send VIP Alert Invite
+                                          </button>
+                                        )}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleWhatsAppReengagement(user, 'chat')}
+                                          className="flex items-center justify-center gap-2 bg-cream-100 dark:bg-dark-700 text-dark-800 dark:text-white font-semibold py-2 px-3 rounded-xl text-xs transition-colors"
+                                        >
+                                          <MessageCircle size={13} className="text-emerald-500" /> Direct Chat
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+
                                   <h4 className="font-bold text-xs uppercase tracking-wider text-dark-800/40 dark:text-white/40 flex items-center gap-2">
                                     <CartIcon size={14} className="text-amber-500" />
                                     Active Cart Items
@@ -938,20 +1144,6 @@ export default function AdminSubscribers() {
                                         <span>Total Cart Value</span>
                                         <span className="text-amber-500 font-bold">{formatPrice(user.cartTotal)}</span>
                                       </div>
-
-                                      {user.phone ? (
-                                        <button
-                                          type="button"
-                                          onClick={() => handleWhatsAppReminder(user)}
-                                          className="w-full mt-3 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors shadow-sm"
-                                        >
-                                          <MessageCircle size={14} /> Send WhatsApp Cart Reminder
-                                        </button>
-                                      ) : (
-                                        <p className="text-[11px] text-dark-800/40 dark:text-white/40 italic text-center pt-2">
-                                          WhatsApp reminders unavailable (no phone registered).
-                                        </p>
-                                      )}
                                     </div>
                                   )}
 
