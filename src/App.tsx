@@ -38,7 +38,7 @@ import CartSync from './components/ui/CartSync'
 import WishlistSync from './components/ui/WishlistSync'
 import { useSignInStore } from './store/signInStore'
 import { useCustomerSession } from './hooks/useCustomerSession'
-import { applyTheme, initialColor, resolveEffectiveMode, useThemeStore, type ColorTheme } from './store/themeStore'
+import { applyTheme, initialColor, useThemeStore, type ColorTheme } from './store/themeStore'
 import PushPromptModal from './components/ui/PushPromptModal'
 import AccountDeletionRestoreModal from './components/ui/AccountDeletionRestoreModal'
 
@@ -235,7 +235,6 @@ function StorefrontLayout({ children }: { children: React.ReactNode }) {
   const closeSignIn = useSignInStore(s => s.closeModal)
   const signInReason = useSignInStore(s => s.reason)
   const constraintsRef = useRef(null)
-  const mode = useThemeStore(s => s.mode)
   const settings = useStoreSettings()
   const { user } = useCustomerSession()
   const isAdmin = user?.app_metadata?.role === 'admin'
