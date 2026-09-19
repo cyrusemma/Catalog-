@@ -53,6 +53,7 @@ const CustomerOrders = lazy(() => import('./pages/CustomerOrders'))
 const Settings = lazy(() => import('./pages/Settings'))
 const Privacy = lazy(() => import('./pages/Privacy'))
 const Terms = lazy(() => import('./pages/Terms'))
+const About = lazy(() => import('./pages/About'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const Feedback = lazy(() => import('./pages/Feedback'))
 const Blog = lazy(() => import('./pages/Blog'))
@@ -616,7 +617,7 @@ function AnimatedRoutes() {
         <Route path="/settings" element={<StorefrontLayout><Settings /></StorefrontLayout>} />
         <Route path="/privacy" element={<StorefrontLayout><Privacy /></StorefrontLayout>} />
         <Route path="/terms" element={<StorefrontLayout><Terms /></StorefrontLayout>} />
-        <Route path="/about" element={<StorefrontLayout><CustomPage forcedSlug="about" /></StorefrontLayout>} />
+        <Route path="/about" element={<StorefrontLayout><About /></StorefrontLayout>} />
         <Route path="/faq" element={<StorefrontLayout><CustomPage forcedSlug="faq" /></StorefrontLayout>} />
         <Route path="/p/:slug" element={<StorefrontLayout><CustomPage /></StorefrontLayout>} />
         <Route path="/blog" element={<StorefrontLayout><Blog /></StorefrontLayout>} />
