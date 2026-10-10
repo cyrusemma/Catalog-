@@ -22,7 +22,7 @@ import {
   Info
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import SEOHead from '../components/layout/SEOHead'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useCustomPage } from '../hooks/useCms'
 
@@ -33,7 +33,6 @@ export default function Terms() {
   const [activeSection, setActiveSection] = useState<string>('intro')
 
   const title = pageData?.title || 'Terms of Service'
-  useDocumentTitle(pageData?.meta_title || `${title} | ${storeName}`)
 
   const handlePrint = () => {
     window.print()
@@ -85,6 +84,10 @@ export default function Terms() {
 
   return (
     <div className="pt-24 pb-20 px-4 sm:px-6 w-full min-h-screen bg-slate-50/50 dark:bg-dark-900">
+      <SEOHead
+        title={pageData?.meta_title || `${title} | ${storeName}`}
+        description={`Read the Terms of Service for ${storeName}. Understand your rights, responsibilities, and how our WhatsApp marketplace operates.`}
+      />
       <div className="max-w-4xl mx-auto">
         
         {/* Navigation Breadcrumb */}

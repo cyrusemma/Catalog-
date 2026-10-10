@@ -12,7 +12,7 @@ import {
   Heart,
   Handshake
 } from '@phosphor-icons/react'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import SEOHead from '../components/layout/SEOHead'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useCustomPage } from '../hooks/useCms'
 
@@ -22,7 +22,6 @@ export default function About() {
   const { data: pageData } = useCustomPage('about')
 
   const title = pageData?.title || `About ${storeName}`
-  useDocumentTitle(pageData?.meta_title || `${title} | Our Mission & Story`)
 
   const contactEmail = 'cyrusadetu@gmail.com'
   const contactPhone = '0599399983'
@@ -80,6 +79,10 @@ export default function About() {
 
   return (
     <div className="pt-24 pb-20 px-4 sm:px-6 w-full min-h-screen bg-slate-50/50 dark:bg-dark-900">
+      <SEOHead
+        title={pageData?.meta_title || `${title} | Our Mission & Story`}
+        description={`Learn about ${storeName}'s mission, our curated marketplace, and how we connect shoppers with quality merchants.`}
+      />
       <div className="max-w-4xl mx-auto space-y-12">
         
         {/* If Custom Page HTML is set via Admin CMS */}

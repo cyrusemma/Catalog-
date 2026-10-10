@@ -19,6 +19,7 @@ import {
 import { supabase } from '../lib/supabase'
 import { formatPhoneNumber } from '../lib/utils'
 import { useSignInStore } from '../store/signInStore'
+import SEOHead from '../components/layout/SEOHead'
 
 const BENEFITS = [
   {
@@ -175,6 +176,10 @@ export default function BecomeMerchant() {
   if (!user) {
     return (
       <main className="flex-1 flex flex-col items-center justify-center p-4 py-20 text-center">
+        <SEOHead
+          title="Become a Seller | Start Selling on Catalog"
+          description="Join our marketplace as a merchant. Get your own store link, WhatsApp order alerts, and sell to thousands of shoppers."
+        />
         <div className="w-20 h-20 rounded-full bg-brand-400/10 flex items-center justify-center mb-6 mx-auto">
           <Storefront size={40} weight="duotone" className="text-brand-400" />
         </div>
