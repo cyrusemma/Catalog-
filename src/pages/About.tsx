@@ -10,7 +10,9 @@ import {
   Phone, 
   ChatCircleDots,
   Heart,
-  Handshake
+  Handshake,
+  GithubLogo,
+  Code,
 } from '@phosphor-icons/react'
 import SEOHead from '../components/layout/SEOHead'
 import { useStoreSettings } from '../hooks/useStoreSettings'
@@ -82,6 +84,32 @@ export default function About() {
       <SEOHead
         title={pageData?.meta_title || `${title} | Our Mission & Story`}
         description={`Learn about ${storeName}'s mission, our curated marketplace, and how we connect shoppers with quality merchants.`}
+        schemaData={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'Person',
+            name: 'Emmanuel Mawuli Kofi Adetu',
+            alternateName: ['Adetu Mawuli', 'Cyrus Adetu', 'Emmanuel Adetu'],
+            url: 'https://ccatalog.store/about',
+            sameAs: [
+              'https://github.com/cyrusemma',
+            ],
+            jobTitle: 'Full-Stack Developer',
+            description: `Full-stack developer and the creator of ${storeName} (ccatalog.store), a WhatsApp-first marketplace platform built for Ghanaian merchants and shoppers.`,
+            knowsAbout: ['Web Development', 'E-commerce', 'React', 'TypeScript', 'Supabase'],
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: storeName,
+            url: 'https://ccatalog.store',
+            author: {
+              '@type': 'Person',
+              name: 'Emmanuel Mawuli Kofi Adetu',
+              sameAs: 'https://github.com/cyrusemma',
+            },
+          },
+        ]}
       />
       <div className="max-w-4xl mx-auto space-y-12">
         
@@ -284,6 +312,39 @@ export default function About() {
                 <span>&copy; {new Date().getFullYear()} {storeName}</span>
               </div>
             </div>
+            {/* ── Meet the Creator ──────────────────────────────────── */}
+            <div className="bg-white dark:bg-dark-800/80 rounded-3xl border border-brand-400/10 p-8 sm:p-10 shadow-sm">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-brand-400 via-amber-500 to-brand-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                  <span className="text-2xl font-display font-bold text-white select-none">EM</span>
+                </div>
+                <div className="text-center sm:text-left">
+                  <p className="text-xs font-bold uppercase tracking-widest text-brand-500 mb-1 flex items-center justify-center sm:justify-start gap-1.5">
+                    <Code size={12} weight="bold" />
+                    Designed &amp; Built by
+                  </p>
+                  <h2 className="text-2xl font-display font-bold text-dark-800 dark:text-white mb-2">
+                    Emmanuel Mawuli Kofi Adetu
+                  </h2>
+                  <p className="text-dark-800/60 dark:text-white/60 text-sm leading-relaxed max-w-lg">
+                    Full-stack developer and the creator of {storeName}. Built from scratch as a
+                    modern WhatsApp-first marketplace platform connecting Ghanaian merchants with
+                    everyday shoppers.
+                  </p>
+                  <a
+                    href="https://github.com/cyrusemma"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 mt-4 text-sm font-semibold text-brand-500 hover:text-brand-400 transition-colors group"
+                  >
+                    <GithubLogo size={16} weight="fill" />
+                    github.com/cyrusemma
+                    <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+
           </>
         )}
 
