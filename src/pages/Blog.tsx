@@ -57,7 +57,7 @@ export default function Blog() {
     '@type': 'CollectionPage',
     name: `${storeName} Journal & Stories`,
     description: 'Style inspirations, product guides, and behind-the-scenes stories from our marketplace creators.',
-    url: typeof window !== 'undefined' ? `${window.location.origin}/blog` : 'https://catalog.cyrus.com/blog',
+    url: typeof window !== 'undefined' ? `${window.location.origin}/blog` : 'https://ccatalog.store/blog',
   }
 
   return (

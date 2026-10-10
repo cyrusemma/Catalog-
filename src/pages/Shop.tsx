@@ -339,7 +339,7 @@ export default function Shop() {
     '@type': 'CollectionPage',
     name: `Shop All Products | ${storeName}`,
     description: 'Browse our complete catalog of curated products, clothing, shoes, accessories, and electronics.',
-    url: typeof window !== 'undefined' ? `${window.location.origin}/shop` : 'https://catalog.cyrus.com/shop',
+    url: typeof window !== 'undefined' ? `${window.location.origin}/shop` : 'https://ccatalog.store/shop',
   }
 
   return (

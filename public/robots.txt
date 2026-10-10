@@ -40,4 +40,4 @@ Disallow: /merchant/
 Disallow: /account/
 
 # Sitemap location
-Sitemap: https://catalog.cyrus.com/sitemap.xml
+Sitemap: https://ccatalog.store/sitemap.xml

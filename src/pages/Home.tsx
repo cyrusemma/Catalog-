@@ -40,7 +40,7 @@ export default function Home() {
     '@type': 'Store',
     name: storeName,
     description: storeTagline,
-    url: typeof window !== 'undefined' ? window.location.origin : 'https://catalog.cyrus.com',
+    url: typeof window !== 'undefined' ? window.location.origin : 'https://ccatalog.store',
     telephone: settings.whatsapp_number || undefined,
     currenciesAccepted: settings.currency || 'GHS',
     paymentAccepted: 'Mobile Money, Cash on Delivery, Bank Transfer',

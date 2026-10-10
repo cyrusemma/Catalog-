@@ -102,7 +102,7 @@ export default function BlogPost() {
       name: storeName,
       logo: {
         '@type': 'ImageObject',
-        url: settings.logo_url || 'https://catalog.cyrus.com/apple-touch-icon.png',
+        url: settings.logo_url || 'https://ccatalog.store/apple-touch-icon.png',
       },
     },
     mainEntityOfPage: {

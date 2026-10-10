@@ -12,14 +12,14 @@ Catalog is a modern Progressive Web App (PWA) storefront connecting customers di
 - **Core Categories:** Footwear, Apparel, Electronics, Accessories, Lifestyle
 
 ## Public Endpoints
-- **Storefront Home:** https://catalog.cyrus.com/
-- **Full Catalog:** https://catalog.cyrus.com/shop
-- **Stories & Journal:** https://catalog.cyrus.com/blog
-- **Merchant Onboarding:** https://catalog.cyrus.com/sell
-- **About Us:** https://catalog.cyrus.com/about
-- **FAQs & Support:** https://catalog.cyrus.com/faq
-- **Terms of Service:** https://catalog.cyrus.com/terms
-- **Privacy Policy:** https://catalog.cyrus.com/privacy
+- **Storefront Home:** https://ccatalog.store/
+- **Full Catalog:** https://ccatalog.store/shop
+- **Stories & Journal:** https://ccatalog.store/blog
+- **Merchant Onboarding:** https://ccatalog.store/sell
+- **About Us:** https://ccatalog.store/about
+- **FAQs & Support:** https://ccatalog.store/faq
+- **Terms of Service:** https://ccatalog.store/terms
+- **Privacy Policy:** https://ccatalog.store/privacy
 
 ## Order & Customer Support
 Orders are confirmed and dispatched directly via WhatsApp integration (`wa.me`) for verified, real-time customer service.
