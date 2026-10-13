@@ -666,9 +666,9 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* Cart Preview Hover Wrapper */}
+            {/* Cart Preview Hover Wrapper — hidden on mobile since it is prominently fixed in BottomNav */}
             <div
-              className="relative"
+              className="relative hidden sm:block"
               onMouseEnter={openMiniCart}
               onMouseLeave={closeMiniCart}
             >
@@ -738,28 +738,31 @@ export default function Navbar() {
               </AnimatePresence>
             </div>
 
-            {isLoggedIn && profile ? (
-              <Link
-                to="/account"
-                aria-label="Your account"
-                className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-brand-400 to-brand-500 text-white text-[10px] font-bold ring-1 ring-brand-400/30 hover:ring-brand-400/60 transition-shadow ml-1"
-              >
-                {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span>{initials}</span>
-                )}
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={() => openSignIn()}
-                aria-label="Sign in"
-                className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white ml-1"
-              >
-                <UserCircle size={18} weight="duotone" />
-              </button>
-            )}
+            {/* Profile Avatar / Sign In — hidden on mobile since it is prominently fixed in BottomNav */}
+            <div className="hidden sm:flex items-center">
+              {isLoggedIn && profile ? (
+                <Link
+                  to="/account"
+                  aria-label="Your account"
+                  className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-brand-400 to-brand-500 text-white text-[10px] font-bold ring-1 ring-brand-400/30 hover:ring-brand-400/60 transition-shadow ml-1"
+                >
+                  {profile.avatar_url ? (
+                    <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{initials}</span>
+                  )}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openSignIn()}
+                  aria-label="Sign in"
+                  className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white ml-1"
+                >
+                  <UserCircle size={18} weight="duotone" />
+                </button>
+              )}
+            </div>
           </div>
         </nav>
       </div>

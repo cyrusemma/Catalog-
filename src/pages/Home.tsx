@@ -355,22 +355,28 @@ export default function Home() {
         initial={reduceMotion ? false : { opacity: 0, y: 12 }}
         animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-7xl mx-auto px-3.5 sm:px-4 pt-3 pb-6 sm:pt-6 sm:pb-12 relative z-30"
+        className="w-full max-w-7xl mx-auto px-3.5 sm:px-4 pt-3 pb-6 sm:pt-6 sm:pb-12 relative z-30 overflow-hidden"
       >
-        <div className="relative rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-8 lg:p-11 overflow-hidden bg-gradient-to-br from-cream-100/90 via-cream-50 to-white dark:from-[#18130e] dark:via-dark-900 dark:to-dark-900 border border-cream-200/80 dark:border-white/10 shadow-sm">
+        <div className="w-full max-w-full relative rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-7 lg:p-11 overflow-hidden bg-gradient-to-br from-cream-100/90 via-cream-50 to-white dark:from-[#18130e] dark:via-dark-900 dark:to-dark-900 border border-cream-200/80 dark:border-white/10 shadow-sm">
           {/* Subtle warm backdrop glow - compact & non-distracting */}
           <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-brand-400/10 dark:bg-amber-500/10 blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-emerald-500/10 dark:bg-emerald-500/5 blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 grid lg:grid-cols-12 gap-6 lg:gap-10 items-center">
+          <div className="relative z-10 w-full grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-10 items-center">
             {/* Left Column: Headline, concise support copy, clear CTAs */}
-            <div className="lg:col-span-7 text-center lg:text-left space-y-3 sm:space-y-4">
-              <h2 className="text-[22px] sm:text-3xl lg:text-4xl font-display font-bold tracking-tight text-dark-800 dark:text-white leading-[1.2] sm:leading-[1.15]">
-                Launch your online store and receive orders straight to WhatsApp.
+            <div className="w-full min-w-0 lg:col-span-7 text-center lg:text-left space-y-3 sm:space-y-4">
+              <div className="flex justify-center lg:justify-start">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-400/10 dark:bg-white/10 text-brand-600 dark:text-brand-300 border border-brand-400/20 dark:border-white/15 text-[11px] font-bold uppercase tracking-wider">
+                  <Storefront size={13} weight="fill" /> Zero Commission
+                </span>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl lg:text-4xl font-display font-bold tracking-tight text-dark-800 dark:text-white leading-snug sm:leading-tight break-words max-w-lg mx-auto lg:mx-0">
+                Launch your online store &amp; receive orders straight to WhatsApp
               </h2>
 
-              <p className="text-xs sm:text-base text-dark-800/70 dark:text-white/70 font-normal leading-relaxed max-w-xl mx-auto lg:mx-0">
-                Share your personal catalog link, accept customer orders with zero commission, and manage your inventory easily.
+              <p className="text-xs sm:text-sm lg:text-base text-dark-800/70 dark:text-white/70 font-normal leading-relaxed max-w-md mx-auto lg:mx-0 break-words">
+                Share your custom catalog link, manage products easily, and accept customer orders with zero platform fee.
               </p>
 
               {/* CTAs */}
@@ -395,33 +401,33 @@ export default function Home() {
             </div>
 
             {/* Right Column: Credible Storefront Preview */}
-            <div className="lg:col-span-5 w-full">
-              <div className="rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 shadow-md">
+            <div className="w-full min-w-0 lg:col-span-5">
+              <div className="w-full max-w-full rounded-2xl sm:rounded-3xl p-3 sm:p-5 bg-white/95 dark:bg-dark-800/95 backdrop-blur-sm border border-cream-200 dark:border-white/10 shadow-md overflow-hidden">
                 {/* Store URL & Status */}
-                <div className="flex items-center justify-between gap-2 pb-2.5 sm:pb-3 mb-2.5 sm:mb-3 border-b border-cream-200/70 dark:border-white/10 text-xs">
+                <div className="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-cream-200/70 dark:border-white/10 text-xs">
                   <div className="flex items-center gap-1.5 min-w-0 font-mono text-dark-800/60 dark:text-white/50 text-[11px] truncate">
-                    <Storefront size={13} className="text-brand-400 flex-shrink-0" />
+                    <Storefront size={13} className="text-brand-400 shrink-0" />
                     <span className="truncate">ccatalog.store/s/{previewStoreSlug}</span>
                   </div>
-                  <span className="text-[10px] font-semibold text-dark-800/50 dark:text-white/40 uppercase tracking-wider flex-shrink-0">
-                    {previewStoreIsReal ? 'Storefront' : 'Store Preview'}
+                  <span className="text-[10px] font-semibold text-dark-800/50 dark:text-white/40 uppercase tracking-wider shrink-0 bg-cream-100 dark:bg-white/5 px-2 py-0.5 rounded-md">
+                    {previewStoreIsReal ? 'Storefront' : 'Preview'}
                   </span>
                 </div>
 
                 {/* Store Identity */}
-                <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                <div className="flex items-center gap-2.5 sm:gap-3 mb-3 min-w-0">
                   {previewStoreLogo ? (
                     <img
                       src={previewStoreLogo}
                       alt={previewStoreName}
-                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover border border-cream-200 dark:border-white/10 flex-shrink-0"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover border border-cream-200 dark:border-white/10 shrink-0"
                     />
                   ) : (
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand-400/10 text-brand-400 font-bold flex items-center justify-center text-sm flex-shrink-0 border border-brand-400/20">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand-400/10 text-brand-400 font-bold flex items-center justify-center text-sm shrink-0 border border-brand-400/20">
                       {previewStoreName.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <h3 className="text-xs sm:text-sm font-bold text-dark-800 dark:text-white truncate">
                       {previewStoreName}
                     </h3>
@@ -432,13 +438,13 @@ export default function Home() {
                 </div>
 
                 {/* Real Products in Preview */}
-                <div className="space-y-2">
+                <div className="space-y-2 w-full">
                   {previewProducts.slice(0, 2).map((p) => (
                     <div
                       key={p.id}
-                      className="p-2 sm:p-2.5 rounded-xl bg-cream-50/80 dark:bg-dark-700/60 border border-cream-200/60 dark:border-white/5 flex items-center gap-2.5 sm:gap-3"
+                      className="p-2 sm:p-2.5 rounded-xl bg-cream-50/80 dark:bg-dark-700/60 border border-cream-200/60 dark:border-white/5 flex items-center gap-2 sm:gap-3 min-w-0"
                     >
-                      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden bg-cream-100 dark:bg-dark-700 flex-shrink-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden bg-cream-100 dark:bg-dark-700 shrink-0">
                         <img
                           src={p.images?.[0] || 'https://placehold.co/100x100/1a1008/d4820a?text=Product'}
                           alt={p.title}
@@ -454,7 +460,7 @@ export default function Home() {
                           {formatPrice(p.selling_price)}
                         </p>
                       </div>
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30">
                           <WhatsappLogo size={12} weight="fill" />
                           <span>Order</span>
@@ -465,7 +471,7 @@ export default function Home() {
                 </div>
 
                 {/* Direct WhatsApp ordering note */}
-                <p className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-dark-800/40 dark:text-white/35 text-center">
+                <p className="mt-2.5 text-[10px] sm:text-[11px] text-dark-800/40 dark:text-white/35 text-center">
                   Direct WhatsApp checkout on every listing
                 </p>
               </div>
