@@ -189,7 +189,7 @@ export default function Home() {
   }
 
   return (
-    <main className="flex-1">
+    <main className="flex-1 pb-20 sm:pb-0">
       <SEOHead
         title={storeName}
         description={storeTagline}
@@ -201,7 +201,7 @@ export default function Home() {
         initial={reduceMotion ? false : { opacity: 0, y: 8 }}
         animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 relative z-40"
+        className="max-w-2xl mx-auto px-4 pt-3 sm:pt-6 relative z-40"
       >
         <div ref={searchRootRef} className="relative z-40">
           <form
@@ -259,7 +259,7 @@ export default function Home() {
                 aria-activedescendant={
                   activeIndex >= 0 ? `home-search-opt-${topSuggestions[activeIndex]?.id}` : undefined
                 }
-                className="w-full h-full pl-11 pr-10 rounded-full bg-transparent text-base text-dark-800 dark:text-white placeholder:text-dark-800/40 dark:placeholder:text-white/40 outline-none focus:ring-2 focus:ring-brand-400/30 transition-shadow"
+                className="w-full h-full pl-11 pr-10 rounded-full bg-transparent text-sm sm:text-base text-dark-800 dark:text-white placeholder:text-dark-800/40 dark:placeholder:text-white/40 outline-none focus:ring-2 focus:ring-brand-400/30 transition-shadow"
               />
               {searchTerm && (
                 <button
@@ -355,29 +355,29 @@ export default function Home() {
         initial={reduceMotion ? false : { opacity: 0, y: 12 }}
         animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-7xl mx-auto px-4 pt-4 pb-8 sm:pt-6 sm:pb-12 relative z-30"
+        className="max-w-7xl mx-auto px-3.5 sm:px-4 pt-3 pb-6 sm:pt-6 sm:pb-12 relative z-30"
       >
-        <div className="relative rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-9 lg:p-11 overflow-hidden bg-gradient-to-br from-cream-100/90 via-cream-50 to-white dark:from-[#18130e] dark:via-dark-900 dark:to-dark-900 border border-cream-200/80 dark:border-white/10 shadow-sm">
+        <div className="relative rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-8 lg:p-11 overflow-hidden bg-gradient-to-br from-cream-100/90 via-cream-50 to-white dark:from-[#18130e] dark:via-dark-900 dark:to-dark-900 border border-cream-200/80 dark:border-white/10 shadow-sm">
           {/* Subtle warm backdrop glow - compact & non-distracting */}
           <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-brand-400/10 dark:bg-amber-500/10 blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-emerald-500/10 dark:bg-emerald-500/5 blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 grid lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+          <div className="relative z-10 grid lg:grid-cols-12 gap-6 lg:gap-10 items-center">
             {/* Left Column: Headline, concise support copy, clear CTAs */}
-            <div className="lg:col-span-7 text-center lg:text-left space-y-4">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-display font-bold tracking-tight text-dark-800 dark:text-white leading-[1.15]">
+            <div className="lg:col-span-7 text-center lg:text-left space-y-3 sm:space-y-4">
+              <h2 className="text-[22px] sm:text-3xl lg:text-4xl font-display font-bold tracking-tight text-dark-800 dark:text-white leading-[1.2] sm:leading-[1.15]">
                 Launch your online store and receive orders straight to WhatsApp.
               </h2>
 
-              <p className="text-sm sm:text-base text-dark-800/70 dark:text-white/70 font-normal leading-relaxed max-w-xl mx-auto lg:mx-0">
+              <p className="text-xs sm:text-base text-dark-800/70 dark:text-white/70 font-normal leading-relaxed max-w-xl mx-auto lg:mx-0">
                 Share your personal catalog link, accept customer orders with zero commission, and manage your inventory easily.
               </p>
 
               {/* CTAs */}
-              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
+              <div className="pt-1 sm:pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 justify-center lg:justify-start">
                 <Link
                   to="/sell"
-                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-brand-400 hover:bg-brand-500 active:bg-brand-600 text-white font-bold text-sm transition-all shadow-sm flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-brand-400 hover:bg-brand-500 active:bg-brand-600 text-white font-bold text-sm transition-all shadow-sm flex items-center justify-center gap-2"
                 >
                   <Storefront size={18} weight="fill" />
                   <span>Open your store</span>
@@ -386,7 +386,7 @@ export default function Home() {
 
                 <Link
                   to="/shop"
-                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl border border-dark-800/15 dark:border-white/15 hover:border-brand-400/40 hover:bg-brand-400/5 text-dark-800 dark:text-white font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-dark-800/15 dark:border-white/15 hover:border-brand-400/40 hover:bg-brand-400/5 text-dark-800 dark:text-white font-semibold text-sm transition-all flex items-center justify-center gap-2"
                 >
                   <span>Explore shops</span>
                   <CaretRight size={15} />
@@ -396,9 +396,9 @@ export default function Home() {
 
             {/* Right Column: Credible Storefront Preview */}
             <div className="lg:col-span-5 w-full">
-              <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 shadow-md">
+              <div className="rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 shadow-md">
                 {/* Store URL & Status */}
-                <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-cream-200/70 dark:border-white/10 text-xs">
+                <div className="flex items-center justify-between gap-2 pb-2.5 sm:pb-3 mb-2.5 sm:mb-3 border-b border-cream-200/70 dark:border-white/10 text-xs">
                   <div className="flex items-center gap-1.5 min-w-0 font-mono text-dark-800/60 dark:text-white/50 text-[11px] truncate">
                     <Storefront size={13} className="text-brand-400 flex-shrink-0" />
                     <span className="truncate">ccatalog.store/s/{previewStoreSlug}</span>
@@ -409,23 +409,23 @@ export default function Home() {
                 </div>
 
                 {/* Store Identity */}
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
                   {previewStoreLogo ? (
                     <img
                       src={previewStoreLogo}
                       alt={previewStoreName}
-                      className="w-10 h-10 rounded-xl object-cover border border-cream-200 dark:border-white/10 flex-shrink-0"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover border border-cream-200 dark:border-white/10 flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-xl bg-brand-400/10 text-brand-400 font-bold flex items-center justify-center text-sm flex-shrink-0 border border-brand-400/20">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand-400/10 text-brand-400 font-bold flex items-center justify-center text-sm flex-shrink-0 border border-brand-400/20">
                       {previewStoreName.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div className="min-w-0">
-                    <h3 className="text-sm font-bold text-dark-800 dark:text-white truncate">
+                    <h3 className="text-xs sm:text-sm font-bold text-dark-800 dark:text-white truncate">
                       {previewStoreName}
                     </h3>
-                    <p className="text-[11px] text-dark-800/50 dark:text-white/40 truncate">
+                    <p className="text-[10px] sm:text-[11px] text-dark-800/50 dark:text-white/40 truncate">
                       {previewStoreTagline}
                     </p>
                   </div>
@@ -436,9 +436,9 @@ export default function Home() {
                   {previewProducts.slice(0, 2).map((p) => (
                     <div
                       key={p.id}
-                      className="p-2 sm:p-2.5 rounded-xl bg-cream-50/80 dark:bg-dark-700/60 border border-cream-200/60 dark:border-white/5 flex items-center gap-3"
+                      className="p-2 sm:p-2.5 rounded-xl bg-cream-50/80 dark:bg-dark-700/60 border border-cream-200/60 dark:border-white/5 flex items-center gap-2.5 sm:gap-3"
                     >
-                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-cream-100 dark:bg-dark-700 flex-shrink-0">
+                      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden bg-cream-100 dark:bg-dark-700 flex-shrink-0">
                         <img
                           src={p.images?.[0] || 'https://placehold.co/100x100/1a1008/d4820a?text=Product'}
                           alt={p.title}
@@ -465,7 +465,7 @@ export default function Home() {
                 </div>
 
                 {/* Direct WhatsApp ordering note */}
-                <p className="mt-3 text-[11px] text-dark-800/40 dark:text-white/35 text-center">
+                <p className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-dark-800/40 dark:text-white/35 text-center">
                   Direct WhatsApp checkout on every listing
                 </p>
               </div>
@@ -492,26 +492,26 @@ export default function Home() {
           whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="py-10 sm:py-16"
+          className="py-6 sm:py-14"
         >
-          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between mb-6 sm:mb-10">
+          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between mb-4 sm:mb-8">
             <div>
-              <span className="block text-[var(--hero-accent)] text-[11px] uppercase tracking-[0.28em] font-semibold mb-2.5 flex items-center gap-2">
+              <span className="block text-[var(--hero-accent)] text-[11px] uppercase tracking-[0.28em] font-semibold mb-1.5 sm:mb-2.5 flex items-center gap-2">
                 <Storefront size={12} weight="fill" /> Followed Sellers
               </span>
-              <h2 className="text-3xl sm:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
                 From Shops You Follow
               </h2>
             </div>
             <Link
               to="/account"
-              className="group inline-flex items-center gap-1.5 text-sm font-medium text-dark-800/70 dark:text-white/70 hover:text-[var(--hero-accent)] transition-colors"
+              className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-dark-800/70 dark:text-white/70 hover:text-[var(--hero-accent)] transition-colors"
             >
               Manage sellers <ArrowRight size={14} weight="bold" className="transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
           <div className="max-w-7xl mx-auto px-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
               {(followedProducts as any[]).slice(0, 8).map((p, i) => (
                 <ProductCard key={p.id} product={p} index={i} />
               ))}
@@ -527,27 +527,26 @@ export default function Home() {
           whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="py-10 sm:py-16"
+          className="py-6 sm:py-14"
         >
-          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between mb-6 sm:mb-10">
+          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between mb-4 sm:mb-8">
             <div>
-              <span className="block text-[var(--hero-accent)] text-[11px] uppercase tracking-[0.28em] font-semibold mb-2.5">
+              <span className="block text-[var(--hero-accent)] text-[11px] uppercase tracking-[0.28em] font-semibold mb-1.5 sm:mb-2.5">
                 Just Dropped
               </span>
-              <h2 className="text-3xl sm:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
                 New Arrivals
               </h2>
             </div>
             <Link
               to="/shop"
-              className="group inline-flex items-center gap-1.5 text-sm font-medium text-dark-800/70 dark:text-white/70 hover:text-[var(--hero-accent)] transition-colors"
+              className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-dark-800/70 dark:text-white/70 hover:text-[var(--hero-accent)] transition-colors"
             >
               View all <ArrowRight size={14} weight="bold" className="transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
-          {/* Mobile = edge-to-edge swipe rail with snap. Desktop = grid. */}
           <div className="max-w-7xl mx-auto px-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
               {newProducts.slice(0, 8).map((p, i) => (
                 <ProductCard key={p.id} product={p} index={i} />
               ))}
@@ -563,26 +562,26 @@ export default function Home() {
           whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="py-10 sm:py-16"
+          className="py-6 sm:py-14"
         >
-          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between mb-6 sm:mb-10">
+          <div className="max-w-7xl mx-auto px-4 flex items-end justify-between mb-4 sm:mb-8">
             <div>
-              <span className="block text-[var(--hero-accent)] text-[11px] uppercase tracking-[0.28em] font-semibold mb-2.5">
+              <span className="block text-[var(--hero-accent)] text-[11px] uppercase tracking-[0.28em] font-semibold mb-1.5 sm:mb-2.5">
                 Featured
               </span>
-              <h2 className="text-3xl sm:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
                 Featured Products
               </h2>
             </div>
             <Link
               to="/shop"
-              className="group inline-flex items-center gap-1.5 text-sm font-medium text-dark-800/70 dark:text-white/70 hover:text-[var(--hero-accent)] transition-colors"
+              className="group inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-dark-800/70 dark:text-white/70 hover:text-[var(--hero-accent)] transition-colors"
             >
               View all <ArrowRight size={14} weight="bold" className="transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
           <div className="max-w-7xl mx-auto px-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
               {featured.slice(0, 8).map((p, i) => (
                 <ProductCard key={p.id} product={p} index={i} />
               ))}
@@ -593,10 +592,10 @@ export default function Home() {
 
       {/* Empty state */}
       {!productsLoadFailed && (!featured || featured.length === 0) && (!newProducts || newProducts.length === 0) && (
-        <section className="max-w-7xl mx-auto px-4 py-32 text-center">
-          <ShoppingBagOpen size={64} weight="duotone" className="text-brand-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-display font-bold text-dark-800 dark:text-white mb-2">Coming Soon</h2>
-          <p className="text-dark-800/50 dark:text-white/50">Products are being added. Check back soon!</p>
+        <section className="max-w-7xl mx-auto px-4 py-24 sm:py-32 text-center">
+          <ShoppingBagOpen size={56} weight="duotone" className="text-brand-400 mx-auto mb-4" />
+          <h2 className="text-xl sm:text-2xl font-display font-bold text-dark-800 dark:text-white mb-2">Coming Soon</h2>
+          <p className="text-xs sm:text-sm text-dark-800/50 dark:text-white/50">Products are being added. Check back soon!</p>
         </section>
       )}
 
@@ -606,21 +605,21 @@ export default function Home() {
         whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-80px' }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        className="py-12 sm:py-18"
+        className="py-8 sm:py-16"
       >
         <div className="max-w-7xl mx-auto px-4">
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-cream-100/90 via-cream-50 to-white dark:from-[#16120e] dark:via-dark-900 dark:to-dark-900 border border-dark-800/8 dark:border-white/10 p-7 sm:p-10 lg:p-12 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-8 sm:gap-12">
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-[2.5rem] bg-gradient-to-br from-cream-100/90 via-cream-50 to-white dark:from-[#16120e] dark:via-dark-900 dark:to-dark-900 border border-dark-800/8 dark:border-white/10 p-5 sm:p-10 lg:p-12 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-12">
             
             {/* Subtle Warm Ambient Glow */}
             <div className="absolute -right-20 -top-20 w-80 h-80 bg-brand-400/10 dark:bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-brand-500/10 dark:bg-amber-600/5 rounded-full blur-3xl pointer-events-none" />
 
             {/* Left Column: Editorial Copy & Action */}
-            <div className="space-y-4 text-center lg:text-left relative z-10 max-w-xl">
-              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-brand-400/10 dark:bg-white/10 border border-brand-400/20 dark:border-white/15 text-[11px] font-bold uppercase tracking-widest text-brand-600 dark:text-amber-300 backdrop-blur-sm">
+            <div className="space-y-3 sm:space-y-4 text-center lg:text-left relative z-10 max-w-xl w-full">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-400/10 dark:bg-white/10 border border-brand-400/20 dark:border-white/15 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-brand-600 dark:text-amber-300 backdrop-blur-sm">
                 <Images size={13} weight="bold" /> CURATED LOOKBOOK
               </span>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-display font-bold text-dark-800 dark:text-white tracking-tight leading-tight">
+              <h2 className="text-xl sm:text-3xl lg:text-4xl font-display font-bold text-dark-800 dark:text-white tracking-tight leading-tight">
                 Explore the Visual Gallery
               </h2>
               <p className="text-xs sm:text-sm text-dark-800/70 dark:text-white/70 leading-relaxed">
@@ -629,7 +628,7 @@ export default function Home() {
               <div className="pt-2 flex justify-center lg:justify-start">
                 <Link
                   to="/gallery"
-                  className="group inline-flex items-center gap-2 px-7 py-3.5 bg-dark-900 hover:bg-dark-800 dark:bg-amber-400 dark:hover:bg-amber-300 text-white dark:text-dark-900 font-bold rounded-2xl text-sm shadow-lg shadow-black/10 dark:shadow-amber-500/20 transition-all transform hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
+                  className="group inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 sm:px-7 py-3 sm:py-3.5 bg-dark-900 hover:bg-dark-800 dark:bg-amber-400 dark:hover:bg-amber-300 text-white dark:text-dark-900 font-bold rounded-xl sm:rounded-2xl text-sm shadow-lg shadow-black/10 dark:shadow-amber-500/20 transition-all transform hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
                 >
                   <span>Open Visual Gallery</span>
                   <ArrowRight size={16} weight="bold" className="group-hover:translate-x-1 transition-transform" />
@@ -638,19 +637,19 @@ export default function Home() {
             </div>
 
             {/* Right Column: Editorial Overlapping Image Stack */}
-            <div className="relative flex items-center justify-center shrink-0 z-10 py-4 lg:py-2">
+            <div className="relative flex items-center justify-center shrink-0 z-10 py-2">
               {lookbookImages.length > 0 ? (
-                <div className="flex items-center -space-x-8 sm:-space-x-12 hover:space-x-2 transition-all duration-500 py-3">
+                <div className="flex items-center -space-x-6 sm:-space-x-12 hover:space-x-2 transition-all duration-500 py-3">
                   {lookbookImages.map((src, i) => {
                     const rotations = [
-                      '-rotate-6 translate-y-2',
-                      'rotate-0 -translate-y-2 z-10 scale-105',
-                      'rotate-6 translate-y-2',
+                      '-rotate-6 translate-y-1 sm:translate-y-2',
+                      'rotate-0 -translate-y-1 sm:-translate-y-2 z-10 scale-105',
+                      'rotate-6 translate-y-1 sm:translate-y-2',
                     ]
                     return (
                       <div
                         key={i}
-                        className={`relative w-24 sm:w-32 lg:w-36 aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border-2 border-white dark:border-dark-800 transform transition-all duration-300 hover:scale-110 hover:z-20 hover:rotate-0 hover:shadow-2xl ${rotations[i] || ''}`}
+                        className={`relative w-20 sm:w-32 lg:w-36 aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden shadow-xl border-2 border-white dark:border-dark-800 transform transition-all duration-300 hover:scale-110 hover:z-20 hover:rotate-0 hover:shadow-2xl ${rotations[i] || ''}`}
                       >
                         <img
                           src={src}
@@ -664,8 +663,8 @@ export default function Home() {
                   })}
                 </div>
               ) : (
-                <div className="w-48 h-32 rounded-2xl bg-brand-400/10 border border-brand-400/20 flex items-center justify-center text-brand-400">
-                  <Images size={36} weight="duotone" />
+                <div className="w-40 sm:w-48 h-28 sm:h-32 rounded-2xl bg-brand-400/10 border border-brand-400/20 flex items-center justify-center text-brand-400">
+                  <Images size={32} weight="duotone" />
                 </div>
               )}
             </div>
