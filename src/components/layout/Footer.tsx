@@ -8,6 +8,7 @@ import {
   WhatsappLogo,
   EnvelopeSimple,
   Phone,
+  ArrowUpRight,
 } from '@phosphor-icons/react'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
 import { supabase } from '../../lib/supabase'
@@ -17,8 +18,6 @@ function socialUrl(value: string, base: string): string {
   if (/^https?:\/\//i.test(v)) return v
   return base + v.replace(/^@/, '')
 }
-
-
 
 export default function Footer() {
   const settings = useStoreSettings()
@@ -47,138 +46,193 @@ export default function Footer() {
       value: settings.whatsapp_number,
       href: `https://wa.me/${settings.whatsapp_number.replace(/\D/g, '')}`,
       Icon: WhatsappLogo,
-      hoverClass: 'hover:bg-[#25D366]/10 hover:text-[#25D366] hover:border-[#25D366]/30',
+      iconColor: '#25D366',
+      bgHover: 'hover:bg-[#25D366]/[0.07] hover:border-[#25D366]/20',
     },
-    { 
-      label: 'Email', 
-      value: 'cyrusadetu@gmail.com', 
-      href: 'mailto:cyrusadetu@gmail.com', 
+    {
+      label: 'Email',
+      value: 'cyrusadetu@gmail.com',
+      href: 'mailto:cyrusadetu@gmail.com',
       Icon: EnvelopeSimple,
-      hoverClass: 'hover:bg-brand-400/10 hover:text-brand-400 hover:border-brand-400/30',
+      iconColor: '#a0845c',
+      bgHover: 'hover:bg-[#a0845c]/[0.07] hover:border-[#a0845c]/20',
     },
-    { 
-      label: 'Call us', 
-      value: '0599399983', 
-      href: 'tel:0599399983', 
+    {
+      label: 'Call us',
+      value: '0599399983',
+      href: 'tel:0599399983',
       Icon: Phone,
-      hoverClass: 'hover:bg-blue-500/10 hover:text-blue-500 hover:border-blue-500/30',
+      iconColor: '#5b82b0',
+      bgHover: 'hover:bg-[#5b82b0]/[0.07] hover:border-[#5b82b0]/20',
     },
     settings.social_instagram && {
       label: 'Instagram',
       value: settings.social_instagram,
       href: socialUrl(settings.social_instagram, 'https://instagram.com/'),
       Icon: InstagramLogo,
-      hoverClass: 'hover:bg-[#E1306C]/10 hover:text-[#E1306C] hover:border-[#E1306C]/30',
+      iconColor: '#C13584',
+      bgHover: 'hover:bg-[#C13584]/[0.07] hover:border-[#C13584]/20',
     },
     settings.social_tiktok && {
       label: 'TikTok',
       value: settings.social_tiktok,
       href: socialUrl(settings.social_tiktok, 'https://tiktok.com/@'),
       Icon: TiktokLogo,
-      hoverClass: 'hover:bg-black/10 dark:hover:bg-white/10 hover:text-black dark:hover:text-white hover:border-black/30 dark:hover:border-white/30',
+      iconColor: '#69C9D0',
+      bgHover: 'hover:bg-[#69C9D0]/[0.07] hover:border-[#69C9D0]/20',
     },
     settings.social_facebook && {
       label: 'Facebook',
       value: settings.social_facebook,
       href: socialUrl(settings.social_facebook, 'https://facebook.com/'),
       Icon: FacebookLogo,
-      hoverClass: 'hover:bg-[#1877F2]/10 hover:text-[#1877F2] hover:border-[#1877F2]/30',
+      iconColor: '#1877F2',
+      bgHover: 'hover:bg-[#1877F2]/[0.07] hover:border-[#1877F2]/20',
     },
-  ].filter(Boolean) as { label: string; value: string; href: string; Icon: React.ElementType; hoverClass: string }[]
+  ].filter(Boolean) as { label: string; value: string; href: string; Icon: React.ElementType; iconColor: string; bgHover: string }[]
+
+  const navLinks = [
+    { to: '/', label: 'Home' },
+    { to: '/shop', label: 'Shop' },
+    { to: '/gallery', label: 'Gallery' },
+    { to: '/blog', label: 'Blog' },
+    { to: '/about', label: 'About' },
+    { to: '/faq', label: 'FAQs' },
+  ]
+
+  const supportLinks = [
+    { to: '/settings', label: 'Contact Us' },
+    { to: '/privacy', label: 'Privacy Policy' },
+    { to: '/terms', label: 'Terms of Service' },
+    { to: '/feedback', label: 'Leave Feedback' },
+  ]
 
   return (
-    <footer className="mt-auto relative overflow-hidden">
-      {/* Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-t from-brand-400/10 via-brand-400/5 to-transparent pointer-events-none" />
+    <footer className="mt-auto relative overflow-hidden border-t border-dark-800/[0.06] dark:border-white/[0.06]">
 
-      <div className="relative max-w-5xl mx-auto px-4 pt-16 pb-24 sm:pb-16 flex flex-col items-center text-center">
-        {/* Logo & Store Name */}
-        <Link to="/" className="inline-flex flex-col items-center gap-3 group mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-brand-400/10 border border-brand-400/20 flex items-center justify-center text-brand-400 group-hover:bg-brand-400 group-hover:text-white group-hover:-rotate-6 group-hover:scale-110 transition-all duration-300 shadow-xl shadow-brand-400/5">
-            <Storefront size={24} weight="duotone" />
-          </div>
-          <div>
-            <p className="font-display font-bold text-xl text-dark-800 dark:text-white">{settings.store_name}</p>
-            <p className="text-sm text-dark-800/50 dark:text-white/40 mt-1 font-medium">Curated products, fast support.</p>
-          </div>
-        </Link>
+      {/* Subtle neutral warm ambient — not distracting */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#f6f3ef] dark:from-transparent dark:to-[#0c0a08] pointer-events-none" />
 
-        {/* Quick Links */}
-          <div className="flex flex-wrap justify-center gap-6 text-sm font-semibold text-dark-800/60 dark:text-white/50 mb-12">
-            <Link to="/" className="hover:text-brand-400 transition-colors">Home</Link>
-            <Link to="/shop" className="hover:text-brand-400 transition-colors">Shop</Link>
-            <Link to="/blog" className="hover:text-brand-400 transition-colors">Stories & Blog</Link>
-            <Link to="/cart" className="hover:text-brand-400 transition-colors">Cart</Link>
+      <div className="relative max-w-5xl mx-auto px-4 pt-14 pb-24 sm:pb-14">
+
+        {/* Main Grid */}
+        <div className="flex flex-col sm:flex-row gap-10 sm:gap-8 mb-10">
+
+          {/* Brand Column */}
+          <div className="flex flex-col items-center sm:items-start gap-4 sm:max-w-[240px] shrink-0">
+            <Link to="/" className="inline-flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-xl bg-dark-800/[0.05] dark:bg-white/[0.05] border border-dark-800/[0.08] dark:border-white/[0.08] flex items-center justify-center text-dark-800/50 dark:text-white/50 group-hover:border-amber-500/30 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-all duration-300">
+                <Storefront size={20} weight="duotone" />
+              </div>
+              <div>
+                <p className="font-display font-bold text-base text-dark-800 dark:text-white leading-tight">
+                  {settings.store_name}
+                </p>
+                <p className="text-[11px] text-dark-800/38 dark:text-white/32 font-medium mt-0.5">
+                  Curated · Fast · Trusted
+                </p>
+              </div>
+            </Link>
+
+            <p className="text-[13px] text-dark-800/48 dark:text-white/38 leading-relaxed text-center sm:text-left">
+              Handpicked products from verified local merchants. Fast delivery. Real support.
+            </p>
+
+            {/* Sell CTA */}
             <Link
               to="/sell"
-              className="relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-400 text-white font-extrabold text-xs shadow-md shadow-brand-400/25 hover:bg-brand-500 transition-all hover:scale-105"
+              className="group inline-flex items-center gap-1.5 text-[12px] font-semibold text-amber-700/80 dark:text-amber-400/70 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
             >
-              <Storefront size={12} weight="bold" />
-              Sell with us
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
-              </span>
+              <Storefront size={13} weight="fill" />
+              Open your free store
+              <ArrowUpRight size={12} weight="bold" className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Link>
-            <Link to="/about" className="hover:text-brand-400 transition-colors">About Us</Link>
-            <Link to="/faq" className="hover:text-brand-400 transition-colors">FAQs</Link>
-            <Link to="/settings" className="hover:text-brand-400 transition-colors">Contact & Settings</Link>
           </div>
 
+          {/* Nav Columns */}
+          <div className="flex-1 flex flex-wrap justify-center sm:justify-end gap-8 sm:gap-14">
 
-        {/* Interaction Grid: Reviews & Contacts */}
-        <div className="mb-10 w-full max-w-4xl flex justify-center">
-          
-          {/* Contact Links */}
-          <div className="flex flex-col items-center">
-            <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-dark-800/50 dark:text-white/40 mb-5">
-              Connect with us
-            </h3>
-            <div className="flex flex-wrap justify-center gap-3">
-              {contactLinks.map(({ label, value, href, Icon, hoverClass }) => (
-                <div key={label} className="relative group">
-                  <a
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={label}
-                    className={`flex items-center justify-center w-12 h-12 rounded-2xl bg-white/50 dark:bg-white/5 border border-brand-400/10 text-dark-800/60 dark:text-white/60 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1 ${hoverClass}`}
-                  >
-                    <Icon size={22} weight="duotone" className="transition-transform group-hover:scale-110" />
-                  </a>
-                  
-                  {/* Tooltip */}
-                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-dark-800 dark:bg-white text-white dark:text-dark-800 text-xs font-bold rounded-lg opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 whitespace-nowrap z-10 shadow-xl shadow-dark-900/10">
-                    {value}
-                    {/* Tooltip Arrow */}
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-dark-800 dark:bg-white rotate-45" />
-                  </div>
-                </div>
+            <div className="flex flex-col gap-2.5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-dark-800/30 dark:text-white/28 mb-0.5">
+                Navigate
+              </p>
+              {navLinks.map(({ to, label }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="text-[13px] font-medium text-dark-800/50 dark:text-white/42 hover:text-dark-800 dark:hover:text-white transition-colors"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-dark-800/30 dark:text-white/28 mb-0.5">
+                Support
+              </p>
+              {supportLinks.map(({ to, label }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="text-[13px] font-medium text-dark-800/50 dark:text-white/42 hover:text-dark-800 dark:hover:text-white transition-colors"
+                >
+                  {label}
+                </Link>
               ))}
             </div>
           </div>
-          
         </div>
 
-        {settings.show_visitor_count && visitorCount !== null && (
-          <div className="mb-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-400/10 border border-brand-400/25 text-[10px] font-extrabold uppercase tracking-wider text-brand-400 shadow-md">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-400"></span>
+        {/* Divider */}
+        <div className="w-full h-px bg-dark-800/[0.06] dark:bg-white/[0.06] mb-7" />
+
+        {/* Bottom Row */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
+
+          {/* Social Icons */}
+          <div className="flex items-center gap-2">
+            {contactLinks.map(({ label, value, href, Icon, iconColor, bgHover }) => (
+              <div key={label} className="relative group">
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className={`flex items-center justify-center w-9 h-9 rounded-xl bg-dark-800/[0.04] dark:bg-white/[0.04] border border-dark-800/[0.07] dark:border-white/[0.07] text-dark-800/38 dark:text-white/38 transition-all duration-200 hover:-translate-y-px ${bgHover}`}
+                  style={{ '--hover-color': iconColor } as React.CSSProperties}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = iconColor}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = ''}
+                >
+                  <Icon size={17} weight="duotone" />
+                </a>
+
+                {/* Tooltip */}
+                <div className="absolute -top-9 left-1/2 -translate-x-1/2 px-2.5 py-1 bg-dark-800 dark:bg-white text-white dark:text-dark-800 text-[10px] font-semibold rounded-lg opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150 whitespace-nowrap z-10 shadow-lg">
+                  {value}
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-dark-800 dark:bg-white rotate-45" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Copyright + Visitor */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+            {settings.show_visitor_count && visitorCount !== null && (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-dark-800/[0.04] dark:bg-white/[0.04] border border-dark-800/[0.06] dark:border-white/[0.06] text-[10px] font-medium text-dark-800/38 dark:text-white/32 uppercase tracking-wider">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-55" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                </span>
+                {visitorCount.toLocaleString()} visits
+              </div>
+            )}
+            <span className="text-[12px] text-dark-800/33 dark:text-white/28">
+              &copy; {new Date().getFullYear()} {settings.store_name}. All rights reserved.
             </span>
-            <span>{visitorCount.toLocaleString()} Site Visits</span>
-          </div>
-        )}
-
-        {/* Copyright */}
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full max-w-md border-t border-brand-400/10 pt-6 text-xs text-dark-800/40 dark:text-white/30 gap-4">
-          <span>&copy; {new Date().getFullYear()} {settings.store_name}. All rights reserved.</span>
-          <div className="flex items-center gap-4">
-            <Link to="/privacy" className="hover:text-brand-400 transition-colors">Privacy Policy</Link>
-            <Link to="/terms" className="hover:text-brand-400 transition-colors">Terms of Service</Link>
-            <Link to="/feedback" className="hover:text-brand-400 transition-colors">Leave Feedback</Link>
           </div>
         </div>
+
       </div>
     </footer>
   )

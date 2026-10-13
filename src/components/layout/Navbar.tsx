@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ShoppingCart, Storefront, UserCircle, SquaresFour, MagnifyingGlass, X, Tag, ArrowRight, ArrowUpRight } from '@phosphor-icons/react'
+import { ShoppingCart, Storefront, UserCircle, SquaresFour, MagnifyingGlass, X, Tag, ArrowRight, ArrowUpRight, List } from '@phosphor-icons/react'
 import { useQuery } from '@tanstack/react-query'
 import { useCartStore } from '../../store/cartStore'
 import { useStoreSettings } from '../../hooks/useStoreSettings'
@@ -34,6 +34,7 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobileSearchActive, setIsMobileSearchActive] = useState(false)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [showCategoriesDrawer, setShowCategoriesDrawer] = useState(false)
   const mobileInputRef = useRef<HTMLInputElement>(null)
   const desktopInputRef = useRef<HTMLInputElement>(null)
   const searchContainerRef = useRef<HTMLDivElement>(null)
@@ -195,6 +196,102 @@ export default function Navbar() {
   }
 
   return (
+    <>
+    {/* Categories Drawer Overlay */}
+    <AnimatePresence>
+      {showCategoriesDrawer && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            key="cat-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowCategoriesDrawer(false)}
+          />
+
+          {/* Drawer Panel */}
+          <motion.div
+            key="cat-drawer"
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+            className="fixed left-0 top-0 bottom-0 z-[61] w-[min(320px,85vw)] bg-white dark:bg-dark-900 shadow-2xl flex flex-col overflow-hidden"
+          >
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-dark-800/[0.07] dark:border-white/[0.07]">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-brand-400/10 border border-brand-400/20 flex items-center justify-center text-brand-500">
+                  <Tag size={14} weight="bold" />
+                </div>
+                <span className="font-display font-bold text-base text-dark-800 dark:text-white">Categories</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCategoriesDrawer(false)}
+                aria-label="Close categories"
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-dark-800/50 dark:text-white/50 hover:bg-dark-800/[0.06] dark:hover:bg-white/[0.06] transition-colors"
+              >
+                <X size={16} weight="bold" />
+              </button>
+            </div>
+
+            {/* All Products link */}
+            <div className="px-4 pt-4 pb-2">
+              <Link
+                to="/shop"
+                onClick={() => setShowCategoriesDrawer(false)}
+                className="flex items-center justify-between w-full px-4 py-3 rounded-2xl bg-brand-400 text-white font-bold text-sm shadow-md shadow-brand-400/20 hover:bg-brand-500 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Storefront size={16} weight="duotone" />
+                  All Products
+                </div>
+                <ArrowRight size={14} weight="bold" />
+              </Link>
+            </div>
+
+            {/* Category List */}
+            <div className="flex-1 overflow-y-auto px-4 py-2 space-y-1 scrollbar-thin">
+              {categoryTree && categoryTree.length > 0 ? (
+                categoryTree.map((cat) => (
+                  <Link
+                    key={cat.id}
+                    to={`/shop/${cat.slug}`}
+                    onClick={() => setShowCategoriesDrawer(false)}
+                    className="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium text-dark-800/75 dark:text-white/70 hover:bg-brand-400/8 hover:text-brand-600 dark:hover:text-brand-400 transition-all group"
+                  >
+                    <span>{cat.name}</span>
+                    <ArrowUpRight size={13} weight="bold" className="opacity-0 group-hover:opacity-100 transition-opacity text-brand-400" />
+                  </Link>
+                ))
+              ) : (
+                <div className="py-10 text-center">
+                  <Tag size={32} weight="duotone" className="text-dark-800/20 dark:text-white/20 mx-auto mb-3" />
+                  <p className="text-sm text-dark-800/40 dark:text-white/40">No categories yet</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer: Sell link */}
+            <div className="px-4 pb-6 pt-3 border-t border-dark-800/[0.06] dark:border-white/[0.06]">
+              <Link
+                to="/sell"
+                onClick={() => setShowCategoriesDrawer(false)}
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-semibold text-amber-700 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/6 transition-colors"
+              >
+                <Storefront size={15} weight="fill" />
+                Open your free store
+              </Link>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+
     <div className={`fixed top-0 left-0 right-0 z-50 pointer-events-none transition-transform duration-300 ease-in-out ${hidden ? '-translate-y-full' : 'translate-y-0'}`}>
       <div className="max-w-5xl mx-auto pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pointer-events-auto">
         <nav className={`
@@ -362,20 +459,33 @@ export default function Navbar() {
             </div>
           ) : (
             <>
-              <Link to="/" className="flex items-center gap-2.5 group min-w-0 flex-1 sm:flex-none">
-                {settings.logo_url ? (
-                  <img
-                    src={settings.logo_url}
-                    alt={settings.store_name}
-                    className="w-8 h-8 flex-shrink-0 object-contain rounded-xl bg-white/5"
-                  />
-                ) : (
-                  <div className="w-8 h-8 flex-shrink-0 bg-gradient-to-br from-brand-400 to-brand-500 rounded-xl flex items-center justify-center shadow-amber-glow group-hover:shadow-amber-glow-lg transition-shadow">
-                    <Storefront size={16} weight="duotone" className="text-white" />
-                  </div>
-                )}
-                <span className="font-display font-bold text-base text-dark-800 dark:text-white truncate">{settings.store_name}</span>
-              </Link>
+              <div className="flex items-center gap-2 min-w-0 flex-1 sm:flex-none">
+                {/* Hamburger Categories Button - Mobile */}
+                <button
+                  type="button"
+                  onClick={() => setShowCategoriesDrawer(true)}
+                  aria-label="Browse categories"
+                  className="flex items-center justify-center w-8 h-8 rounded-xl hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white flex-shrink-0"
+                  title="Browse categories"
+                >
+                  <List size={19} weight="bold" />
+                </button>
+
+                <Link to="/" className="flex items-center gap-2 group min-w-0">
+                  {settings.logo_url ? (
+                    <img
+                      src={settings.logo_url}
+                      alt={settings.store_name}
+                      className="w-8 h-8 flex-shrink-0 object-contain rounded-xl bg-white/5"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 flex-shrink-0 bg-gradient-to-br from-brand-400 to-brand-500 rounded-xl flex items-center justify-center shadow-amber-glow group-hover:shadow-amber-glow-lg transition-shadow">
+                      <Storefront size={16} weight="duotone" className="text-white" />
+                    </div>
+                  )}
+                  <span className="font-display font-bold text-base text-dark-800 dark:text-white truncate">{settings.store_name}</span>
+                </Link>
+              </div>
 
               <div className="hidden sm:flex items-center gap-2">
                 {navLink('/', 'Home')}
@@ -654,5 +764,6 @@ export default function Navbar() {
         </nav>
       </div>
     </div>
+    </>
   )
 }

@@ -542,7 +542,7 @@ export default function Home() {
         </div>
       </motion.section>
 
-      {/* Become a Seller Banner CTA - Classic Luxury Redesign */}
+      {/* ── Create Your Store — High-Conversion CTA ─────────────────────────── */}
       <motion.section
         initial={reduceMotion ? false : { opacity: 0, y: 28 }}
         whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
@@ -551,134 +551,153 @@ export default function Home() {
         className="py-14 sm:py-24 relative overflow-hidden"
       >
         <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="relative rounded-[2.5rem] sm:rounded-[3rem] p-8 sm:p-12 lg:p-16 border border-amber-500/25 dark:border-amber-500/20 bg-gradient-to-br from-[#1c1209] via-[#140b04] to-[#0a0502] text-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12">
-            
-            {/* Ambient Lighting & Glow Flares */}
-            <div className="absolute -top-32 -left-32 w-96 h-96 bg-amber-500/15 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-amber-600/10 rounded-full blur-[130px] pointer-events-none" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(217,119,6,0.08),transparent_60%)] pointer-events-none" />
+          <div className="relative rounded-[2.5rem] sm:rounded-[3rem] p-8 sm:p-12 lg:p-16 overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12"
+            style={{
+              background: 'linear-gradient(135deg, #0f0a04 0%, #1a0f04 40%, #120d06 70%, #0a0602 100%)',
+              boxShadow: '0 32px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(180,110,20,0.18)',
+            }}
+          >
+            {/* Ambient light — warm upper-left, cool lower-right */}
+            <div className="absolute -top-24 -left-24 w-[420px] h-[420px] rounded-full blur-[100px] pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(214,128,10,0.18) 0%, transparent 70%)' }} />
+            <div className="absolute -bottom-24 -right-24 w-[320px] h-[320px] rounded-full blur-[90px] pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(16,120,80,0.10) 0%, transparent 70%)' }} />
+            {/* Fine grain texture overlay */}
+            <div className="absolute inset-0 opacity-[0.025] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' /%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")', backgroundSize: '150px' }} />
 
-            {/* Left Column: Core Copy & CTAs */}
+            {/* Left: Copy + CTAs */}
             <div className="max-w-xl text-center lg:text-left relative z-10">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300 text-[11px] font-bold uppercase tracking-widest mb-5 backdrop-blur-md shadow-xs">
-                <Storefront size={13} weight="fill" className="text-amber-400" />
-                <span>For Creators &amp; Merchants</span>
+
+              {/* Social proof pill — scarcity/trust */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6 border border-amber-400/20" style={{ background: 'rgba(214,128,10,0.10)' }}>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                </span>
+                <span className="text-[11px] font-bold text-amber-300/90 uppercase tracking-widest">Free · No Commission · Open Now</span>
               </div>
 
-              <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal tracking-tight text-white leading-[1.12] mb-5">
-                Turn your passion into an{' '}
-                <span className="italic font-serif bg-gradient-to-r from-amber-200 via-amber-300 to-yellow-400 bg-clip-text text-transparent">
-                  online business
+              {/* Headline — benefit-led */}
+              <h2 className="font-serif text-3xl sm:text-4xl lg:text-[2.8rem] font-normal tracking-tight text-white leading-[1.1] mb-4">
+                Your products deserve{' '}
+                <span className="italic" style={{ background: 'linear-gradient(90deg, #fde68a, #f59e0b, #d97706)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  their own store.
                 </span>
               </h2>
 
-              <p className="text-sm sm:text-base text-[#e5d8c5]/80 mb-8 leading-relaxed font-light">
-                Launch your branded digital storefront in under 60 seconds. Upload products, share your unique boutique link, and receive verified customer orders directly to your WhatsApp with zero listing fees.
+              <p className="text-[15px] text-white/55 mb-8 leading-relaxed font-light max-w-md mx-auto lg:mx-0">
+                Launch in under 60 seconds. Share your link, get orders straight to WhatsApp — completely free, forever.
               </p>
 
-              {/* Value Badges */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 sm:gap-3 mb-9">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-xs font-medium text-amber-200/90">
-                  <Lightning size={14} weight="fill" className="text-amber-400" />
-                  60-Second Setup
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-xs font-medium text-amber-200/90">
-                  <WhatsappLogo size={14} weight="fill" className="text-emerald-400" />
-                  WhatsApp Orders
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-xs font-medium text-amber-200/90">
-                  <SealCheck size={14} weight="fill" className="text-amber-400" />
-                  100% Free to Start
-                </span>
+              {/* Benefit pills */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-9">
+                {[
+                  { icon: <Lightning size={13} weight="fill" className="text-amber-400" />, text: '60-Second Setup' },
+                  { icon: <WhatsappLogo size={13} weight="fill" className="text-emerald-400" />, text: 'Orders to WhatsApp' },
+                  { icon: <SealCheck size={13} weight="fill" className="text-amber-400" />, text: 'Zero Listing Fees' },
+                  { icon: <ChartLineUp size={13} weight="fill" className="text-sky-400" />, text: 'Live Analytics' },
+                ].map(({ icon, text }) => (
+                  <span key={text} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-medium text-white/70 border border-white/[0.08]" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                    {icon}
+                    {text}
+                  </span>
+                ))}
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
                 <Link
                   to="/sell"
-                  className="group w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-dark-950 font-extrabold text-sm tracking-wide shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2.5 transition-all transform hover:-translate-y-0.5 active:scale-95"
+                  className="group w-full sm:w-auto px-8 py-4 rounded-2xl font-extrabold text-sm tracking-wide flex items-center justify-center gap-2.5 transition-all transform hover:-translate-y-0.5 active:scale-95"
+                  style={{
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 60%, #b45309 100%)',
+                    color: '#0a0602',
+                    boxShadow: '0 8px 32px rgba(214,128,10,0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
+                  }}
                 >
-                  <span>Create Your Store</span>
-                  <ArrowUpRight size={18} weight="bold" className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  <Storefront size={17} weight="fill" />
+                  <span>Create Your Free Store</span>
+                  <ArrowUpRight size={17} weight="bold" className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </Link>
 
                 <Link
                   to="/shop"
-                  className="w-full sm:w-auto px-6 py-4 rounded-2xl border border-white/15 hover:border-amber-400/40 bg-white/5 hover:bg-white/10 text-white/90 hover:text-white font-semibold text-sm transition-all flex items-center justify-center gap-2 backdrop-blur-md"
+                  className="w-full sm:w-auto px-6 py-4 rounded-2xl border font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                  style={{ borderColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.65)', background: 'rgba(255,255,255,0.04)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(214,128,10,0.35)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.90)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.65)' }}
                 >
-                  <span>Explore Existing Shops</span>
-                  <CaretRight size={16} />
+                  <span>Browse Existing Shops</span>
+                  <CaretRight size={15} />
                 </Link>
               </div>
+
+              {/* Micro-trust line */}
+              <p className="mt-5 text-[11px] text-white/25 text-center lg:text-left">
+                Trusted by merchants across Ghana · No credit card needed
+              </p>
             </div>
 
-            {/* Right Column: Luxury Interactive Showcase Card & Bento */}
-            <div className="w-full lg:max-w-md space-y-4 relative z-10">
-              {/* Storefront Mock Preview Card */}
-              <div className="bg-white/[0.05] border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden">
-                <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-white/10">
+            {/* Right: Mock store card */}
+            <div className="w-full lg:max-w-[380px] space-y-3 relative z-10">
+
+              {/* Store card */}
+              <div className="rounded-3xl p-5 backdrop-blur-xl border border-white/[0.08] shadow-2xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-white/[0.07]">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                    <span className="text-xs font-mono text-amber-200/80 truncate">catalog.com/s/your-store</span>
+                    <div className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
+                    </div>
+                    <span className="text-[11px] font-mono truncate" style={{ color: 'rgba(253,230,138,0.75)' }}>catalog.com/s/your-store</span>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex-shrink-0">
-                    ACTIVE STORE
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider flex-shrink-0 border border-emerald-500/30" style={{ background: 'rgba(16,185,129,0.12)', color: '#6ee7b7' }}>
+                    LIVE
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3.5 mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 p-0.5 shadow-md flex-shrink-0">
-                    <div className="w-full h-full bg-[#1c1209] rounded-[14px] flex items-center justify-center text-amber-400 font-serif text-lg font-bold">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-11 h-11 rounded-xl p-0.5 flex-shrink-0" style={{ background: 'linear-gradient(135deg, #f59e0b, #fde68a)' }}>
+                    <div className="w-full h-full rounded-[10px] flex items-center justify-center font-serif text-base font-bold" style={{ background: '#1a0f04', color: '#f59e0b' }}>
                       B
                     </div>
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <h4 className="font-serif text-sm font-bold text-white truncate">Bella Boutique</h4>
-                      <SealCheck size={16} weight="fill" className="text-amber-400 flex-shrink-0" />
+                      <SealCheck size={15} weight="fill" style={{ color: '#f59e0b', flexShrink: 0 }} />
                     </div>
-                    <p className="text-[11px] text-[#e5d8c5]/60 mt-0.5">Luxury Apparel &amp; Accessories</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: 'rgba(229,216,197,0.50)' }}>Luxury Apparel &amp; Accessories</p>
                   </div>
                 </div>
 
-                {/* WhatsApp Order Notification Simulation */}
-                <div className="bg-emerald-950/50 border border-emerald-500/30 rounded-2xl p-3.5 flex items-start gap-3 shadow-inner">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center flex-shrink-0 shadow-md">
-                    <WhatsappLogo size={18} weight="fill" />
+                {/* WhatsApp notification */}
+                <div className="rounded-2xl p-3 flex items-start gap-3 border border-emerald-500/20" style={{ background: 'rgba(6,78,59,0.35)' }}>
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
+                    <WhatsappLogo size={16} weight="fill" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[11px] font-bold text-emerald-300">New WhatsApp Order</p>
-                      <span className="text-[10px] text-emerald-400/70 font-mono">Just now</span>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <p className="text-[11px] font-bold" style={{ color: '#6ee7b7' }}>New Order 🎉</p>
+                      <span className="text-[10px] font-mono" style={{ color: 'rgba(110,231,183,0.55)' }}>Just now</span>
                     </div>
-                    <p className="text-xs font-medium text-white/90 truncate mt-0.5">
-                      Silk Satin Slip Dress (GH₵ 280.00)
-                    </p>
+                    <p className="text-xs font-medium truncate" style={{ color: 'rgba(255,255,255,0.80)' }}>Silk Satin Slip Dress — GH₵ 280.00</p>
                   </div>
                 </div>
               </div>
 
-              {/* Bento Feature Grid */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 hover:border-amber-400/30 transition-all">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 mb-2.5">
-                    <RocketLaunch size={18} weight="duotone" />
+              {/* Bento grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { Icon: RocketLaunch, title: 'Instant Setup', desc: 'Live in under 60 sec.' },
+                  { Icon: ChartLineUp, title: 'Live Analytics', desc: 'Track visits & orders.' },
+                ].map(({ Icon, title, desc }) => (
+                  <div key={title} className="rounded-2xl p-4 border border-white/[0.07] hover:border-amber-400/25 transition-all group" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <div className="w-8 h-8 rounded-xl mb-2.5 flex items-center justify-center border border-amber-500/20" style={{ background: 'rgba(214,128,10,0.10)', color: '#f59e0b' }}>
+                      <Icon size={17} weight="duotone" />
+                    </div>
+                    <h5 className="text-xs font-bold text-white mb-0.5">{title}</h5>
+                    <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(229,216,197,0.50)' }}>{desc}</p>
                   </div>
-                  <h5 className="text-xs font-bold text-white mb-0.5">Instant Setup</h5>
-                  <p className="text-[11px] text-[#e5d8c5]/60 leading-relaxed">
-                    Custom link ready in under 60 seconds.
-                  </p>
-                </div>
-
-                <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4 hover:border-amber-400/30 transition-all">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 mb-2.5">
-                    <ChartLineUp size={18} weight="duotone" />
-                  </div>
-                  <h5 className="text-xs font-bold text-white mb-0.5">Live Analytics</h5>
-                  <p className="text-[11px] text-[#e5d8c5]/60 leading-relaxed">
-                    Track visitor counts and order trends.
-                  </p>
-                </div>
+                ))}
               </div>
             </div>
 
