@@ -1,6 +1,6 @@
 import { memo, useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { ShoppingCart, Star, Lightning, Heart, Clock, Check } from '@phosphor-icons/react'
+import { ShoppingCart, Star, Lightning, Heart, Clock, Check, Tag } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
@@ -31,17 +31,20 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
   const { session } = useCustomerSession()
   const openSignInModal = useSignInStore(s => s.openModal)
   const [added, setAdded] = useState(false)
-  
+
   const priceRange = getProductPriceRange(product)
   const isNew = isNewProduct(product.created_at)
   const flashPrice = activeFlashSalePrice(product)
   const onFlashSale = flashPrice != null
   const displayPrice = flashPrice ?? product.selling_price
-  // When on flash sale, the "was" price is the normal selling price; otherwise
-  // fall back to the compare-at original price if there is one.
   const strikePrice = onFlashSale
     ? product.selling_price
     : (product.original_price && product.original_price > product.selling_price ? product.original_price : null)
+
+  const isOutOfStock = product.stock_status === 'out_of_stock'
+  const discountPct = !onFlashSale && product.discount_percent && product.discount_percent > 0
+    ? product.discount_percent
+    : null
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -62,55 +65,83 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
     }
   }
 
-  const isOutOfStock = product.stock_status === 'out_of_stock'
+  // Determine the single most important badge to show (priority order)
+  const primaryBadge = onFlashSale
+    ? 'flash'
+    : product.is_preorder
+    ? 'preorder'
+    : discountPct
+    ? 'discount'
+    : isNew
+    ? 'new'
+    : null
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.05, ease: 'easeOut' }}
-      whileHover={isOutOfStock ? undefined : { scale: 1.02 }}
-      className={`h-full min-w-0 ${isOutOfStock ? 'opacity-60' : ''}`}
+      whileHover={isOutOfStock ? undefined : { scale: 1.015 }}
+      className="h-full min-w-0"
     >
-      <Link to={detailUrl} className={`card card-hover group flex flex-col h-full min-w-0 ${compact ? 'rounded-2xl' : ''} ${isOutOfStock ? 'pointer-events-none select-none' : ''}`}>
+      <Link to={detailUrl} className={`card card-hover group flex flex-col h-full min-w-0 ${compact ? 'rounded-2xl' : ''}`}>
         {/* Image */}
         <div className={`relative overflow-hidden bg-cream-100 dark:bg-dark-700 ${compact ? 'aspect-[4/5] sm:aspect-square' : 'aspect-square'}`}>
           <Image
             src={product.images?.[0] || 'https://placehold.co/400x400/1a1008/d4820a?text=No+Image'}
             alt={product.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isOutOfStock ? 'opacity-50 grayscale-[30%]' : ''}`}
           />
 
-          {/* Glass Shine Sweep Micro-Animation */}
-          <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden z-10" aria-hidden="true">
-            <div className="absolute top-0 -left-[100%] w-[45%] h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-[20deg] group-hover:left-[130%] transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)]" />
-          </div>
+          {/* Glass Shine Sweep — only on in-stock items */}
+          {!isOutOfStock && (
+            <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden z-10" aria-hidden="true">
+              <div className="absolute top-0 -left-[100%] w-[45%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-[20deg] group-hover:left-[130%] transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)]" />
+            </div>
+          )}
 
-          {/* Discount Tag */}
-          {!onFlashSale && product.discount_percent && product.discount_percent > 0 && (
-            <span className="absolute top-2 left-2 bg-red-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm">
-              -{product.discount_percent}%
+          {/* Primary badge — top-left, one at a time */}
+          {primaryBadge === 'flash' && (
+            <span className="absolute top-2 left-2 inline-flex items-center gap-0.5 bg-rose-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm motion-safe:animate-pulse">
+              <Lightning size={9} weight="fill" /> FLASH
+            </span>
+          )}
+          {primaryBadge === 'preorder' && (
+            <span className="absolute top-2 left-2 inline-flex items-center gap-0.5 bg-slate-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+              <Clock size={9} weight="fill" /> PRE-ORDER
+            </span>
+          )}
+          {primaryBadge === 'discount' && (
+            <span className="absolute top-2 left-2 bg-rose-600 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow-sm">
+              -{discountPct}%
+            </span>
+          )}
+          {primaryBadge === 'new' && (
+            <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-white/90 dark:bg-dark-700/90 backdrop-blur-sm text-dark-800 dark:text-white text-[9px] font-bold px-1.5 py-0.5 rounded border border-dark-800/10 dark:border-white/15 shadow-sm">
+              <Tag size={9} weight="fill" className="text-brand-400" /> NEW
             </span>
           )}
 
-          {/* Wishlist heart */}
+          {/* Wishlist */}
           <motion.button
             type="button"
             onClick={handleWishlist}
             whileTap={{ scale: 0.85 }}
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-            className={`absolute top-2 right-2 bg-white/90 dark:bg-white/95 backdrop-blur-md rounded-full flex items-center justify-center shadow-md ring-1 ring-black/5 hover:scale-110 transition-transform ${compact ? 'w-7 h-7 sm:w-8 sm:h-8' : 'w-8 h-8'}`}
+            className={`absolute top-2 right-2 bg-white/90 dark:bg-dark-800/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm ring-1 ring-black/5 hover:scale-110 transition-transform ${compact ? 'w-7 h-7 sm:w-8 sm:h-8' : 'w-8 h-8'}`}
           >
             <Heart
-              size={compact ? 14 : 16}
+              size={compact ? 14 : 15}
               weight={isWishlisted ? 'fill' : 'regular'}
-              className={isWishlisted ? 'text-red-500' : 'text-dark-800/70'}
+              className={isWishlisted ? 'text-rose-500' : 'text-dark-800/50 dark:text-white/50'}
             />
           </motion.button>
-          {product.stock_status === 'out_of_stock' && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20">
-              <span className="inline-flex items-center gap-1 bg-black/75 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wide whitespace-nowrap">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+
+          {/* Out of stock pill */}
+          {isOutOfStock && (
+            <div className="absolute inset-0 flex items-end justify-center pb-3 z-20">
+              <span className="inline-flex items-center gap-1.5 bg-dark-800/80 dark:bg-black/70 backdrop-blur-sm text-white text-[10px] font-semibold px-3 py-1.5 rounded-full tracking-wide">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 flex-shrink-0" />
                 Out of Stock
               </span>
             </div>
@@ -119,88 +150,78 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
 
         {/* Info */}
         <div className={`flex flex-col flex-grow ${compact ? 'p-2 sm:p-3' : 'p-2.5 sm:p-3.5'}`}>
-          <div className="flex flex-wrap items-center justify-between gap-1 mb-1 sm:mb-2">
-            <p className={`text-cream-400 dark:text-white/50 uppercase tracking-wider font-medium truncate ${compact ? 'text-[8px] sm:text-[10px]' : 'text-[9px] sm:text-[10px]'}`}>
+
+          {/* Category label */}
+          {product.category && (
+            <p className={`text-dark-800/38 dark:text-white/38 uppercase tracking-wider font-medium truncate mb-1 ${compact ? 'text-[8px]' : 'text-[9px]'}`}>
               {product.category}
             </p>
-            <div className={`flex flex-wrap gap-1 ${compact ? 'scale-90 origin-right' : ''}`}>
-              {onFlashSale && (
-                <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm animate-pulse">
-                  <Lightning size={10} weight="fill" /> FLASH
-                </span>
-              )}
-              {product.is_preorder && (
-                <span className="bg-blue-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
-                  <Clock size={10} weight="fill" /> PREORDER
-                </span>
-              )}
-              {isNew && !onFlashSale && (
-                <span className="bg-brand-50 text-brand-600 dark:bg-brand-950/30 dark:text-brand-400 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 border border-brand-200 dark:border-brand-800/30">
-                  <span className="w-1 h-1 rounded-full bg-brand-500 dark:bg-brand-400 animate-pulse" />
-                  <span>NEW</span>
-                </span>
-              )}
-              {product.is_featured && (
-                <span className="animate-star-live flex items-center justify-center px-1 py-0.5" title="Featured">
-                  <Star size={12} weight="fill" />
-                </span>
-              )}
-            </div>
-          </div>
-          <h3 className={`text-dark-800 dark:text-white font-medium leading-snug line-clamp-2 mb-1.5 sm:mb-2 group-hover:text-brand-400 transition-colors ${compact ? 'text-[12px] sm:text-sm' : 'text-[13px] sm:text-sm'}`}>
+          )}
+
+          {/* Title */}
+          <h3 className={`text-dark-800 dark:text-white font-medium leading-snug line-clamp-2 mb-1.5 group-hover:text-brand-500 dark:group-hover:text-brand-400 transition-colors ${compact ? 'text-[12px] sm:text-[13px]' : 'text-[13px] sm:text-sm'}`}>
             {product.title}
           </h3>
 
+          {/* Rating — desktop only */}
           {product.rating && (
-            <div className="hidden sm:flex items-center gap-1 mb-2">
-              <Star size={11} weight="fill" className="text-brand-400 fill-brand-400" />
-              <span className="text-dark-800/60 dark:text-white/60 text-xs">
-                {product.rating} ({product.rating_count})
+            <div className="hidden sm:flex items-center gap-1 mb-1.5">
+              <Star size={11} weight="fill" className="text-amber-400" />
+              <span className="text-dark-800/50 dark:text-white/50 text-[11px]">
+                {product.rating} <span className="text-dark-800/30 dark:text-white/30">({product.rating_count})</span>
               </span>
             </div>
           )}
 
+          {/* Flash countdown */}
           {onFlashSale && product.flash_sale_ends_at && (
-            <div className="flex items-center gap-1 mb-1.5 text-red-500">
-              <Clock size={11} weight="fill" />
-              <CountdownTimer endsAt={product.flash_sale_ends_at} className="text-[10px] sm:text-xs" />
+            <div className="flex items-center gap-1 mb-1.5 text-rose-600 dark:text-rose-400">
+              <Clock size={10} weight="fill" />
+              <CountdownTimer endsAt={product.flash_sale_ends_at} className="text-[10px] sm:text-xs font-medium" />
             </div>
           )}
 
-          {/* Price */}
-          <div className={`mt-auto mb-2 sm:mb-0 sm:flex sm:items-center sm:justify-between ${compact ? 'gap-2' : ''}`}>
-            <div className="min-w-0">
+          {/* Price row */}
+          <div className={`mt-auto flex items-end justify-between gap-2 ${compact ? '' : ''}`}>
+            <div className="min-w-0 flex-1">
               {priceRange.hasRange && !onFlashSale ? (
                 <div>
-                  <p className={`font-bold truncate text-brand-400 ${compact ? 'text-xs sm:text-sm' : 'text-xs sm:text-sm'}`}>
+                  <p className={`font-bold text-dark-800 dark:text-white truncate ${compact ? 'text-xs sm:text-sm' : 'text-sm'}`}>
                     {priceRange.displayString}
                   </p>
-                  <span className="text-[10px] text-cream-400 dark:text-white/40 font-medium">
-                    {product.variants?.length} options available
+                  <span className="text-[10px] text-dark-800/40 dark:text-white/38 font-medium">
+                    {product.variants?.length} options
                   </span>
                 </div>
               ) : (
-                <>
-                  <p className={`font-bold truncate ${onFlashSale ? 'text-red-500' : 'text-brand-400'} ${compact ? 'text-sm sm:text-base' : 'text-sm sm:text-base'}`}>{formatPrice(displayPrice)}</p>
+                <div>
+                  <p className={`font-bold truncate ${onFlashSale ? 'text-rose-600 dark:text-rose-400' : 'text-dark-800 dark:text-white'} ${compact ? 'text-sm' : 'text-sm sm:text-base'}`}>
+                    {formatPrice(displayPrice)}
+                  </p>
                   {strikePrice && (
-                    <p className={`text-cream-400 dark:text-white/30 line-through truncate ${compact ? 'text-[9px] sm:text-xs' : 'text-[10px] sm:text-xs'}`}>
-                      {formatPrice(strikePrice)}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <p className="text-dark-800/35 dark:text-white/30 line-through truncate text-[10px] sm:text-xs">
+                        {formatPrice(strikePrice)}
+                      </p>
+                      <span className="text-[9px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 px-1 py-0.5 rounded">
+                        -{Math.round(((strikePrice - displayPrice) / strikePrice) * 100)}%
+      	              </span>
+                    </div>
                   )}
-                </>
+                </div>
               )}
             </div>
 
-            {/* Desktop: inline add to cart button with success feedback */}
-            {product.stock_status !== 'out_of_stock' && (
-              <div className="hidden sm:flex items-center ml-2">
+            {/* Desktop cart button */}
+            {!isOutOfStock && (
+              <div className="hidden sm:flex items-center flex-shrink-0">
                 <motion.button
                   whileTap={{ scale: 0.88 }}
                   onClick={handleAddToCart}
                   aria-label={added ? 'Added to cart' : 'Add to cart'}
                   className={`rounded-xl flex items-center justify-center transition-all duration-300 text-white ${compact ? 'w-8 h-8' : 'w-9 h-9'} ${
                     added
-                      ? 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]'
+                      ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
                       : 'bg-brand-400 hover:bg-brand-500'
                   }`}
                 >
@@ -212,22 +233,22 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
             )}
           </div>
 
-          {/* Mobile: full-width add to cart with success feedback */}
-          {product.stock_status !== 'out_of_stock' && (
-            <div className={`flex sm:hidden mt-2`}>
+          {/* Mobile add-to-cart */}
+          {!isOutOfStock && (
+            <div className="flex sm:hidden mt-2">
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={handleAddToCart}
                 aria-label={added ? 'Added to cart' : 'Add to cart'}
-                className={`w-full rounded-lg flex items-center justify-center gap-2 transition-all duration-300 text-white font-semibold text-xs ${compact ? 'h-7' : 'h-8'} ${
+                className={`w-full rounded-lg flex items-center justify-center gap-1.5 transition-all duration-300 text-white font-semibold text-xs ${compact ? 'h-7' : 'h-8'} ${
                   added
-                    ? 'bg-green-500'
+                    ? 'bg-emerald-500'
                     : 'bg-brand-400 hover:bg-brand-500 active:bg-brand-600'
                 }`}
               >
                 {added
-                  ? <><Check size={compact ? 12 : 13} weight="bold" /><span>Added!</span></>
-                  : <><ShoppingCart size={compact ? 12 : 14} weight="duotone" /><span>Add</span></>}
+                  ? <><Check size={12} weight="bold" /><span>Added!</span></>
+                  : <><ShoppingCart size={12} weight="duotone" /><span>Add to cart</span></>}
               </motion.button>
             </div>
           )}
@@ -237,9 +258,5 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
   )
 }
 
-// Cart count, wishlist toggles and store settings all bubble re-renders up here
-// through the storefront. Memoizing prevents every product card on screen from
-// repainting when, say, a single item is added to the cart. The default shallow
-// prop check is enough — `product` is stable per id and `compact`/`index` are primitives.
+// Memoised to avoid cascading re-renders when cart/wishlist updates
 export default memo(ProductCard)
-

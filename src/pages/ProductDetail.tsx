@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ShoppingCart, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck, Lightning, Clock, Heart, Check, Storefront } from '@phosphor-icons/react'
+import { ArrowLeft, ShoppingCart, Star, CheckCircle, XCircle, SmileySad, ShareNetwork, Truck, Lightning, Clock, Heart, Check, Storefront, WhatsappLogo } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useProduct } from '../hooks/useProducts'
@@ -8,7 +8,7 @@ import { useCartStore } from '../store/cartStore'
 import { useWishlistStore } from '../store/wishlistStore'
 import { useRecentStore } from '../store/recentStore'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
-import { effectivePrice, activeFlashSalePrice } from '../lib/utils'
+import { effectivePrice, activeFlashSalePrice, buildWhatsAppUrl, buildProductWhatsAppMessage } from '../lib/utils'
 import { supabase } from '../lib/supabase'
 import CountdownTimer from '../components/ui/CountdownTimer'
 import ProductCard from '../components/ui/ProductCard'
@@ -186,6 +186,21 @@ export default function ProductDetail() {
     if (!session) {
       openSignInModal('Create an account for a faster checkout experience!')
     }
+  }
+
+  const handleWhatsAppOrder = () => {
+    if (!product) return
+    const targetWhatsApp = (product.store as any)?.whatsapp_number || settings.whatsapp_number || '0599399983'
+    const variantTitle = selectedVariant ? ` (${selectedVariant.name})` : ''
+    const sizeColor = [selectedSize ? `Size: ${selectedSize}` : '', selectedColor ? `Color: ${selectedColor}` : ''].filter(Boolean).join(', ')
+    const fullTitle = `${product.title}${variantTitle}${sizeColor ? ` [${sizeColor}]` : ''}`
+    const msg = buildProductWhatsAppMessage(
+      fullTitle,
+      displayPrice,
+      window.location.href,
+      settings.currency || 'GHS'
+    )
+    window.open(buildWhatsAppUrl(targetWhatsApp, msg), '_blank')
   }
 
   const handleShare = async () => {
@@ -404,69 +419,84 @@ export default function ProductDetail() {
           )}
 
           {/* Price card */}
-          <div className={`rounded-2xl p-5 mb-6 ${onFlashSale ? 'bg-red-500/10 border border-red-500/30' : 'glass-amber shadow-amber-glow'}`}>
+          <div className={`rounded-2xl p-4 sm:p-5 mb-5 ${
+            onFlashSale
+              ? 'bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40'
+              : 'bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 shadow-sm'
+          }`}>
             {onFlashSale && product.flash_sale_ends_at && (
-              <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-red-500/20">
-                <span className="inline-flex items-center gap-1.5 text-red-500 font-bold text-sm uppercase tracking-wide">
-                  <Lightning size={16} weight="fill" /> Flash Sale
+              <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-rose-200 dark:border-rose-900/40">
+                <span className="inline-flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-bold text-xs uppercase tracking-wide">
+                  <Lightning size={14} weight="fill" /> Flash Sale
                 </span>
                 <CountdownTimer endsAt={product.flash_sale_ends_at} variant="bar" />
               </div>
             )}
-            <p className={`text-4xl sm:text-5xl font-bold mb-1 ${onFlashSale ? 'text-red-500' : 'text-brand-400'}`}>{formatPrice(displayPrice)}</p>
-            {strikePrice && (
-              <div className="flex items-center gap-2">
-                <p className="text-dark-800/40 dark:text-white/30 text-sm line-through">{formatPrice(strikePrice)}</p>
-                <span className="badge-discount">-{Math.round(((strikePrice - displayPrice) / strikePrice) * 100)}%</span>
-              </div>
-            )}
+            <div className="flex items-baseline gap-3 flex-wrap">
+              <p className={`text-3xl sm:text-4xl font-extrabold tracking-tight ${onFlashSale ? 'text-rose-600 dark:text-rose-400' : 'text-dark-800 dark:text-white'}`}>
+                {formatPrice(displayPrice)}
+              </p>
+              {strikePrice && (
+                <div className="flex items-center gap-2">
+                  <p className="text-dark-800/40 dark:text-white/30 text-sm line-through font-medium">
+                    {formatPrice(strikePrice)}
+                  </p>
+                  <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-900/30">
+                    -{Math.round(((strikePrice - displayPrice) / strikePrice) * 100)}%
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Stock */}
-          {(() => {
-            const currentStock = selectedVariant && typeof selectedVariant.stock === 'number'
-              ? selectedVariant.stock
-              : product.stock
-            const currentStatus = selectedVariant && typeof selectedVariant.stock === 'number'
-              ? (selectedVariant.stock <= 0 ? 'out_of_stock' : selectedVariant.stock <= 3 ? 'few_units_left' : 'in_stock')
-              : product.stock_status
+          {/* Stock & Delivery info row */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-6 p-3 rounded-2xl bg-cream-50/70 dark:bg-dark-800/50 border border-cream-200/60 dark:border-white/5 text-xs">
+            {(() => {
+              const currentStock = selectedVariant && typeof selectedVariant.stock === 'number'
+                ? selectedVariant.stock
+                : product.stock
+              const currentStatus = selectedVariant && typeof selectedVariant.stock === 'number'
+                ? (selectedVariant.stock <= 0 ? 'out_of_stock' : selectedVariant.stock <= 3 ? 'few_units_left' : 'in_stock')
+                : product.stock_status
 
-            return (
-              <div className="flex items-center gap-2 mb-6">
-                {currentStatus === 'in_stock' && (
-                  <>
-                    <CheckCircle size={18} weight="fill" className="text-green-500" />
-                    <span className="text-green-500 text-sm font-semibold">In Stock</span>
-                  </>
-                )}
-                {currentStatus === 'few_units_left' && (
-                  <>
-                    <CheckCircle size={18} weight="fill" className="text-amber-500" />
-                    <span className="text-amber-500 text-sm font-semibold">
-                      Few units left{currentStock > 0 ? ` — only ${currentStock} remaining` : ''}
-                    </span>
-                  </>
-                )}
-                {currentStatus === 'out_of_stock' && (
-                  <>
-                    <XCircle size={18} weight="fill" className="text-red-500" />
-                    <span className="text-red-500 text-sm font-semibold">Out of Stock</span>
-                  </>
-                )}
-              </div>
-            )
-          })()}
+              return (
+                <div className="flex items-center gap-1.5">
+                  {currentStatus === 'in_stock' && (
+                    <>
+                      <CheckCircle size={15} weight="fill" className="text-emerald-500" />
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">In Stock</span>
+                    </>
+                  )}
+                  {currentStatus === 'few_units_left' && (
+                    <>
+                      <CheckCircle size={15} weight="fill" className="text-amber-500" />
+                      <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                        Few units left{currentStock > 0 ? ` (${currentStock} remaining)` : ''}
+                      </span>
+                    </>
+                  )}
+                  {currentStatus === 'out_of_stock' && (
+                    <>
+                      <XCircle size={15} weight="fill" className="text-rose-500" />
+                      <span className="text-rose-600 dark:text-rose-400 font-semibold">Out of Stock</span>
+                    </>
+                  )}
+                </div>
+              )
+            })()}
 
-          {/* Delivery info */}
-          <div className="flex items-center gap-2 mb-6">
-            <Truck size={18} weight="duotone" className={Number(product.delivery_fee) > 0 ? 'text-brand-400' : 'text-green-500'} />
-            {Number(product.delivery_fee) > 0 ? (
-              <span className="text-dark-800/80 dark:text-white/70 text-sm">
-                Delivery: <span className="font-semibold text-dark-800 dark:text-white">{formatPrice(Number(product.delivery_fee))}</span>
-              </span>
-            ) : (
-              <span className="text-green-500 text-sm font-semibold">Free delivery</span>
-            )}
+            <span className="text-dark-800/20 dark:text-white/20 hidden sm:inline">•</span>
+
+            <div className="flex items-center gap-1.5 text-dark-800/70 dark:text-white/60">
+              <Truck size={15} weight="duotone" className={Number(product.delivery_fee) > 0 ? 'text-brand-400' : 'text-emerald-500'} />
+              {Number(product.delivery_fee) > 0 ? (
+                <span>
+                  Delivery: <span className="font-semibold text-dark-800 dark:text-white">{formatPrice(Number(product.delivery_fee))}</span>
+                </span>
+              ) : (
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Free delivery</span>
+              )}
+            </div>
           </div>
 
           {/* Available Options / Variations (e.g. 500GB, 1TB) */}
@@ -581,9 +611,7 @@ export default function ProductDetail() {
               </div>
               {!selectedSize && (
                 <p className="text-dark-800/45 dark:text-white/35 text-[11px] mt-2">
-                  {(!product.colors || product.colors.length === 0)
-                    ? 'Tap to select your size.'
-                    : 'Tap to select your size.'}
+                  Tap to select your size.
                 </p>
               )}
             </div>
@@ -704,34 +732,47 @@ export default function ProductDetail() {
               )
             }
             return (
-              <div className="flex gap-3 mt-auto">
-                <motion.button
-                  type="button"
-                  onClick={() => {
-                    handleAddToCart()
-                    // Reset selections after adding to cart
-                    setTimeout(() => {
-                      setSelectedSize(null)
-                      setSelectedColor(null)
-                    }, 2000)
-                  }}
-                  whileTap={{ scale: 0.97 }}
-                  className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold transition-all ${
-                    added
-                      ? 'bg-green-500 text-white shadow-lg'
-                      : 'bg-dark-800 dark:bg-dark-700 hover:bg-dark-700 dark:hover:bg-dark-600 text-white border border-dark-700 dark:border-white/10'
-                  }`}
-                >
-                  <ShoppingCart size={18} weight="duotone" />
-                  {added
-                    ? 'Added to Cart!'
-                    : (() => {
-                        const parts = ['Add to Cart']
-                        const details = [selectedVariant?.name, selectedSize, selectedColor].filter(Boolean)
-                        if (details.length > 0) return `Add — ${details.join(' · ')}`
-                        return parts[0]
-                      })()}
-                </motion.button>
+              <div className="space-y-3 mt-auto pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <motion.button
+                    type="button"
+                    onClick={() => {
+                      handleAddToCart()
+                      // Reset selections after adding to cart
+                      setTimeout(() => {
+                        setSelectedSize(null)
+                        setSelectedColor(null)
+                      }, 2000)
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold transition-all text-sm shadow-md ${
+                      added
+                        ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]'
+                        : 'bg-brand-400 hover:bg-brand-500 active:bg-brand-600 text-white shadow-amber-glow'
+                    }`}
+                  >
+                    {added ? <Check size={18} weight="bold" /> : <ShoppingCart size={18} weight="duotone" />}
+                    <span>
+                      {added
+                        ? 'Added to Cart!'
+                        : (() => {
+                            const details = [selectedVariant?.name, selectedSize, selectedColor].filter(Boolean)
+                            if (details.length > 0) return `Add to Cart (${details.join(' · ')})`
+                            return 'Add to Cart'
+                          })()}
+                    </span>
+                  </motion.button>
+
+                  <motion.button
+                    type="button"
+                    onClick={handleWhatsAppOrder}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-sm bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-sm transition-all"
+                  >
+                    <WhatsappLogo size={19} weight="fill" />
+                    <span>Order via WhatsApp</span>
+                  </motion.button>
+                </div>
               </div>
             )
           })()}

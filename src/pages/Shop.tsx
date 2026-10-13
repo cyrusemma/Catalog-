@@ -636,21 +636,50 @@ export default function Shop() {
 
       {/* Empty state */}
       {!isLoading && !productsIsError && (!visibleProducts || visibleProducts.length === 0) && (
-        <div className="text-center py-24">
-          <MagnifyingGlassMinus size={56} weight="duotone" className="text-brand-400 mx-auto mb-4" />
-          <h3 className="text-dark-800 dark:text-white font-semibold mb-2">No products found</h3>
-          <p className="text-dark-800/50 dark:text-white/40 text-sm">
-            {activeFilterCount > 0 ? 'Try widening your filters' : 'Try a different search or category'}
+        <div className="text-center py-16 sm:py-24 px-4 max-w-md mx-auto">
+          <div className="w-16 h-16 rounded-3xl bg-brand-400/10 dark:bg-brand-400/15 flex items-center justify-center mx-auto mb-4 text-brand-400">
+            <MagnifyingGlassMinus size={32} weight="duotone" />
+          </div>
+          <h3 className="text-lg font-bold text-dark-800 dark:text-white mb-2">No products found</h3>
+          <p className="text-dark-800/60 dark:text-white/50 text-sm mb-6 leading-relaxed">
+            {activeFilterCount > 0
+              ? "We couldn't find matches for the active filters. Clear them to explore all available items."
+              : query
+              ? `No items match "${query}". Try checking for typos or searching by broader keywords.`
+              : "There are no products listed in this section right now."}
           </p>
-          {activeFilterCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setFilters(defaultFilters)}
-              className="mt-4 text-brand-400 text-sm font-semibold hover:underline"
-            >
-              Reset filters
-            </button>
-          )}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setFilters(defaultFilters)}
+                className="btn-primary py-2.5 px-5 text-xs font-bold"
+              >
+                Reset filters
+              </button>
+            )}
+            {query && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('')
+                  setQuery('')
+                }}
+                className="btn-ghost py-2.5 px-5 text-xs font-semibold"
+              >
+                Clear search
+              </button>
+            )}
+            {!query && activeFilterCount === 0 && (
+              <button
+                type="button"
+                onClick={() => handleParentChange('all')}
+                className="btn-primary py-2.5 px-5 text-xs font-bold"
+              >
+                Browse all products
+              </button>
+            )}
+          </div>
         </div>
       )}
 

@@ -151,7 +151,7 @@ export function useProduct(idOrSlug: string, isMarketplaceView = true) {
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug)
       let query = supabase
         .from('products')
-        .select('*, store:stores(name, slug, logo_url, markup_percentage)')
+        .select('*, store:stores(name, slug, logo_url, markup_percentage, whatsapp_number)')
         .eq('is_published', true)
 
       if (isUUID) {
@@ -165,7 +165,7 @@ export function useProduct(idOrSlug: string, isMarketplaceView = true) {
         // Fallback: try matching the alternate column
         const fallback = await supabase
           .from('products')
-          .select('*, store:stores(name, slug, logo_url, markup_percentage)')
+          .select('*, store:stores(name, slug, logo_url, markup_percentage, whatsapp_number)')
           .eq('is_published', true)
           .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
           .maybeSingle()
