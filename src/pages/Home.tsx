@@ -1,14 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
-  ArrowUpRight,
   CaretRight,
-  ChartLineUp,
   Images,
-  Lightning,
   MagnifyingGlass,
-  RocketLaunch,
-  SealCheck,
   ShoppingBagOpen,
   Storefront,
   WhatsappLogo,
@@ -19,15 +14,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import ProductCard from '../components/ui/ProductCard'
 import CustomerReviews from '../components/ui/CustomerReviews'
-import UnifiedHeroCarousel from '../components/ui/UnifiedHeroCarousel'
 import ShopLoader from '../components/ui/ShopLoader'
 import { useProducts, useNewProducts } from '../hooks/useProducts'
 import { useCatalogSearch } from '../hooks/useCatalogSearch'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useCustomerSession } from '../hooks/useCustomerSession'
+import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
 import { supabase } from '../lib/supabase'
-import { formatPrice } from '../lib/utils'
-import type { Product } from '../types'
 import SEOHead from '../components/layout/SEOHead'
 
 export default function Home() {
@@ -74,6 +67,36 @@ export default function Home() {
   const productsLoadFailed = allProductsIsError || featuredIsError || newProductsIsError
   const reduceMotion = useReducedMotion()
   const navigate = useNavigate()
+  const formatPrice = useCurrencyFormatter()
+
+  // Real store data for the credible storefront preview (or honest demo fallback)
+  const { data: realApprovedStore } = useQuery({
+    queryKey: ['hero-showcase-store'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('stores')
+        .select('id, name, slug, logo_url, tagline, business_category')
+        .eq('approval_status', 'approved')
+        .limit(1)
+        .maybeSingle()
+      return data || null
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const previewStoreIsReal = !!realApprovedStore
+  const previewStoreName = realApprovedStore?.name || storeName || 'Merchant Store'
+  const previewStoreSlug = realApprovedStore?.slug || 'merchant-store'
+  const previewStoreTagline = realApprovedStore?.tagline || realApprovedStore?.business_category || 'Handcrafted & Curated Catalog'
+  const previewStoreLogo = realApprovedStore?.logo_url || settings.logo_url || null
+
+  const previewProducts = useMemo(() => {
+    if (realApprovedStore?.id) {
+      const storeProducts = allProducts.filter(p => p.store_id === realApprovedStore.id)
+      if (storeProducts.length >= 2) return storeProducts.slice(0, 2)
+    }
+    return (allProducts && allProducts.length > 0 ? allProducts : (featured || [])).slice(0, 2)
+  }, [realApprovedStore, allProducts, featured])
 
 
   useEffect(() => {
@@ -147,18 +170,6 @@ export default function Home() {
     }
   }, [dropdownOpen])
 
-  // Hero product showcase — featured first, topped up with new arrivals, deduped.
-  const heroShowcase = useMemo(() => {
-    const seen = new Set<string>()
-    const out: Product[] = []
-    for (const p of [...(featured ?? []), ...(newProducts ?? [])]) {
-      if (!seen.has(p.id)) {
-        seen.add(p.id)
-        out.push(p)
-      }
-    }
-    return out.slice(0, 6)
-  }, [featured, newProducts])
 
   // Extract up to 3 distinct product images for the editorial lookbook preview stack
   const lookbookImages = useMemo(() => {
@@ -339,8 +350,129 @@ export default function Home() {
         </div>
       </motion.section>
 
-      {/* Premium Unified Swiper Hero Carousel */}
-      <UnifiedHeroCarousel products={heroShowcase} heroImages={settings.hero_images || []} />
+      {/* ── Compact Seller Hero & Credible Store Preview ─────────────────── */}
+      <motion.section
+        initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+        animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-7xl mx-auto px-4 pt-4 pb-8 sm:pt-6 sm:pb-12 relative z-30"
+      >
+        <div className="relative rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-9 lg:p-11 overflow-hidden bg-gradient-to-br from-cream-100/90 via-cream-50 to-white dark:from-[#18130e] dark:via-dark-900 dark:to-dark-900 border border-cream-200/80 dark:border-white/10 shadow-sm">
+          {/* Subtle warm backdrop glow - compact & non-distracting */}
+          <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-brand-400/10 dark:bg-amber-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-emerald-500/10 dark:bg-emerald-500/5 blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 grid lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+            {/* Left Column: Headline, concise support copy, clear CTAs */}
+            <div className="lg:col-span-7 text-center lg:text-left space-y-4">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-display font-bold tracking-tight text-dark-800 dark:text-white leading-[1.15]">
+                Launch your online store and receive orders straight to WhatsApp.
+              </h2>
+
+              <p className="text-sm sm:text-base text-dark-800/70 dark:text-white/70 font-normal leading-relaxed max-w-xl mx-auto lg:mx-0">
+                Share your personal catalog link, accept customer orders with zero commission, and manage your inventory easily.
+              </p>
+
+              {/* CTAs */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
+                <Link
+                  to="/sell"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-brand-400 hover:bg-brand-500 active:bg-brand-600 text-white font-bold text-sm transition-all shadow-sm flex items-center justify-center gap-2"
+                >
+                  <Storefront size={18} weight="fill" />
+                  <span>Open your store</span>
+                  <ArrowRight size={15} weight="bold" />
+                </Link>
+
+                <Link
+                  to="/shop"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl border border-dark-800/15 dark:border-white/15 hover:border-brand-400/40 hover:bg-brand-400/5 text-dark-800 dark:text-white font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Explore shops</span>
+                  <CaretRight size={15} />
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Column: Credible Storefront Preview */}
+            <div className="lg:col-span-5 w-full">
+              <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-white dark:bg-dark-800 border border-cream-200 dark:border-white/10 shadow-md">
+                {/* Store URL & Status */}
+                <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-cream-200/70 dark:border-white/10 text-xs">
+                  <div className="flex items-center gap-1.5 min-w-0 font-mono text-dark-800/60 dark:text-white/50 text-[11px] truncate">
+                    <Storefront size={13} className="text-brand-400 flex-shrink-0" />
+                    <span className="truncate">ccatalog.store/s/{previewStoreSlug}</span>
+                  </div>
+                  <span className="text-[10px] font-semibold text-dark-800/50 dark:text-white/40 uppercase tracking-wider flex-shrink-0">
+                    {previewStoreIsReal ? 'Storefront' : 'Store Preview'}
+                  </span>
+                </div>
+
+                {/* Store Identity */}
+                <div className="flex items-center gap-3 mb-4">
+                  {previewStoreLogo ? (
+                    <img
+                      src={previewStoreLogo}
+                      alt={previewStoreName}
+                      className="w-10 h-10 rounded-xl object-cover border border-cream-200 dark:border-white/10 flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-xl bg-brand-400/10 text-brand-400 font-bold flex items-center justify-center text-sm flex-shrink-0 border border-brand-400/20">
+                      {previewStoreName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-dark-800 dark:text-white truncate">
+                      {previewStoreName}
+                    </h3>
+                    <p className="text-[11px] text-dark-800/50 dark:text-white/40 truncate">
+                      {previewStoreTagline}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Real Products in Preview */}
+                <div className="space-y-2">
+                  {previewProducts.slice(0, 2).map((p) => (
+                    <div
+                      key={p.id}
+                      className="p-2 sm:p-2.5 rounded-xl bg-cream-50/80 dark:bg-dark-700/60 border border-cream-200/60 dark:border-white/5 flex items-center gap-3"
+                    >
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-cream-100 dark:bg-dark-700 flex-shrink-0">
+                        <img
+                          src={p.images?.[0] || 'https://placehold.co/100x100/1a1008/d4820a?text=Product'}
+                          alt={p.title}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs font-semibold text-dark-800 dark:text-white truncate">
+                          {p.title}
+                        </h4>
+                        <p className="text-xs font-bold text-brand-400 mt-0.5">
+                          {formatPrice(p.selling_price)}
+                        </p>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30">
+                          <WhatsappLogo size={12} weight="fill" />
+                          <span>Order</span>
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Direct WhatsApp ordering note */}
+                <p className="mt-3 text-[11px] text-dark-800/40 dark:text-white/35 text-center">
+                  Direct WhatsApp checkout on every listing
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.section>
 
       {productsLoadFailed && (
         <section className="max-w-7xl mx-auto px-4 py-10">
@@ -536,169 +668,6 @@ export default function Home() {
                   <Images size={36} weight="duotone" />
                 </div>
               )}
-            </div>
-
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ── Create Your Store — High-Conversion CTA ─────────────────────────── */}
-      <motion.section
-        initial={reduceMotion ? false : { opacity: 0, y: 28 }}
-        whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-60px' }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="py-14 sm:py-24 relative overflow-hidden"
-      >
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="relative rounded-[2.5rem] sm:rounded-[3rem] p-8 sm:p-12 lg:p-16 overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12"
-            style={{
-              background: 'linear-gradient(135deg, #0f0a04 0%, #1a0f04 40%, #120d06 70%, #0a0602 100%)',
-              boxShadow: '0 32px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(180,110,20,0.18)',
-            }}
-          >
-            {/* Ambient light — warm upper-left, cool lower-right */}
-            <div className="absolute -top-24 -left-24 w-[420px] h-[420px] rounded-full blur-[100px] pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(214,128,10,0.18) 0%, transparent 70%)' }} />
-            <div className="absolute -bottom-24 -right-24 w-[320px] h-[320px] rounded-full blur-[90px] pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(16,120,80,0.10) 0%, transparent 70%)' }} />
-            {/* Fine grain texture overlay */}
-            <div className="absolute inset-0 opacity-[0.025] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' /%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")', backgroundSize: '150px' }} />
-
-            {/* Left: Copy + CTAs */}
-            <div className="max-w-xl text-center lg:text-left relative z-10">
-
-              {/* Social proof pill — scarcity/trust */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6 border border-amber-400/20" style={{ background: 'rgba(214,128,10,0.10)' }}>
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-                </span>
-                <span className="text-[11px] font-bold text-amber-300/90 uppercase tracking-widest">Free · No Commission · Open Now</span>
-              </div>
-
-              {/* Headline — benefit-led */}
-              <h2 className="font-serif text-3xl sm:text-4xl lg:text-[2.8rem] font-normal tracking-tight text-white leading-[1.1] mb-4">
-                Your products deserve{' '}
-                <span className="italic" style={{ background: 'linear-gradient(90deg, #fde68a, #f59e0b, #d97706)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                  their own store.
-                </span>
-              </h2>
-
-              <p className="text-[15px] text-white/55 mb-8 leading-relaxed font-light max-w-md mx-auto lg:mx-0">
-                Launch in under 60 seconds. Share your link, get orders straight to WhatsApp — completely free, forever.
-              </p>
-
-              {/* Benefit pills */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-9">
-                {[
-                  { icon: <Lightning size={13} weight="fill" className="text-amber-400" />, text: '60-Second Setup' },
-                  { icon: <WhatsappLogo size={13} weight="fill" className="text-emerald-400" />, text: 'Orders to WhatsApp' },
-                  { icon: <SealCheck size={13} weight="fill" className="text-amber-400" />, text: 'Zero Listing Fees' },
-                  { icon: <ChartLineUp size={13} weight="fill" className="text-sky-400" />, text: 'Live Analytics' },
-                ].map(({ icon, text }) => (
-                  <span key={text} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-medium text-white/70 border border-white/[0.08]" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                    {icon}
-                    {text}
-                  </span>
-                ))}
-              </div>
-
-              {/* CTAs */}
-              <div className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
-                <Link
-                  to="/sell"
-                  className="group w-full sm:w-auto px-8 py-4 rounded-2xl font-extrabold text-sm tracking-wide flex items-center justify-center gap-2.5 transition-all transform hover:-translate-y-0.5 active:scale-95"
-                  style={{
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 60%, #b45309 100%)',
-                    color: '#0a0602',
-                    boxShadow: '0 8px 32px rgba(214,128,10,0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
-                  }}
-                >
-                  <Storefront size={17} weight="fill" />
-                  <span>Create Your Free Store</span>
-                  <ArrowUpRight size={17} weight="bold" className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                </Link>
-
-                <Link
-                  to="/shop"
-                  className="w-full sm:w-auto px-6 py-4 rounded-2xl border font-semibold text-sm transition-all flex items-center justify-center gap-2"
-                  style={{ borderColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.65)', background: 'rgba(255,255,255,0.04)' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(214,128,10,0.35)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.90)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.65)' }}
-                >
-                  <span>Browse Existing Shops</span>
-                  <CaretRight size={15} />
-                </Link>
-              </div>
-
-              {/* Micro-trust line */}
-              <p className="mt-5 text-[11px] text-white/25 text-center lg:text-left">
-                Trusted by merchants across Ghana · No credit card needed
-              </p>
-            </div>
-
-            {/* Right: Mock store card */}
-            <div className="w-full lg:max-w-[380px] space-y-3 relative z-10">
-
-              {/* Store card */}
-              <div className="rounded-3xl p-5 backdrop-blur-xl border border-white/[0.08] shadow-2xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-white/[0.07]">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
-                    </div>
-                    <span className="text-[11px] font-mono truncate" style={{ color: 'rgba(253,230,138,0.75)' }}>catalog.com/s/your-store</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider flex-shrink-0 border border-emerald-500/30" style={{ background: 'rgba(16,185,129,0.12)', color: '#6ee7b7' }}>
-                    LIVE
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-11 h-11 rounded-xl p-0.5 flex-shrink-0" style={{ background: 'linear-gradient(135deg, #f59e0b, #fde68a)' }}>
-                    <div className="w-full h-full rounded-[10px] flex items-center justify-center font-serif text-base font-bold" style={{ background: '#1a0f04', color: '#f59e0b' }}>
-                      B
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="font-serif text-sm font-bold text-white truncate">Bella Boutique</h4>
-                      <SealCheck size={15} weight="fill" style={{ color: '#f59e0b', flexShrink: 0 }} />
-                    </div>
-                    <p className="text-[11px] mt-0.5" style={{ color: 'rgba(229,216,197,0.50)' }}>Luxury Apparel &amp; Accessories</p>
-                  </div>
-                </div>
-
-                {/* WhatsApp notification */}
-                <div className="rounded-2xl p-3 flex items-start gap-3 border border-emerald-500/20" style={{ background: 'rgba(6,78,59,0.35)' }}>
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
-                    <WhatsappLogo size={16} weight="fill" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <p className="text-[11px] font-bold" style={{ color: '#6ee7b7' }}>New Order 🎉</p>
-                      <span className="text-[10px] font-mono" style={{ color: 'rgba(110,231,183,0.55)' }}>Just now</span>
-                    </div>
-                    <p className="text-xs font-medium truncate" style={{ color: 'rgba(255,255,255,0.80)' }}>Silk Satin Slip Dress — GH₵ 280.00</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bento grid */}
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { Icon: RocketLaunch, title: 'Instant Setup', desc: 'Live in under 60 sec.' },
-                  { Icon: ChartLineUp, title: 'Live Analytics', desc: 'Track visits & orders.' },
-                ].map(({ Icon, title, desc }) => (
-                  <div key={title} className="rounded-2xl p-4 border border-white/[0.07] hover:border-amber-400/25 transition-all group" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                    <div className="w-8 h-8 rounded-xl mb-2.5 flex items-center justify-center border border-amber-500/20" style={{ background: 'rgba(214,128,10,0.10)', color: '#f59e0b' }}>
-                      <Icon size={17} weight="duotone" />
-                    </div>
-                    <h5 className="text-xs font-bold text-white mb-0.5">{title}</h5>
-                    <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(229,216,197,0.50)' }}>{desc}</p>
-                  </div>
-                ))}
-              </div>
             </div>
 
           </div>
