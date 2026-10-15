@@ -190,7 +190,7 @@ export default function BecomeMerchant() {
           Join our marketplace and start selling your products today. Sign in or create an account
           first.
         </p>
-        <button onClick={() => openSignIn()} className="btn-primary">
+        <button onClick={() => openSignIn('Sign in to create your store and start selling.', '/sell')} className="btn-primary">
           Sign In to Continue
         </button>
       </main>

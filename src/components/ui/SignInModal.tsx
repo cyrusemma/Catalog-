@@ -1,7 +1,16 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { X, GoogleLogo, EnvelopeSimple, CheckCircle, Eye, EyeSlash, LockKey } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
+import { useSignInStore } from '../../store/signInStore'
+import {
+  getAuthCallbackUrl,
+  saveAuthRedirect,
+  clearAuthRedirect,
+  resolvePostAuthRedirect,
+  sanitizeRedirectUrl,
+} from '../../lib/authRedirect'
 
 interface Props {
   open: boolean
@@ -18,11 +27,13 @@ type Tab = 'password' | 'magic'
  *  - Email + password (sign in OR sign up; signup sends a confirmation email)
  *  - Magic link (passwordless; one-time link in email)
  *
- * The modal closes itself on a successful "check your email" state for
- * signup/magic-link; Google + password sign-in either navigate away or close
- * once the auth state changes.
+ * All flows preserve and return the user to the exact page they were on
+ * before authenticating, validated against open-redirect attacks.
  */
 export default function SignInModal({ open, onClose, reason }: Props) {
+  const navigate = useNavigate()
+  const storeRedirectUrl = useSignInStore(s => s.redirectUrl)
+
   const [tab, setTab] = useState<Tab>('password')
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin')
   const [email, setEmail] = useState('')
@@ -48,18 +59,29 @@ export default function SignInModal({ open, onClose, reason }: Props) {
     onClose()
   }
 
-  // After OAuth / magic-link confirmation, Supabase redirects back to this
-  // exact URL with `?code=...`. Keeping the user on whatever page they were
-  // signing in from feels more natural than punting them home.
-  const redirectTo = typeof window !== 'undefined'
-    ? `${window.location.origin}${window.location.pathname}`
-    : undefined
+  // Determine target return URL
+  const getActiveReturnTarget = (): string => {
+    if (storeRedirectUrl) {
+      const sanitized = sanitizeRedirectUrl(storeRedirectUrl)
+      if (sanitized) return sanitized
+    }
+    if (typeof window !== 'undefined') {
+      const current = `${window.location.pathname}${window.location.search}${window.location.hash}`
+      const sanitized = sanitizeRedirectUrl(current)
+      if (sanitized) return sanitized
+    }
+    return '/'
+  }
 
   const signInWithGoogle = async () => {
     setError('')
+    const target = getActiveReturnTarget()
+    saveAuthRedirect(target)
+    const callbackUrl = getAuthCallbackUrl(target)
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo },
+      options: { redirectTo: callbackUrl },
     })
     if (error) {
       setError(
@@ -84,29 +106,41 @@ export default function SignInModal({ open, onClose, reason }: Props) {
     setError('')
     setWorking(true)
 
+    const target = getActiveReturnTarget()
+    saveAuthRedirect(target)
+
     if (mode === 'signup') {
-      // Signup. Supabase will send a confirmation email; the user can't sign
-      // in until they click the link.
-      const { error } = await supabase.auth.signUp({
+      const callbackUrl = getAuthCallbackUrl(target)
+      const { data, error } = await supabase.auth.signUp({
         email: cleanedEmail,
         password,
-        options: { emailRedirectTo: redirectTo },
+        options: { emailRedirectTo: callbackUrl },
       })
       setWorking(false)
       if (error) {
         setError(humanizeAuthError(error.message))
         return
       }
+
+      // If Supabase has email confirmation disabled, user session is returned immediately
+      if (data?.session) {
+        close()
+        const dest = await resolvePostAuthRedirect(data.user, target)
+        clearAuthRedirect()
+        navigate(dest, { replace: true })
+        return
+      }
+
       setNotice({
         kind: 'info',
         title: 'Confirm your email',
-        body: `We sent a confirmation link to ${cleanedEmail}. Click it to activate your account, then come back and sign in.`,
+        body: `We sent a confirmation link to ${cleanedEmail}. Click it to activate your account, and you'll return right back to this page.`,
       })
       return
     }
 
     // Sign in
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: cleanedEmail,
       password,
     })
@@ -115,8 +149,11 @@ export default function SignInModal({ open, onClose, reason }: Props) {
       setError(humanizeAuthError(error.message))
       return
     }
-    // Supabase has set the session; auth state change will propagate. Close.
+
     close()
+    const dest = await resolvePostAuthRedirect(data?.user, target)
+    clearAuthRedirect()
+    navigate(dest, { replace: true })
   }
 
   const sendMagicLink = async (e: React.FormEvent) => {
@@ -128,9 +165,14 @@ export default function SignInModal({ open, onClose, reason }: Props) {
     }
     setWorking(true)
     setError('')
+
+    const target = getActiveReturnTarget()
+    saveAuthRedirect(target)
+    const callbackUrl = getAuthCallbackUrl(target)
+
     const { error } = await supabase.auth.signInWithOtp({
       email: cleaned,
-      options: { emailRedirectTo: redirectTo },
+      options: { emailRedirectTo: callbackUrl },
     })
     setWorking(false)
     if (error) {
@@ -140,7 +182,7 @@ export default function SignInModal({ open, onClose, reason }: Props) {
     setNotice({
       kind: 'success',
       title: 'Check your email',
-      body: `We sent a sign-in link to ${cleaned}. Tap it on this device to finish signing in.`,
+      body: `We sent a sign-in link to ${cleaned}. Tap it to finish signing in and return here.`,
     })
   }
 

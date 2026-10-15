@@ -36,7 +36,7 @@ export default function BottomNav() {
           const handleTabClick = (e: React.MouseEvent) => {
             if (isAccountTab && !isLoggedIn) {
               e.preventDefault()
-              openSignIn('Sign in to view your account.')
+              openSignIn('Sign in to view your account.', '/account')
             }
           }
 

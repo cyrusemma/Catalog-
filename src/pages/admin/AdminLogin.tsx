@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { isAdminSession } from '../../lib/admin'
 import { Store, Eye, EyeOff, Lock } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { sanitizeRedirectUrl } from '../../lib/authRedirect'
 
 export default function AdminLogin() {
   const navigate = useNavigate()
@@ -30,7 +31,10 @@ export default function AdminLogin() {
       await supabase.auth.signOut()
       setError('This account does not have admin access.')
     } else {
-      navigate('/admin')
+      const searchParams = new URLSearchParams(location.search)
+      const redirectParam = searchParams.get('redirect')
+      const target = sanitizeRedirectUrl(redirectParam) || '/admin'
+      navigate(target, { replace: true })
     }
     setLoading(false)
   }

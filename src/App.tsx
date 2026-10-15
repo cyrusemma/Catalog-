@@ -61,6 +61,8 @@ const BlogPost = lazy(() => import('./pages/BlogPost'))
 const CustomPage = lazy(() => import('./pages/CustomPage'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 const StoreFront = lazy(() => import('./pages/store/StoreFront'))
+const AuthCallback = lazy(() => import('./pages/AuthCallback'))
+import { recordLastVisitedStore } from './lib/authRedirect'
 
 const BecomeMerchant = lazy(() => import('./pages/BecomeMerchant'))
 import OfflineGame from './pages/OfflineGame'
@@ -389,18 +391,33 @@ function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
   const closeSignIn = useSignInStore(s => s.closeModal)
   const signInReason = useSignInStore(s => s.reason)
 
-  const { data: store, isLoading, isError } = useQuery<StoreDetails>({
+  const { data: store, isLoading, isError, error: storeError, refetch } = useQuery<StoreDetails>({
     queryKey: ['store', storeSlug],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('stores')
-        .select('*')
-        .eq('slug', storeSlug)
-        .single()
-      if (error) throw error
-      return data
+      // 10-second timeout — prevents the spinner from hanging forever if
+      // Supabase is slow to respond (cold start, network hiccup, RLS eval).
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10_000)
+      try {
+        const { data, error } = await supabase
+          .from('stores')
+          .select('*')
+          .eq('slug', storeSlug)
+          .abortSignal(controller.signal)
+          .single()
+        if (error) throw error
+        if (!data) throw new Error('NOT_FOUND')
+        return data
+      } finally {
+        clearTimeout(timeoutId)
+      }
     },
     enabled: !!storeSlug,
+    retry: 2,
+    retryDelay: 1500,
+    // Keep previous data visible while refetching so the storefront
+    // doesn't flash a spinner on background refetches.
+    staleTime: 1000 * 60 * 5,
   })
 
   // Dynamically overwrite PWA manifest for THIS merchant storefront
@@ -415,41 +432,20 @@ function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
       : null
   )
 
-  if (isLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-400 mx-auto mb-4" />
-          <p className="text-gray-500 text-sm">Opening storefront...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (isError || !store) {
-    return (
-      <div className="flex-1 flex items-center justify-center min-h-[60vh] px-4">
-        <div className="text-center max-w-sm">
-          <Store size={48} className="text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Store Not Found</h2>
-          <p className="text-gray-500 text-sm mb-6">
-            The storefront URL you are trying to reach doesn't exist or has been deactivated.
-          </p>
-          <Link
-            to="/"
-            className="inline-block bg-brand-400 hover:bg-brand-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors shadow-sm"
-          >
-            Go to Marketplace
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
   const { user } = useCustomerSession()
-  const isOwner = !!user?.id && user.id === store.owner_id
+  const location = useLocation()
+  const mode = useThemeStore(s => s.mode)
 
-  const ctxValue: StoreContextValue = {
+  useEffect(() => {
+    if (storeSlug) {
+      recordLastVisitedStore(storeSlug)
+    }
+  }, [storeSlug])
+
+  const isOwner = !!user?.id && !!store && user.id === store.owner_id
+  const merchantThemeColor = (store?.theme_color as ColorTheme) || 'golden'
+
+  const ctxValue: StoreContextValue = store ? {
     storeSlug: store.slug,
     storeId: store.id,
     storeName: store.name,
@@ -466,12 +462,24 @@ function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
     maintenanceMode: !!store.maintenance_mode,
     maintenanceMessage: store.maintenance_message || null,
     operatingHours: store.operating_hours || null,
+  } : {
+    storeSlug: '',
+    storeId: '',
+    storeName: '',
+    logoUrl: null,
+    tagline: null,
+    socialInstagram: null,
+    socialTiktok: null,
+    socialFacebook: null,
+    whatsappNumber: null,
+    ownerId: null,
+    heroImages: [],
+    settings: {},
+    minimumOrderAmount: 0,
+    maintenanceMode: false,
+    maintenanceMessage: null,
+    operatingHours: null,
   }
-
-  const location = useLocation()
-
-  const mode = useThemeStore(s => s.mode)
-  const merchantThemeColor = (store?.theme_color as ColorTheme) || 'golden'
 
   useEffect(() => {
     if (store?.theme_color) {
@@ -481,6 +489,77 @@ function MerchantStorefrontLayout({ children }: { children: React.ReactNode }) {
       applyTheme(initialColor(), mode)
     }
   }, [merchantThemeColor, mode])
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-400 mx-auto mb-4" />
+          <p className="text-gray-500 text-sm">Opening storefront...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isError || !store) {
+    // Distinguish between "not found" (PGRST116 = no rows, or explicit NOT_FOUND)
+    // and a network/timeout failure so we can show the right message.
+    const errMsg = storeError instanceof Error ? storeError.message : String(storeError ?? '')
+    const isAborted = errMsg.includes('AbortError') || errMsg.includes('abort') || errMsg.includes('signal')
+    const isNotFound =
+      errMsg === 'NOT_FOUND' ||
+      errMsg.includes('PGRST116') ||
+      errMsg.includes('JSON object requested') ||
+      errMsg.includes('0 rows')
+
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-[60vh] px-4">
+        <div className="text-center max-w-sm">
+          <Store size={48} className="text-gray-300 mx-auto mb-4" />
+          {isNotFound ? (
+            <>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Store Not Found</h2>
+              <p className="text-gray-500 text-sm mb-6">
+                The storefront you're looking for doesn't exist or may have been removed.
+              </p>
+            </>
+          ) : isAborted ? (
+            <>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Store Unavailable</h2>
+              <p className="text-gray-500 text-sm mb-6">
+                The request timed out. This is usually a temporary issue — please try again.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Failed to Load</h2>
+              <p className="text-gray-500 text-sm mb-6">
+                Something went wrong loading this storefront. Check your connection and try again.
+              </p>
+            </>
+          )}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {!isNotFound && (
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="inline-block bg-brand-400 hover:bg-brand-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors shadow-sm"
+              >
+                Try Again
+              </button>
+            )}
+            <Link
+              to="/"
+              className="inline-block border border-gray-200 dark:border-white/10 hover:border-brand-400/40 text-gray-700 dark:text-gray-300 font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
+            >
+              Go to Marketplace
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
 
   if (store.maintenance_mode && !isOwner) {
     return (
@@ -632,8 +711,12 @@ function AnimatedRoutes() {
         <Route path="/sell" element={<StorefrontLayout><BecomeMerchant /></StorefrontLayout>} />
         <Route path="/offline-game" element={<OfflineGame />} />
 
+        {/* Auth callback for email confirmation, magic links, and OAuth */}
+        <Route path="/auth/callback" element={<AuthCallback />} />
+
         {/* Merchant dashboard — scoped to store owner, not platform admin */}
         <Route path="/merchant" element={<MerchantProtectedRoute><MerchantDashboard /></MerchantProtectedRoute>} />
+        <Route path="/dashboard" element={<MerchantProtectedRoute><MerchantDashboard /></MerchantProtectedRoute>} />
 
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />

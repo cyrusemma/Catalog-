@@ -43,6 +43,14 @@
       "destination": "/api/og/store/:slug"
     },
     {
+      "source": "/auth/callback",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/index.html"
+    },
+    {
       "source": "/((?!api/|assets/|.*\\..*).*)",
       "destination": "/index.html"
     }
