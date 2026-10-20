@@ -309,9 +309,9 @@ export default function ProductDetail() {
       </div>
 
 
-      <div className="grid md:grid-cols-2 gap-8 lg:gap-14">
+      <div className="grid md:grid-cols-2 gap-8 lg:gap-14 min-w-0">
         {/* Images */}
-        <div>
+        <div className="min-w-0">
           <div className="aspect-square rounded-3xl overflow-hidden bg-cream-100 dark:bg-dark-800 border border-cream-200 dark:border-brand-400/15 mb-3 relative">
             <AnimatePresence mode="wait">
               <motion.img
@@ -362,7 +362,7 @@ export default function ProductDetail() {
         </div>
 
         {/* Details */}
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-0">
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-brand-400 text-xs font-bold uppercase tracking-[0.2em]">{product.category}</span>
@@ -374,7 +374,7 @@ export default function ProductDetail() {
             </div>
           </div>
           <div className="flex items-start justify-between gap-3 mb-4">
-            <h1 className="text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white leading-snug flex-1">{product.title}</h1>
+            <h1 className="min-w-0 text-3xl sm:text-4xl font-display font-bold text-dark-800 dark:text-white leading-snug flex-1 break-words">{product.title}</h1>
             {/* Wishlist button beside title on desktop */}
             <motion.button
               type="button"
