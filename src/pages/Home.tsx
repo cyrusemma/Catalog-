@@ -6,7 +6,6 @@ import {
   MagnifyingGlass,
   ShoppingBagOpen,
   Storefront,
-  WhatsappLogo,
   X,
 } from '@phosphor-icons/react'
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
@@ -20,6 +19,7 @@ import { useCatalogSearch } from '../hooks/useCatalogSearch'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useCustomerSession } from '../hooks/useCustomerSession'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
+import { useSwipe } from '../hooks/useSwipe'
 import { supabase } from '../lib/supabase'
 import SEOHead from '../components/layout/SEOHead'
 
@@ -140,7 +140,43 @@ export default function Home() {
 
   const [activeIndex, setActiveIndex] = useState(-1)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [heroProductIndex, setHeroProductIndex] = useState(0)
   const searchRootRef = useRef<HTMLDivElement>(null)
+
+  const heroProducts = useMemo(() => {
+    const pool = [...(allProducts || []), ...(featured || []), ...(newProducts || [])]
+    const seen = new Set<string>()
+    const results: Array<{ id: string; title: string; images?: string[]; selling_price?: number; slug?: string; store_id?: string; category?: string }> = []
+
+    for (const product of pool) {
+      const image = product.images?.[0]
+      if (!image || seen.has(image)) continue
+      seen.add(image)
+      results.push(product)
+      if (results.length === 5) break
+    }
+
+    return results
+  }, [allProducts, featured, newProducts])
+
+  const heroProductsDisplay = heroProducts.length > 0 ? heroProducts : previewProducts
+
+  useEffect(() => {
+    if (heroProductsDisplay.length <= 1) return
+    if (reduceMotion) return
+    const timer = window.setInterval(() => {
+      setHeroProductIndex((current) => (current + 1) % heroProductsDisplay.length)
+    }, 4200)
+    return () => window.clearInterval(timer)
+  }, [heroProductsDisplay.length, reduceMotion])
+
+  const { onPointerDown, onPointerUp, onPointerCancel } = useSwipe({
+    onSwipeLeft: () => setHeroProductIndex((current) => (current + 1) % heroProductsDisplay.length),
+    onSwipeRight: () => setHeroProductIndex((current) => (current - 1 + heroProductsDisplay.length) % heroProductsDisplay.length),
+    threshold: 48,
+  })
+
+  const activeHeroProduct = heroProductsDisplay[heroProductIndex] || heroProductsDisplay[0]
 
   // Reset highlight whenever the result set changes
   useEffect(() => {
@@ -400,80 +436,102 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Column: Credible Storefront Preview */}
+            {/* Right Column: Swipeable storefront gallery */}
             <div className="w-full min-w-0 lg:col-span-5">
-              <div className="w-full max-w-full rounded-2xl sm:rounded-3xl p-3 sm:p-5 bg-white/95 dark:bg-dark-800/95 backdrop-blur-sm border border-cream-200 dark:border-white/10 shadow-md overflow-hidden">
-                {/* Store URL & Status */}
-                <div className="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-cream-200/70 dark:border-white/10 text-xs">
-                  <div className="flex items-center gap-1.5 min-w-0 font-mono text-dark-800/60 dark:text-white/50 text-[11px] truncate">
-                    <Storefront size={13} className="text-brand-400 shrink-0" />
-                    <span className="truncate">ccatalog.store/s/{previewStoreSlug}</span>
-                  </div>
-                  <span className="text-[10px] font-semibold text-dark-800/50 dark:text-white/40 uppercase tracking-wider shrink-0 bg-cream-100 dark:bg-white/5 px-2 py-0.5 rounded-md">
-                    {previewStoreIsReal ? 'Storefront' : 'Preview'}
-                  </span>
-                </div>
-
-                {/* Store Identity */}
-                <div className="flex items-center gap-2.5 sm:gap-3 mb-3 min-w-0">
-                  {previewStoreLogo ? (
-                    <img
-                      src={previewStoreLogo}
-                      alt={previewStoreName}
-                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover border border-cream-200 dark:border-white/10 shrink-0"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand-400/10 text-brand-400 font-bold flex items-center justify-center text-sm shrink-0 border border-brand-400/20">
-                      {previewStoreName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-xs sm:text-sm font-bold text-dark-800 dark:text-white truncate">
-                      {previewStoreName}
-                    </h3>
-                    <p className="text-[10px] sm:text-[11px] text-dark-800/50 dark:text-white/40 truncate">
-                      {previewStoreTagline}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Real Products in Preview */}
-                <div className="space-y-2 w-full">
-                  {previewProducts.slice(0, 2).map((p) => (
+              <div
+                className="relative w-full max-w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-cream-200 dark:border-white/10 bg-white/95 dark:bg-dark-800/95 shadow-md"
+                onPointerDown={onPointerDown}
+                onPointerUp={onPointerUp}
+                onPointerCancel={onPointerCancel}
+              >
+                <div className="relative aspect-[4/3] w-full overflow-hidden bg-cream-100 dark:bg-dark-700">
+                  {heroProductsDisplay.map((product, index) => (
                     <div
-                      key={p.id}
-                      className="p-2 sm:p-2.5 rounded-xl bg-cream-50/80 dark:bg-dark-700/60 border border-cream-200/60 dark:border-white/5 flex items-center gap-2 sm:gap-3 min-w-0"
+                      key={`${product.id}-${index}`}
+                      className={`absolute inset-0 transition-all duration-700 ease-out ${
+                        index === heroProductIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-105 pointer-events-none'
+                      }`}
                     >
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden bg-cream-100 dark:bg-dark-700 shrink-0">
-                        <img
-                          src={p.images?.[0] || 'https://placehold.co/100x100/1a1008/d4820a?text=Product'}
-                          alt={p.title}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-xs font-semibold text-dark-800 dark:text-white truncate">
-                          {p.title}
-                        </h4>
-                        <p className="text-xs font-bold text-brand-400 mt-0.5">
-                          {formatPrice(p.selling_price)}
-                        </p>
-                      </div>
-                      <div className="shrink-0">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30">
-                          <WhatsappLogo size={12} weight="fill" />
-                          <span>Order</span>
-                        </span>
-                      </div>
+                      <img
+                        src={product.images?.[0] || 'https://placehold.co/800x600/1a1008/d4820a?text=Product'}
+                        alt={product.title}
+                        className="h-full w-full object-cover"
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10" />
                     </div>
                   ))}
+
+                  <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-2 p-3 sm:p-4">
+                    <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/20 px-2.5 py-1.5 backdrop-blur-sm">
+                      <Storefront size={12} className="text-white" />
+                      <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/80">
+                        {previewStoreIsReal ? 'Storefront' : 'Preview'}
+                      </span>
+                    </div>
+                    <span className="rounded-full border border-white/15 bg-black/20 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80 backdrop-blur-sm">
+                      {heroProductIndex + 1}/{heroProductsDisplay.length}
+                    </span>
+                  </div>
+
+                  <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                    <div className="mb-3 flex items-center gap-2.5 min-w-0">
+                      {previewStoreLogo ? (
+                        <img
+                          src={previewStoreLogo}
+                          alt={previewStoreName}
+                          className="h-9 w-9 rounded-xl border border-white/20 object-cover bg-white/10 shadow-sm"
+                        />
+                      ) : (
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-sm font-bold text-white">
+                          {previewStoreName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[10px] uppercase tracking-[0.2em] text-white/70">{previewStoreName}</p>
+                        <p className="truncate text-xs text-white/80">{previewStoreTagline}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3 backdrop-blur-sm">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-white/65">Featured</p>
+                      <div className="mt-1 flex items-end justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="truncate text-base font-semibold text-white sm:text-lg">
+                            {activeHeroProduct?.title || 'Your catalog'}
+                          </h3>
+                          <p className="mt-1 text-xs text-white/70">
+                            {activeHeroProduct?.category || 'Curated products'}
+                          </p>
+                        </div>
+                        <p className="shrink-0 text-base font-bold text-white">
+                          {activeHeroProduct ? formatPrice(activeHeroProduct.selling_price || 0) : formatPrice(0)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Direct WhatsApp ordering note */}
-                <p className="mt-2.5 text-[10px] sm:text-[11px] text-dark-800/40 dark:text-white/35 text-center">
-                  Direct WhatsApp checkout on every listing
-                </p>
+                <div className="flex items-center justify-between gap-2 border-t border-cream-200/80 bg-white/90 px-3 py-2.5 dark:border-white/10 dark:bg-dark-900/80 sm:px-4">
+                  <div className="flex items-center gap-1.5 min-w-0 overflow-hidden font-mono text-[10px] text-dark-800/60 dark:text-white/50">
+                    <Storefront size={12} className="text-brand-400 shrink-0" />
+                    <span className="truncate">ccatalog.store/s/{previewStoreSlug}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {heroProductsDisplay.map((_, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        aria-label={`View product ${index + 1}`}
+                        onClick={() => setHeroProductIndex(index)}
+                        className={`h-1.5 rounded-full transition-all ${
+                          index === heroProductIndex ? 'w-5 bg-brand-400' : 'w-1.5 bg-dark-800/20 hover:bg-dark-800/35 dark:bg-white/20 dark:hover:bg-white/35'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
