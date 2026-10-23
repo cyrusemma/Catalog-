@@ -433,14 +433,14 @@ export default function ProductDetail() {
               </div>
             )}
             <div className="flex items-baseline gap-3 flex-wrap">
-              <p className={`text-3xl sm:text-4xl font-extrabold tracking-tight ${onFlashSale ? 'text-rose-600 dark:text-rose-400' : 'text-dark-800 dark:text-white'}`}>
+              <p className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${onFlashSale ? 'text-rose-600 dark:text-rose-400' : 'text-dark-800 dark:text-white'}`}>
                 {formatPrice(displayPrice)}
               </p>
               {strikePrice && (
                 <div className="flex items-center gap-2">
-                  <p className="text-dark-800/40 dark:text-white/30 text-sm line-through font-medium">
+                  <del className="discount-strike text-dark-800/40 dark:text-white/30 text-sm font-medium">
                     {formatPrice(strikePrice)}
-                  </p>
+                  </del>
                   <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-900/30">
                     -{Math.round(((strikePrice - displayPrice) / strikePrice) * 100)}%
                   </span>

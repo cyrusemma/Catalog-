@@ -195,14 +195,14 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
                 </div>
               ) : (
                 <div>
-                  <p className={`font-bold truncate ${onFlashSale ? 'text-rose-600 dark:text-rose-400' : 'text-dark-800 dark:text-white'} ${compact ? 'text-sm' : 'text-sm sm:text-base'}`}>
+                  <p className={`font-bold truncate ${onFlashSale ? 'text-rose-600 dark:text-rose-400' : 'text-dark-800 dark:text-white'} text-xs sm:text-sm`}>
                     {formatPrice(displayPrice)}
                   </p>
                   {strikePrice && (
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <p className="text-dark-800/35 dark:text-white/30 line-through truncate text-[10px] sm:text-xs">
+                      <del className="discount-strike text-dark-800/35 dark:text-white/30 truncate text-[10px] sm:text-xs">
                         {formatPrice(strikePrice)}
-                      </p>
+                      </del>
                       <span className="text-[9px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 px-1 py-0.5 rounded">
                         -{Math.round(((strikePrice - displayPrice) / strikePrice) * 100)}%
       	              </span>
