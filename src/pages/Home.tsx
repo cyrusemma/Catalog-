@@ -663,6 +663,54 @@ export default function Home() {
         </section>
       )}
 
+      {/* Buy Data Promo Banner */}
+      <motion.section
+        initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+        whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="py-6 sm:py-10"
+      >
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-[2rem] bg-gradient-to-br from-[#0a1628] via-[#0d1f3c] to-[#081020] border border-blue-500/20 p-6 sm:p-10 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-10">
+
+            {/* Animated glow blobs */}
+            <div className="absolute -top-16 -left-16 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
+            <div className="absolute -bottom-16 -right-16 w-64 h-64 bg-cyan-400/15 rounded-full blur-3xl pointer-events-none" style={{ animationDelay: '1s' }} />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-24 bg-blue-400/5 rounded-full blur-2xl pointer-events-none" />
+
+            {/* Content */}
+            <div className="relative z-10 flex-1 text-center sm:text-left space-y-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/30 text-[11px] font-bold uppercase tracking-widest text-blue-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping inline-block" />
+                Now Available
+              </span>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-display font-bold text-white tracking-tight leading-tight">
+                Buy Affordable Data Bundles
+              </h2>
+              <p className="text-sm text-white/60 leading-relaxed max-w-md mx-auto sm:mx-0">
+                Get the best data deals — MTN, Vodafone, AirtelTigo and more. Fast, reliable, and instant delivery to your number.
+              </p>
+            </div>
+
+            {/* CTA Button */}
+            <div className="relative z-10 shrink-0">
+              <a
+                href="https://prodigimart.online/shop/cyrus-needhub"
+                target="_blank"
+                rel="noopener noreferrer"
+                id="buy-data-cta-banner"
+                className="group inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-bold text-sm shadow-lg shadow-blue-500/30 hover:shadow-blue-400/40 transition-all hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
+              >
+                <span>Buy Data Now</span>
+                <ArrowRight size={16} weight="bold" className="group-hover:translate-x-1 transition-transform" />
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </motion.section>
+
       {/* Visual Lookbook / Gallery CTA Section — Editorial Magazine Redesign */}
       <motion.section
         initial={reduceMotion ? false : { opacity: 0, y: 24 }}

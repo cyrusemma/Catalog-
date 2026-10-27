@@ -491,6 +491,14 @@ export default function Navbar() {
                 {navLink('/', 'Home')}
                 {navLink('/shop', 'Shop')}
                 {navLink('/gallery', 'Gallery')}
+                <a
+                  href="https://prodigimart.online/shop/cyrus-needhub"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-400 hover:bg-brand-500 text-white text-xs font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-px active:scale-95"
+                >
+                  Buy Data
+                </a>
               </div>
             </>
           )}
