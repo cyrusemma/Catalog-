@@ -1,4 +1,4 @@
-import { memo, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { ShoppingCart, Star, Lightning, Heart, Clock, Check, Tag, ArrowRight } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
@@ -28,6 +28,56 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
   const isWishlisted = useWishlistStore(s => s.has(product.id))
   const formatPrice = useCurrencyFormatter()
   const [added, setAdded] = useState(false)
+  const [activeImageIndex, setActiveImageIndex] = useState(0)
+  const swipedRef = useRef(false)
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null)
+
+  const mediaImages = useMemo(() => {
+    const images = [
+      ...(product.images ?? []),
+      ...(product.variants ?? []).map(variant => variant.image_url).filter((image): image is string => !!image),
+    ]
+    return [...new Set(images)]
+  }, [product.images, product.variants])
+
+  useEffect(() => {
+    setActiveImageIndex(0)
+  }, [product.id])
+
+  const handleMediaPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    pointerStartRef.current = { x: e.clientX, y: e.clientY }
+  }
+
+  const handleMediaPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = pointerStartRef.current
+    pointerStartRef.current = null
+    if (!start || mediaImages.length < 2) return
+
+    const dx = e.clientX - start.x
+    const dy = e.clientY - start.y
+    if (Math.abs(dx) < 36 || Math.abs(dy) > Math.abs(dx)) return
+
+    swipedRef.current = true
+    setActiveImageIndex(current => (
+      dx < 0
+        ? (current + 1) % mediaImages.length
+        : (current - 1 + mediaImages.length) % mediaImages.length
+    ))
+    window.setTimeout(() => {
+      swipedRef.current = false
+    }, 150)
+  }
+
+  const handleMediaPointerCancel = () => {
+    pointerStartRef.current = null
+  }
+
+  const handleCardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (swipedRef.current) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+  }
 
   const hasOptions = !!(
     (product.variants && product.variants.length > 0) ||
@@ -86,11 +136,18 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
       whileHover={isOutOfStock ? undefined : { scale: 1.015 }}
       className="h-full min-w-0"
     >
-      <Link to={detailUrl} className={`card card-hover group flex flex-col h-full min-w-0 ${compact ? 'rounded-2xl' : ''}`}>
+      <Link to={detailUrl} onClick={handleCardClick} className={`card card-hover group flex flex-col h-full min-w-0 ${compact ? 'rounded-2xl' : ''}`}>
         {/* Image */}
-        <div className={`relative overflow-hidden bg-cream-100 dark:bg-dark-700 ${compact ? 'aspect-[4/5] sm:aspect-square' : 'aspect-square'}`}>
+        <div
+          className={`relative overflow-hidden bg-cream-100 dark:bg-dark-700 touch-pan-y ${compact ? 'aspect-[4/5] sm:aspect-square' : 'aspect-square'}`}
+          onPointerDown={handleMediaPointerDown}
+          onPointerUp={handleMediaPointerUp}
+          onPointerCancel={handleMediaPointerCancel}
+          aria-label={mediaImages.length > 1 ? 'Swipe to view more product images' : undefined}
+        >
           <Image
-            src={product.images?.[0] || 'https://placehold.co/400x400/1a1008/d4820a?text=No+Image'}
+            key={mediaImages[activeImageIndex]}
+            src={mediaImages[activeImageIndex] || 'https://placehold.co/400x400/1a1008/d4820a?text=No+Image'}
             alt={product.title}
             className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isOutOfStock ? 'opacity-50 grayscale-[30%]' : ''}`}
           />
@@ -99,6 +156,17 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
           {!isOutOfStock && (
             <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden z-10" aria-hidden="true">
               <div className="absolute top-0 -left-[100%] w-[45%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-[20deg] group-hover:left-[130%] transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)]" />
+            </div>
+          )}
+
+          {mediaImages.length > 1 && (
+            <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/25 px-2 py-1 backdrop-blur-md" aria-hidden="true">
+              {mediaImages.map((image, imageIndex) => (
+                <span
+                  key={`${image}-${imageIndex}`}
+                  className={`h-1 rounded-full transition-all ${imageIndex === activeImageIndex ? 'w-3 bg-white' : 'w-1 bg-white/55'}`}
+                />
+              ))}
             </div>
           )}
 
