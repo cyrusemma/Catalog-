@@ -356,17 +356,6 @@ export default function Account() {
     }
   ]
 
-  const quickTabs: NavItem[] = [
-    { id: 'overview', label: 'Overview', icon: UserIcon },
-    { id: 'orders', label: 'Orders', icon: Package, count: orders?.length },
-    { id: 'wishlist', label: 'Wishlist', icon: Heart, count: wishlistItems.length },
-    { id: 'vouchers', label: 'Coupons', icon: Ticket, count: vouchers?.length },
-    { id: 'inbox', label: 'Inbox', icon: ClipboardText, count: notifications.length },
-    { id: 'followed', label: 'Stores', icon: Storefront, count: profile.followed_stores?.length },
-    { id: 'address', label: 'Address', icon: MapPin },
-    { id: 'store', label: store ? 'Store' : 'Sell', icon: Storefront },
-  ]
-
   const currentTabLabel = navSections
     .flatMap(s => s.items)
     .find(i => i.id === activeTab)?.label || 'Overview'
@@ -578,7 +567,7 @@ export default function Account() {
               className="lg:hidden flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-brand-400 hover:bg-brand-500 text-white font-bold text-xs shadow-sm shadow-brand-400/20 active:scale-95 transition-all"
             >
               <SidebarSimple size={16} weight="bold" />
-              <span>Menu</span>
+              <span>Account menu</span>
             </button>
           </div>
         </div>
@@ -617,45 +606,18 @@ export default function Account() {
         </div>
       </div>
 
-      {/* ── App Navigation Pills Strip ───────────────────────────────────── */}
-      <div className="mb-6 overflow-x-auto pb-1 scrollbar-none">
-        <div className="flex items-center gap-1.5 p-1 bg-cream-100/80 dark:bg-dark-800/80 backdrop-blur-md rounded-2xl border border-cream-200 dark:border-white/5 w-max">
-          {quickTabs.map(tab => {
-            const active = activeTab === tab.id
-            const Icon = tab.icon
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 ${
-                  active
-                    ? 'text-white'
-                    : 'text-dark-800/60 dark:text-white/60 hover:text-dark-800 dark:hover:text-white'
-                }`}
-              >
-                {active && (
-                  <motion.div
-                    layoutId="activeAccountTabPill"
-                    className="absolute inset-0 bg-brand-400 rounded-xl shadow-sm shadow-brand-400/25"
-                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-1.5">
-                  <Icon size={14} weight={active ? 'fill' : 'bold'} />
-                  <span>{tab.label}</span>
-                  {tab.count !== undefined && tab.count > 0 && (
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                      active ? 'bg-white/25 text-white' : 'bg-cream-200 dark:bg-dark-700 text-dark-800/60 dark:text-white/60'
-                    }`}>
-                      {tab.count}
-                    </span>
-                  )}
-                </span>
-              </button>
-            )
-          })}
+      <div className="mb-6 flex items-center justify-between gap-3 lg:hidden">
+        <div>
+          <p className="text-sm font-bold text-dark-800 dark:text-white">Your account</p>
+          <p className="text-xs text-dark-800/45 dark:text-white/40">Choose a section to get started.</p>
         </div>
+        <button
+          type="button"
+          onClick={() => setSlideMenuOpen(true)}
+          className="text-xs font-bold text-brand-500 dark:text-brand-400 hover:underline"
+        >
+          Browse sections
+        </button>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
