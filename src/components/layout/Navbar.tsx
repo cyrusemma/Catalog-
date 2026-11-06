@@ -479,15 +479,17 @@ export default function Navbar() {
             <>
               <div className="flex items-center gap-2 min-w-0 flex-1 sm:flex-none">
                 {/* Hamburger Categories Button - Mobile */}
-                <button
-                  type="button"
-                  onClick={() => setShowCategoriesDrawer(true)}
-                  aria-label="Browse categories"
-                  className="flex items-center justify-center w-8 h-8 rounded-xl hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white flex-shrink-0"
-                  title="Browse categories"
-                >
-                  <List size={19} weight="bold" />
-                </button>
+                {location.pathname !== '/account' && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCategoriesDrawer(true)}
+                    aria-label="Browse categories"
+                    className="flex items-center justify-center w-8 h-8 rounded-xl hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white flex-shrink-0"
+                    title="Browse categories"
+                  >
+                    <List size={19} weight="bold" />
+                  </button>
+                )}
 
                 <Link to="/" className="flex items-center gap-2 group min-w-0">
                   {settings.logo_url ? (
