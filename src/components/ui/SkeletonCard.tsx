@@ -1,6 +1,6 @@
-export default function SkeletonCard({ compact = false }: { compact?: boolean }) {
+export default function SkeletonCard({ compact = false, fixedWidth = false }: { compact?: boolean; fixedWidth?: boolean }) {
   return (
-    <div className={`card h-full flex flex-col min-w-0 ${compact ? 'w-44 sm:w-48 rounded-2xl' : ''}`}>
+    <div className={`card h-full flex flex-col min-w-0 ${fixedWidth ? 'w-44 sm:w-48' : 'w-full'} ${compact ? 'rounded-2xl' : ''}`}>
       <div className={`relative overflow-hidden shrink-0 ${compact ? 'aspect-[4/5] sm:aspect-square' : 'aspect-square'} bg-cream-100 dark:bg-dark-700`}>
         <div className="absolute inset-0 bg-gradient-to-r from-cream-200/50 via-white/40 to-cream-200/50 dark:from-dark-700 dark:via-dark-600/60 dark:to-dark-700 animate-shimmer" />
       </div>

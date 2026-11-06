@@ -1,14 +1,12 @@
 import { memo, useState } from 'react'
-import { useLocation, Link } from 'react-router-dom'
-import { ShoppingCart, Star, Lightning, Heart, Clock, Check, Tag } from '@phosphor-icons/react'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
+import { ShoppingCart, Star, Lightning, Heart, Clock, Check, Tag, ArrowRight } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useCartStore } from '../../store/cartStore'
 import { useWishlistStore } from '../../store/wishlistStore'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
 import { activeFlashSalePrice, isNewProduct, getProductPriceRange } from '../../lib/utils'
 import CountdownTimer from './CountdownTimer'
-import { useSignInStore } from '../../store/signInStore'
-import { useCustomerSession } from '../../hooks/useCustomerSession'
 import type { Product } from '../../types'
 import Image from './Image'
 
@@ -20,6 +18,7 @@ interface Props {
 
 function ProductCard({ product, index = 0, compact = false }: Props) {
   const location = useLocation()
+  const navigate = useNavigate()
   const searchParams = new URLSearchParams(location.search)
   const storeParam = searchParams.get('store')
   const detailUrl = storeParam ? `/product/${product.id}?store=${storeParam}` : `/product/${product.id}`
@@ -28,9 +27,13 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
   const toggleWishlist = useWishlistStore(s => s.toggle)
   const isWishlisted = useWishlistStore(s => s.has(product.id))
   const formatPrice = useCurrencyFormatter()
-  const { session } = useCustomerSession()
-  const openSignInModal = useSignInStore(s => s.openModal)
   const [added, setAdded] = useState(false)
+
+  const hasOptions = !!(
+    (product.variants && product.variants.length > 0) ||
+    (product.sizes && product.sizes.length > 0) ||
+    (product.colors && product.colors.length > 0)
+  )
 
   const priceRange = getProductPriceRange(product)
   const isNew = isNewProduct(product.created_at)
@@ -48,21 +51,20 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
-    if (!session) {
-      openSignInModal('Sign in to save favorites.')
-      return
-    }
+    e.stopPropagation()
     toggleWishlist(product)
   }
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleActionClick = (e: React.MouseEvent) => {
     e.preventDefault()
+    e.stopPropagation()
+    if (hasOptions) {
+      navigate(detailUrl)
+      return
+    }
     addItem(product)
     setAdded(true)
     setTimeout(() => setAdded(false), 1500)
-    if (!session) {
-      openSignInModal('Create an account for a faster checkout experience!')
-    }
   }
 
   // Determine the single most important badge to show (priority order)
@@ -80,7 +82,7 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.05, ease: 'easeOut' }}
+      transition={{ duration: 0.3, delay: Math.min(index % 8, 4) * 0.03, ease: 'easeOut' }}
       whileHover={isOutOfStock ? undefined : { scale: 1.015 }}
       className="h-full min-w-0"
     >
@@ -212,43 +214,56 @@ function ProductCard({ product, index = 0, compact = false }: Props) {
               )}
             </div>
 
-            {/* Desktop cart button */}
+            {/* Desktop action button */}
             {!isOutOfStock && (
               <div className="hidden sm:flex items-center flex-shrink-0">
                 <motion.button
                   whileTap={{ scale: 0.88 }}
-                  onClick={handleAddToCart}
-                  aria-label={added ? 'Added to cart' : 'Add to cart'}
+                  onClick={handleActionClick}
+                  aria-label={hasOptions ? 'Select options' : added ? 'Added to cart' : 'Add to cart'}
+                  title={hasOptions ? 'Select options' : added ? 'Added to cart' : 'Add to cart'}
                   className={`rounded-xl flex items-center justify-center transition-all duration-300 text-white ${compact ? 'w-8 h-8' : 'w-9 h-9'} ${
                     added
                       ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
-                      : 'bg-brand-400 hover:bg-brand-500'
+                      : hasOptions
+                      ? 'bg-dark-800/80 hover:bg-dark-800 dark:bg-white/10 dark:hover:bg-white/20 text-white'
+                      : 'bg-brand-400 hover:bg-brand-500 shadow-amber-glow'
                   }`}
                 >
-                  {added
-                    ? <Check size={compact ? 13 : 15} weight="bold" />
-                    : <ShoppingCart size={compact ? 13 : 14} weight="duotone" />}
+                  {added ? (
+                    <Check size={compact ? 13 : 15} weight="bold" />
+                  ) : hasOptions ? (
+                    <ArrowRight size={compact ? 13 : 14} weight="bold" />
+                  ) : (
+                    <ShoppingCart size={compact ? 13 : 14} weight="duotone" />
+                  )}
                 </motion.button>
               </div>
             )}
           </div>
 
-          {/* Mobile add-to-cart */}
+          {/* Mobile add-to-cart / select options */}
           {!isOutOfStock && (
             <div className="flex sm:hidden mt-2">
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                onClick={handleAddToCart}
-                aria-label={added ? 'Added to cart' : 'Add to cart'}
+                onClick={handleActionClick}
+                aria-label={hasOptions ? 'Select options' : added ? 'Added to cart' : 'Add to cart'}
                 className={`w-full rounded-lg flex items-center justify-center gap-1.5 transition-all duration-300 text-white font-semibold text-xs ${compact ? 'h-7' : 'h-8'} ${
                   added
                     ? 'bg-emerald-500'
+                    : hasOptions
+                    ? 'bg-dark-800/80 active:bg-dark-800 dark:bg-white/10 dark:active:bg-white/20 text-white'
                     : 'bg-brand-400 hover:bg-brand-500 active:bg-brand-600'
                 }`}
               >
-                {added
-                  ? <><Check size={12} weight="bold" /><span>Added!</span></>
-                  : <><ShoppingCart size={12} weight="duotone" /><span>Add to cart</span></>}
+                {added ? (
+                  <><Check size={12} weight="bold" /><span>Added!</span></>
+                ) : hasOptions ? (
+                  <><span>Select options</span><ArrowRight size={11} weight="bold" /></>
+                ) : (
+                  <><ShoppingCart size={12} weight="duotone" /><span>Add to cart</span></>
+                )}
               </motion.button>
             </div>
           )}

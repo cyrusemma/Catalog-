@@ -433,6 +433,16 @@ export default function Home() {
                   <span>Explore shops</span>
                   <CaretRight size={15} />
                 </Link>
+
+                <a
+                  href="https://prodigimart.online/shop/cyrus-needhub"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-brand-400/30 bg-brand-400/5 hover:bg-brand-400/10 text-brand-700 dark:text-brand-300 font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                >
+                  <ShoppingBagOpen size={17} weight="duotone" />
+                  <span>Buy Data</span>
+                </a>
               </div>
             </div>
 
