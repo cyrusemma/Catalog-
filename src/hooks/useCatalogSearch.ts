@@ -63,15 +63,18 @@ export function useCatalogSearch(
   }, [searchTerm, debounceMs])
 
   // Maintain and update the search index when product data updates
+  const [indexVersion, setIndexVersion] = useState(0)
+
   useEffect(() => {
     if (products && Array.isArray(products)) {
       engineRef.current.indexProducts(products)
+      setIndexVersion(v => v + 1)
     }
   }, [products])
 
   // Compute search results based on debounced query
   const searchResultsWithScores = useMemo<SearchResult[]>(() => {
-    if (!products || products.length === 0) return []
+    if (!products || products.length === 0 || !debouncedQuery.trim()) return []
 
     const searchOpts: SearchOptions = {
       enableFuzzy,
@@ -80,7 +83,7 @@ export function useCatalogSearch(
     }
 
     return engineRef.current.searchWithScores(debouncedQuery, searchOpts)
-  }, [products, debouncedQuery, enableFuzzy, storeId, categoryIds])
+  }, [products, debouncedQuery, enableFuzzy, storeId, categoryIds, indexVersion])
 
   const searchResults = useMemo<Product[]>(() => {
     return searchResultsWithScores.map(r => r.product)
