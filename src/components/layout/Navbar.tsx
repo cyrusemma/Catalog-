@@ -7,7 +7,7 @@ import { useStoreSettings } from '../../hooks/useStoreSettings'
 import { useCustomerSession } from '../../hooks/useCustomerSession'
 import { useSignInStore } from '../../store/signInStore'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
-import { useProducts, useCategoryTree } from '../../hooks/useProducts'
+import { useProducts, useCategoryTree, topLevelCategories, childCategories } from '../../hooks/useProducts'
 import { useCatalogSearch } from '../../hooks/useCatalogSearch'
 import ThemeToggle from '../ui/ThemeToggle'
 
@@ -257,17 +257,35 @@ export default function Navbar() {
             {/* Category List */}
             <div className="flex-1 overflow-y-auto px-4 py-2 space-y-1 scrollbar-thin">
               {categoryTree && categoryTree.length > 0 ? (
-                categoryTree.map((cat) => (
-                  <Link
-                    key={cat.id}
-                    to={`/shop/${cat.slug}`}
-                    onClick={() => setShowCategoriesDrawer(false)}
-                    className="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium text-dark-800/75 dark:text-white/70 hover:bg-brand-400/8 hover:text-brand-600 dark:hover:text-brand-400 transition-all group"
-                  >
-                    <span>{cat.name}</span>
-                    <ArrowUpRight size={13} weight="bold" className="opacity-0 group-hover:opacity-100 transition-opacity text-brand-400" />
-                  </Link>
-                ))
+                topLevelCategories(categoryTree).map((cat) => {
+                  const children = childCategories(categoryTree, cat.id)
+                  return (
+                    <div key={cat.id}>
+                      <Link
+                        to={`/shop/${cat.slug}`}
+                        onClick={() => setShowCategoriesDrawer(false)}
+                        className="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold text-dark-800/80 dark:text-white/75 hover:bg-brand-400/8 hover:text-brand-600 dark:hover:text-brand-400 transition-all group"
+                      >
+                        <span>{cat.name}</span>
+                        <ArrowUpRight size={13} weight="bold" className="opacity-0 group-hover:opacity-100 transition-opacity text-brand-400" />
+                      </Link>
+                      {children.length > 0 && (
+                        <div className="ml-3 mb-1 pl-3 border-l border-brand-400/15">
+                          {children.map(child => (
+                            <Link
+                              key={child.id}
+                              to={`/shop/${cat.slug}/${child.slug}`}
+                              onClick={() => setShowCategoriesDrawer(false)}
+                              className="flex items-center px-3 py-2 rounded-xl text-xs text-dark-800/55 dark:text-white/50 hover:bg-brand-400/8 hover:text-brand-600 dark:hover:text-brand-400 transition-all"
+                            >
+                              {child.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })
               ) : (
                 <div className="py-10 text-center">
                   <Tag size={32} weight="duotone" className="text-dark-800/20 dark:text-white/20 mx-auto mb-3" />

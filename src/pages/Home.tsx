@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query'
 import ProductCard from '../components/ui/ProductCard'
 import CustomerReviews from '../components/ui/CustomerReviews'
 import ShopLoader from '../components/ui/ShopLoader'
-import { useProducts, useNewProducts } from '../hooks/useProducts'
+import { useProducts, useNewProducts, useCategoryTree, topLevelCategories, childCategories } from '../hooks/useProducts'
 import { useCatalogSearch } from '../hooks/useCatalogSearch'
 import { useStoreSettings } from '../hooks/useStoreSettings'
 import { useCustomerSession } from '../hooks/useCustomerSession'
@@ -63,6 +63,7 @@ export default function Home() {
   const { data: featured, isError: featuredIsError, error: featuredError, isLoading: featuredLoading } = useProducts({ featured: true })
   const { data: newProducts, isError: newProductsIsError, error: newProductsError, isLoading: newProductsLoading } = useNewProducts(7)
   const { data: allProducts = [], isError: allProductsIsError, error: allProductsError } = useProducts()
+  const { data: categoryTree } = useCategoryTree()
   const productsError = allProductsError ?? featuredError ?? newProductsError
   const productsLoadFailed = allProductsIsError || featuredIsError || newProductsIsError
   const reduceMotion = useReducedMotion()
@@ -555,6 +556,43 @@ export default function Home() {
             <p className="mt-1 text-red-700/80 dark:text-red-200/80">
               {productsError instanceof Error ? productsError.message : 'Check the Supabase deployment environment variables.'}
             </p>
+          </div>
+        </section>
+      )}
+
+      {categoryTree && topLevelCategories(categoryTree).length > 0 && (
+        <section className="py-5 sm:py-10">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-end justify-between mb-3 sm:mb-5">
+              <div>
+                <span className="block text-[var(--hero-accent)] text-[11px] uppercase tracking-[0.28em] font-semibold mb-1.5">
+                  Browse by category
+                </span>
+                <h2 className="text-xl sm:text-3xl font-display font-semibold tracking-[-0.02em] text-dark-800 dark:text-white">
+                  Find your style
+                </h2>
+              </div>
+              <Link to="/shop" className="text-xs sm:text-sm font-semibold text-brand-500 hover:text-brand-600">
+                View all
+              </Link>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {topLevelCategories(categoryTree).map(category => {
+                const children = childCategories(categoryTree, category.id)
+                return (
+                  <Link
+                    key={category.id}
+                    to={`/shop/${category.slug}`}
+                    className="flex-shrink-0 min-w-[140px] sm:min-w-[180px] rounded-2xl border border-cream-200/80 dark:border-white/10 bg-white/70 dark:bg-white/5 px-4 py-3 hover:border-brand-400/40 hover:bg-brand-400/5 transition-colors"
+                  >
+                    <span className="block text-sm font-semibold text-dark-800 dark:text-white">{category.name}</span>
+                    <span className="mt-1 block text-[11px] text-dark-800/45 dark:text-white/40">
+                      {children.length > 0 ? `${children.length} collections` : 'Shop collection'}
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
           </div>
         </section>
       )}

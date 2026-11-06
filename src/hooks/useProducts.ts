@@ -246,12 +246,19 @@ export function useProductCategoryRefs() {
   })
 }
 
-/** Given a category id, return its id plus the ids of all direct children. */
+/** Given a category id, return its id plus the ids of all descendants. */
 export function expandCategoryIds(tree: Category[] | undefined, rootId: string): string[] {
   if (!tree) return [rootId]
   const ids = [rootId]
-  for (const c of tree) {
-    if (c.parent_id === rootId) ids.push(c.id)
+  const pending = [rootId]
+  while (pending.length > 0) {
+    const parentId = pending.pop()!
+    for (const c of tree) {
+      if (c.parent_id === parentId) {
+        ids.push(c.id)
+        pending.push(c.id)
+      }
+    }
   }
   return ids
 }

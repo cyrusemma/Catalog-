@@ -130,9 +130,16 @@ export default function Shop() {
   const subSlug = params.subSlug ?? null
 
   const parents = topLevelCategories(categoryTree)
-  const activeParent = parents.find(p => p.slug === parentSlug)
+  const requestedCategory = categoryTree?.find(c => c.slug === parentSlug)
+  const activeParent = requestedCategory?.parent_id
+    ? parents.find(p => p.id === requestedCategory.parent_id)
+    : requestedCategory
   const subs = activeParent ? childCategories(categoryTree, activeParent.id) : []
-  const activeSub = subs.find(s => s.slug === subSlug)
+  const activeSub = subSlug
+    ? subs.find(s => s.slug === subSlug)
+    : requestedCategory?.parent_id
+      ? requestedCategory
+      : undefined
 
   // Category IDs for query
   const categoryIds = useMemo(() => {
@@ -286,10 +293,10 @@ export default function Shop() {
   // Filter & sort visible products
   const visibleProducts = useMemo(() => {
     if (!allProducts) return undefined
-    let result = (query || (categoryIds && categoryIds.length > 0)) ? searchResults : allProducts
+    let result = (query && query.trim().length > 0) ? searchResults : allProducts
 
-    // Support legacy category string matching alongside UUID category_id
-    if (!query && categoryIds && categoryIds.length > 0) {
+    // Filter by active category (matching category_id hierarchy or legacy category name)
+    if (categoryIds && categoryIds.length > 0) {
       const catSet = new Set(categoryIds)
       result = result.filter(p => {
         if (p.category_id && catSet.has(p.category_id)) return true
