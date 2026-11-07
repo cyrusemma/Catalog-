@@ -222,7 +222,7 @@ export function useCategoryTree() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('categories')
-        .select('id, name, slug, parent_id, sort_order')
+        .select('id, name, slug, parent_id, sort_order, image_url')
         .order('sort_order', { ascending: true })
       if (error) throw error
       return data as Category[]

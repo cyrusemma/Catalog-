@@ -12,6 +12,7 @@ import { motion, useReducedMotion, AnimatePresence } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import ProductCard from '../components/ui/ProductCard'
+import Image from '../components/ui/Image'
 import CustomerReviews from '../components/ui/CustomerReviews'
 import ShopLoader from '../components/ui/ShopLoader'
 import { useProducts, useNewProducts, useCategoryTree, topLevelCategories, childCategories } from '../hooks/useProducts'
@@ -583,10 +584,18 @@ export default function Home() {
                   <Link
                     key={category.id}
                     to={`/shop/${category.slug}`}
-                    className="flex-shrink-0 min-w-[140px] sm:min-w-[180px] rounded-2xl border border-cream-200/80 dark:border-white/10 bg-white/70 dark:bg-white/5 px-4 py-3 hover:border-brand-400/40 hover:bg-brand-400/5 transition-colors"
+                    className="group flex-shrink-0 min-w-[152px] sm:min-w-[190px] rounded-2xl border border-cream-200/80 dark:border-white/10 bg-white/70 dark:bg-white/5 p-2.5 hover:border-brand-400/40 hover:bg-brand-400/5 transition-colors"
                   >
-                    <span className="block text-sm font-semibold text-dark-800 dark:text-white">{category.name}</span>
-                    <span className="mt-1 block text-[11px] text-dark-800/45 dark:text-white/40">
+                    <Image
+                      src={category.image_url || undefined}
+                      alt=""
+                      className="h-20 sm:h-24 w-full rounded-xl bg-cream-100 dark:bg-dark-800"
+                      fallback={<Images size={24} weight="duotone" className="text-dark-800/20 dark:text-white/20" />}
+                    />
+                    <span className="mt-2 block px-1 text-sm font-semibold text-dark-800 dark:text-white group-hover:text-brand-500 transition-colors">
+                      {category.name}
+                    </span>
+                    <span className="mt-1 block px-1 text-[11px] text-dark-800/45 dark:text-white/40">
                       {children.length > 0 ? `${children.length} collections` : 'Shop collection'}
                     </span>
                   </Link>
