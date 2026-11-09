@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import { effectivePrice } from '../../lib/utils'
 import { useThemeStore } from '../../store/themeStore'
+import { useAccountDrawerStore } from '../../store/accountDrawerStore'
 
 export default function Navbar() {
   const location = useLocation()
@@ -172,6 +173,7 @@ export default function Navbar() {
 
   const showDashboardLink = isPlatformAdmin || !!merchantStore
   const showDashboardShortcut = useThemeStore(s => s.showDashboardShortcut)
+  const toggleAccountDrawer = useAccountDrawerStore(s => s.toggle)
 
   const navLink = (to: string, label: string) => {
     const active = location.pathname === to
@@ -479,7 +481,17 @@ export default function Navbar() {
             <>
               <div className="flex items-center gap-2 min-w-0 flex-1 sm:flex-none">
                 {/* Hamburger Categories Button - Mobile */}
-                {location.pathname !== '/account' && (
+                {location.pathname === '/account' ? (
+                  <button
+                    type="button"
+                    onClick={toggleAccountDrawer}
+                    aria-label="Open account menu"
+                    className="flex items-center justify-center w-8 h-8 rounded-xl hover:bg-brand-400/10 transition-colors text-dark-800 dark:text-white flex-shrink-0"
+                    title="Account menu"
+                  >
+                    <List size={19} weight="bold" />
+                  </button>
+                ) : (
                   <button
                     type="button"
                     onClick={() => setShowCategoriesDrawer(true)}

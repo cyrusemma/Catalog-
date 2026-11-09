@@ -21,7 +21,7 @@ import {
   UserPlus,
   MagnifyingGlass,
   X,
-  SidebarSimple,
+  List,
   CaretRight,
   GearSix,
   ShieldCheck
@@ -36,6 +36,7 @@ import { useWishlistStore } from '../store/wishlistStore'
 import { useCurrencyFormatter } from '../hooks/useCurrencyFormatter'
 import ProductCard from '../components/ui/ProductCard'
 import { toast } from 'sonner'
+import { useAccountDrawerStore } from '../store/accountDrawerStore'
 
 // Status steps for tracking orders
 const STATUS_STEPS = ['pending', 'confirmed', 'processing', 'shipped', 'delivered']
@@ -50,7 +51,9 @@ export default function Account() {
   const [signedOut, setSignedOut] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'inbox' | 'vouchers' | 'wishlist' | 'followed' | 'recent' | 'address' | 'alerts' | 'store'>('overview')
   const [showCreateWizard, setShowCreateWizard] = useState(false)
-  const [slideMenuOpen, setSlideMenuOpen] = useState(false)
+  const slideMenuOpen = useAccountDrawerStore(s => s.isOpen)
+  const openSlideMenu = useAccountDrawerStore(s => s.open)
+  const closeSlideMenu = useAccountDrawerStore(s => s.close)
 
   // Address form fields
   const [phone, setPhone] = useState('')
@@ -372,7 +375,7 @@ export default function Account() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              onClick={() => setSlideMenuOpen(false)}
+              onClick={closeSlideMenu}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             />
 
@@ -410,7 +413,7 @@ export default function Account() {
 
                 <button
                   type="button"
-                  onClick={() => setSlideMenuOpen(false)}
+                  onClick={closeSlideMenu}
                   className="p-2 rounded-xl text-dark-800/60 dark:text-white/60 hover:bg-cream-200 dark:hover:bg-dark-700 hover:text-dark-800 dark:hover:text-white transition-colors"
                   aria-label="Close menu"
                 >
@@ -435,7 +438,7 @@ export default function Account() {
                             type="button"
                             onClick={() => {
                               setActiveTab(item.id)
-                              setSlideMenuOpen(false)
+                              closeSlideMenu()
                             }}
                             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-left text-sm font-semibold transition-all group ${
                               active
@@ -563,11 +566,13 @@ export default function Account() {
 
             <button
               type="button"
-              onClick={() => setSlideMenuOpen(true)}
+              onClick={openSlideMenu}
+              aria-label="Open account menu"
+              aria-expanded={slideMenuOpen}
               className="lg:hidden flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-brand-400 hover:bg-brand-500 text-white font-bold text-xs shadow-sm shadow-brand-400/20 active:scale-95 transition-all"
             >
-              <SidebarSimple size={16} weight="bold" />
-              <span>Account menu</span>
+              <List size={19} weight="bold" />
+              <span>Menu</span>
             </button>
           </div>
         </div>
