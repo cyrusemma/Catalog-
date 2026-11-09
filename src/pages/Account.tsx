@@ -24,7 +24,11 @@ import {
   List,
   CaretRight,
   GearSix,
-  ShieldCheck
+  ShieldCheck,
+  Gift,
+  SpinnerGap,
+  Sparkle,
+  Coins
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -49,8 +53,11 @@ export default function Account() {
   const formatPrice = useCurrencyFormatter()
   
   const [signedOut, setSignedOut] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'inbox' | 'vouchers' | 'wishlist' | 'followed' | 'recent' | 'address' | 'alerts' | 'store'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'inbox' | 'vouchers' | 'wishlist' | 'followed' | 'recent' | 'address' | 'alerts' | 'store' | 'rewards'>('overview')
   const [showCreateWizard, setShowCreateWizard] = useState(false)
+  const [wheelSpinning, setWheelSpinning] = useState(false)
+  const [wheelRotation, setWheelRotation] = useState(0)
+  const [wheelResult, setWheelResult] = useState<{ label: string; reward_type: string; credit_amount: number; min_order_amount: number; expires_in_days: number } | null>(null)
   const slideMenuOpen = useAccountDrawerStore(s => s.isOpen)
   const openSlideMenu = useAccountDrawerStore(s => s.open)
   const closeSlideMenu = useAccountDrawerStore(s => s.close)
@@ -123,6 +130,41 @@ export default function Account() {
       return data || []
     }
   })
+
+  const { data: spinHistory } = useQuery({
+    queryKey: ['spin-wheel-history', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return []
+      const { data, error } = await supabase
+        .from('spin_wheel_spins')
+        .select('id, reward_label, reward_type, credit_amount, min_order_amount, status, expires_at, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!user?.id,
+  })
+
+  const spinWheel = async () => {
+    if (wheelSpinning) return
+    setWheelSpinning(true)
+    setWheelResult(null)
+    setWheelRotation(rotation => rotation + 1440 + Math.floor(Math.random() * 360))
+    const { data, error } = await supabase.rpc('spin_the_wheel')
+    if (error) {
+      setWheelSpinning(false)
+      toast.error(error.message.includes('later') ? error.message : 'The wheel is unavailable right now. Please try again.')
+      return
+    }
+    window.setTimeout(() => {
+      setWheelResult(data)
+      setWheelSpinning(false)
+      qc.invalidateQueries({ queryKey: ['spin-wheel-history', user?.id] })
+      toast.success(`You won: ${data.label}`)
+    }, 1600)
+  }
 
   // 4. Fetch details of followed stores
   const { data: followedStores, isLoading: followedStoresLoading } = useQuery({
@@ -316,7 +358,7 @@ export default function Account() {
     .slice(0, 2)
     .join('') || '?'
 
-  type TabId = 'overview' | 'orders' | 'inbox' | 'vouchers' | 'wishlist' | 'followed' | 'recent' | 'address' | 'alerts' | 'store'
+  type TabId = 'overview' | 'orders' | 'inbox' | 'vouchers' | 'wishlist' | 'followed' | 'recent' | 'address' | 'alerts' | 'store' | 'rewards'
 
   interface NavItem {
     id: TabId
@@ -345,6 +387,7 @@ export default function Account() {
       title: 'Offers & Updates',
       items: [
         { id: 'vouchers', label: 'Vouchers & Coupons', icon: Ticket, count: vouchers?.length },
+        { id: 'rewards', label: 'Spin & Rewards', icon: Gift, count: spinHistory?.filter(spin => spin.status === 'available').length },
         { id: 'inbox', label: 'Inbox & Alerts', icon: ClipboardText, count: notifications.length },
         { id: 'followed', label: 'Followed Sellers', icon: Storefront, count: profile.followed_stores?.length },
       ]
@@ -484,7 +527,7 @@ export default function Account() {
                 <button
                   type="button"
                   onClick={() => {
-                    setSlideMenuOpen(false)
+                    closeSlideMenu()
                     signOut()
                   }}
                   className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-2xl text-sm font-semibold text-red-500 hover:bg-red-500/10 transition-colors"
@@ -618,7 +661,7 @@ export default function Account() {
         </div>
         <button
           type="button"
-          onClick={() => setSlideMenuOpen(true)}
+          onClick={openSlideMenu}
           className="text-xs font-bold text-brand-500 dark:text-brand-400 hover:underline"
         >
           Browse sections
@@ -1040,6 +1083,83 @@ export default function Account() {
                               Copy
                             </button>
                           </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Tab: Spin & Rewards ──────────────────────────────────── */}
+              {activeTab === 'rewards' && (
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="text-lg font-bold text-dark-800 dark:text-white">Spin & Rewards</h3>
+                    <p className="text-xs text-dark-800/55 dark:text-white/45 mt-1">
+                      Spin once every 24 hours for a genuine reward. Your result is saved to your account.
+                    </p>
+                  </div>
+
+                  <div className="card p-6 sm:p-8 text-center overflow-hidden relative">
+                    <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-brand-400/10 blur-3xl pointer-events-none" />
+                    <div className="relative mx-auto w-56 h-56 sm:w-64 sm:h-64 mb-6">
+                      <div
+                        className="w-full h-full rounded-full border-8 border-brand-400/20 shadow-xl transition-transform duration-[1600ms] ease-out"
+                        style={{
+                          transform: `rotate(${wheelRotation}deg)`,
+                          background: 'conic-gradient(#f59e0b 0deg 120deg, #fbbf24 120deg 240deg, #fcd34d 240deg 360deg)',
+                        }}
+                      >
+                        <div className="absolute inset-5 rounded-full border-2 border-white/60 flex items-center justify-center">
+                          <Gift size={56} weight="duotone" className="text-white drop-shadow-md" />
+                        </div>
+                      </div>
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-brand-500 drop-shadow-md">
+                        <Sparkle size={28} weight="fill" />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={spinWheel}
+                      disabled={wheelSpinning}
+                      className="btn-primary inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {wheelSpinning ? <SpinnerGap size={18} className="animate-spin" /> : <Sparkle size={18} weight="fill" />}
+                      {wheelSpinning ? 'Spinning...' : 'Spin the wheel'}
+                    </button>
+
+                    {wheelResult && (
+                      <div className="mt-5 rounded-2xl bg-brand-400/10 border border-brand-400/25 p-4 text-left">
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-brand-500 dark:text-brand-400">Your reward</p>
+                        <p className="text-base font-bold text-dark-800 dark:text-white mt-1">{wheelResult.label}</p>
+                        <p className="text-xs text-dark-800/55 dark:text-white/45 mt-1">
+                          {wheelResult.reward_type === 'credit'
+                            ? `Usable on orders of ${formatPrice(wheelResult.min_order_amount)} or more.`
+                            : `Free standard shipping on orders of ${formatPrice(wheelResult.min_order_amount)} or more.`}
+                          {' '}Expires in {wheelResult.expires_in_days} days.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {spinHistory && spinHistory.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-bold text-dark-800 dark:text-white">Your rewards</h4>
+                      {spinHistory.map(spin => (
+                        <div key={spin.id} className="card p-4 flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-brand-400/10 text-brand-400 flex items-center justify-center flex-shrink-0">
+                            {spin.reward_type === 'credit' ? <Coins size={18} weight="fill" /> : <Gift size={18} weight="fill" />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-dark-800 dark:text-white truncate">{spin.reward_label}</p>
+                            <p className="text-[10px] text-dark-800/45 dark:text-white/40">
+                              {spin.status === 'available' ? `Expires ${new Date(spin.expires_at).toLocaleDateString()}` : spin.status}
+                            </p>
+                          </div>
+                          <span className={`text-[10px] font-bold uppercase ${spin.status === 'available' ? 'text-green-500' : 'text-dark-800/35 dark:text-white/30'}`}>
+                            {spin.status}
+                          </span>
                         </div>
                       ))}
                     </div>

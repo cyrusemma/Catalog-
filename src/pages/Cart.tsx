@@ -121,6 +121,25 @@ export default function Cart() {
     enabled: true,
   })
 
+  const { data: availableSpinReward } = useQuery({
+    queryKey: ['available-spin-reward', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null
+      const { data, error } = await supabase
+        .from('spin_wheel_spins')
+        .select('id, reward_type, reward_label, credit_amount, min_order_amount, expires_at')
+        .eq('user_id', user.id)
+        .eq('status', 'available')
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      if (error) throw error
+      return data
+    },
+    enabled: !!user?.id,
+  })
+
   const [promoCodeInput, setPromoCodeInput] = useState('')
   const [appliedPromoCodeRule, setAppliedPromoCodeRule] = useState<any>(null)
   const [promoCodeError, setPromoCodeError] = useState('')
@@ -200,10 +219,17 @@ export default function Cart() {
   }, [appliedPromoCodeRule, filteredItems, subtotal])
 
   const discountAmount = useMemo(() => {
-    return Math.min(autoDiscountAmount + promoDiscountAmount, subtotal)
-  }, [autoDiscountAmount, promoDiscountAmount, subtotal])
+    const spinCredit = availableSpinReward?.reward_type === 'credit' &&
+      subtotal >= Number(availableSpinReward.min_order_amount)
+      ? Math.min(Number(availableSpinReward.credit_amount), subtotal)
+      : 0
+    return Math.min(autoDiscountAmount + promoDiscountAmount + spinCredit, subtotal)
+  }, [autoDiscountAmount, promoDiscountAmount, subtotal, availableSpinReward])
 
-  const grandTotal = Math.max(0, subtotal + deliveryFee - discountAmount)
+  const rewardFreeShipping = availableSpinReward?.reward_type === 'free_shipping' &&
+    subtotal >= Number(availableSpinReward.min_order_amount)
+  const appliedDeliveryFee = rewardFreeShipping ? 0 : deliveryFee
+  const grandTotal = Math.max(0, subtotal + appliedDeliveryFee - discountAmount)
 
   const handleApplyPromoCode = () => {
     setPromoCodeError('')
@@ -300,7 +326,7 @@ export default function Cart() {
         variant_name: i.selected_variant?.name || null,
       })),
       subtotal,
-      delivery_fee: deliveryFee,
+      delivery_fee: appliedDeliveryFee,
       discount_amount: discountAmount,
       total: grandTotal,
       currency: settings.currency || 'GHS',
@@ -337,6 +363,15 @@ export default function Cart() {
           }
         }).catch(err => console.error('Push error:', err))
       }
+
+      if (availableSpinReward) {
+        const { data: redeemed, error: redeemError } = await supabase.rpc('redeem_spin_reward', {
+          reward_spin_id: availableSpinReward.id,
+        })
+        if (redeemError || !redeemed) {
+          console.error('Reward redemption failed', redeemError)
+        }
+      }
     }
 
     // Deduct inventory in real-time
@@ -371,7 +406,7 @@ export default function Cart() {
         }
       }),
       subtotal,
-      deliveryFee,
+      appliedDeliveryFee,
       targetCurrency,
       targetTemplate,
       discountAmount
@@ -804,10 +839,16 @@ export default function Cart() {
                   <span>-{formatPrice(discountAmount)}</span>
                 </div>
               )}
+              {rewardFreeShipping && (
+                <div className="flex justify-between text-sm text-green-600 dark:text-green-400 font-medium">
+                  <span>{availableSpinReward.reward_label}</span>
+                  <span>Applied</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-dark-800/70 dark:text-white/60">Delivery</span>
                 <span className="text-dark-800 dark:text-white font-medium">
-                  {deliveryFee > 0 ? formatPrice(deliveryFee) : 'Free'}
+                  {appliedDeliveryFee > 0 ? formatPrice(appliedDeliveryFee) : 'Free'}
                 </span>
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-cream-200/60 dark:border-white/10">

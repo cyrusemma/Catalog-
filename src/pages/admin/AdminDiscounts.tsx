@@ -5,7 +5,8 @@ import {
   Plus, 
   Trash, 
   X, 
-  Percent
+  Percent,
+  Gift
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import AdminLayout from '../../components/admin/AdminLayout'
@@ -25,6 +26,54 @@ export default function AdminDiscounts() {
 
   const qc = useQueryClient()
   const { data: context } = useAdminContext()
+
+  const { data: wheelConfig } = useQuery({
+    queryKey: ['admin-spin-wheel-config'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('spin_wheel_config').select('active, cooldown_hours').eq('id', true).single()
+      if (error) throw error
+      return data
+    },
+    enabled: context?.isAdmin === true,
+  })
+
+  const { data: wheelRewards } = useQuery({
+    queryKey: ['admin-spin-wheel-rewards'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('spin_wheel_rewards').select('id, label, reward_type, credit_amount, min_order_amount, weight, active').order('created_at')
+      if (error) throw error
+      return data || []
+    },
+    enabled: context?.isAdmin === true,
+  })
+
+  const { data: spinCount } = useQuery({
+    queryKey: ['admin-spin-wheel-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('spin_wheel_spins').select('id', { count: 'exact', head: true })
+      if (error) throw error
+      return count || 0
+    },
+    enabled: context?.isAdmin === true,
+  })
+
+  const updateWheel = useMutation({
+    mutationFn: async (changes: { active?: boolean; cooldown_hours?: number }) => {
+      const { error } = await supabase.from('spin_wheel_config').update(changes).eq('id', true)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-spin-wheel-config'] }),
+    onError: (error: Error) => toast.error(`Could not update wheel: ${error.message}`),
+  })
+
+  const updateWheelReward = useMutation({
+    mutationFn: async ({ id, weight, active }: { id: string; weight: number; active: boolean }) => {
+      const { error } = await supabase.from('spin_wheel_rewards').update({ weight, active }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-spin-wheel-rewards'] }),
+    onError: (error: Error) => toast.error(`Could not update reward: ${error.message}`),
+  })
 
   // Fetch Discounts
   const { data: discounts, isLoading: discountsLoading } = useQuery({
@@ -175,6 +224,73 @@ export default function AdminDiscounts() {
             Create Discount Rule
           </button>
         </div>
+
+        {context?.isAdmin && (
+          <section className="mb-8 bg-white rounded-2xl border border-brand-400/20 shadow-sm p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
+              <div>
+                <p className="text-brand-400 text-xs font-bold uppercase tracking-wider mb-1">Platform promotion</p>
+                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Gift size={20} /> Spin & Rewards</h2>
+                <p className="text-xs text-gray-500 mt-1">Set honest reward odds and control how often customers can spin.</p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-brand-400">{spinCount ?? 0}</p>
+                <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Total spins</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 mb-5 text-sm">
+              <label className="inline-flex items-center gap-2 font-semibold text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={wheelConfig?.active ?? false}
+                  onChange={e => updateWheel.mutate({ active: e.target.checked })}
+                  className="accent-brand-400"
+                />
+                Wheel active
+              </label>
+              <label className="inline-flex items-center gap-2 text-gray-600">
+                Cooldown
+                <input
+                  type="number"
+                  min="0"
+                  value={wheelConfig?.cooldown_hours ?? 24}
+                  onChange={e => updateWheel.mutate({ cooldown_hours: Math.max(0, Number(e.target.value) || 0) })}
+                  className="w-20 border border-gray-200 rounded-lg px-2 py-1 text-sm"
+                />
+                hours
+              </label>
+            </div>
+
+            <div className="grid gap-2">
+              {wheelRewards?.map(reward => (
+                <div key={reward.id} className="flex flex-wrap items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5">
+                  <span className="flex-1 min-w-[160px] text-sm font-semibold text-gray-800">{reward.label}</span>
+                  <span className="text-[10px] uppercase font-bold text-gray-400">{reward.reward_type === 'credit' ? formatPrice(reward.credit_amount) : 'Free shipping'}</span>
+                  <label className="text-xs text-gray-500 flex items-center gap-1">
+                    Odds
+                    <input
+                      type="number"
+                      min="1"
+                      defaultValue={reward.weight}
+                      onBlur={e => updateWheelReward.mutate({ id: reward.id, weight: Math.max(1, Number(e.target.value) || 1), active: reward.active })}
+                      className="w-16 border border-gray-200 rounded-lg px-2 py-1 text-sm"
+                    />
+                  </label>
+                  <label className="inline-flex items-center gap-1 text-xs text-gray-500">
+                    <input
+                      type="checkbox"
+                      checked={reward.active}
+                      onChange={e => updateWheelReward.mutate({ id: reward.id, weight: reward.weight, active: e.target.checked })}
+                      className="accent-brand-400"
+                    />
+                    Enabled
+                  </label>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Discounts List */}
         {discountsLoading ? (
